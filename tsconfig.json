@@ -1,0 +1,17 @@
+{
+  "compilerOptions": {
+    "outFile": "docs/overrides/assets/javascripts/custom.js",
+    "module": "system",
+    "noImplicitAny": true,
+    "removeComments": true,
+    "preserveConstEnums": true,
+    "sourceMap": false,
+    "target": "es6"
+  },
+  "include": [
+    "docs_src/**/*"
+  ],
+  "exclude": [
+    "node_modules"
+  ]
+}

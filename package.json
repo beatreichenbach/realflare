@@ -1,0 +1,9 @@
+{
+  "main": "index.ts",
+  "directories": {
+    "doc": "docs"
+  },
+  "devDependencies": {
+    "typescript": "^4.9.5"
+  }
+}

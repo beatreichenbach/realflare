@@ -1,0 +1,77 @@
+
+# Project information
+site_name: Realflare
+site_url: https://beatreichenbach.github.io/realflare/
+site_author: Beat Reichenbach
+site_description: >-
+  Render complex lens flares from real and accurate lens prescriptions using a ray tracing algorithm that simulates light passing through a camera lens.
+
+# Repository
+repo_name: beatreichenbach/realflare
+repo_url: https://github.com/beatreichenbach/realflare
+
+# Copyright
+copyright: Copyright &copy; 2023 Beat Reichenbach
+
+# Configuration
+theme:
+  name: material
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.top
+    - search.suggest
+    - search.highlight
+    - content.tabs.link
+    - content.code.annotation
+    - content.code.copy
+  palette:
+    - scheme: slate
+      primary: light-blue
+      accent: blue
+  font:
+    text: Roboto
+    code: Roboto Mono
+  logo: assets/logo.svg
+  favicon: assets/favicon.png
+  custom_dir: docs/overrides
+
+# Customization
+extra:
+  social:
+    - icon: fontawesome/brands/github-alt
+      link: https://github.com/beatreichenbach
+    - icon: fontawesome/brands/linkedin
+      link: https://www.linkedin.com/in/beatreichenbach
+    - icon: fontawesome/brands/artstation
+      link: https://www.artstation.com/beatreichenbach
+    - icon: fontawesome/brands/twitter
+      link: https://twitter.com/artofbeat
+
+
+# Extensions
+markdown_extensions:
+  - admonition
+  - attr_list
+  - toc:
+      permalink: true
+  - footnotes
+
+# Page tree
+nav:
+  - Home: index.md
+  - Getting started:
+    - Installation: installation.md
+    - Guides:
+      - Creating a flare: guides/creating-a-flare.md
+      - Creating a prescription: guides/creating-a-prescription.md
+  - Reference:
+      - Flare: reference/flare.md
+      - Render: reference/render.md
+      - Prescription: reference/prescription.md
+      - Presets: reference/presets.md
+      - Command Line: reference/command_line.md
+  - Knowledge Base:
+      - Optics: knowledge/optics.md
+      - Rendering: knowledge/rendering.md
+      - Coding: knowledge/coding.md

@@ -1,0 +1,55 @@
+#https://packaging.python.org/en/latest/specifications/declaring-project-metadata/
+[project]
+name = "realflare"
+description = "Physically-Based Lens Flare Tool"
+authors = [
+    {name = "Beat Reichenbach", email = "info@artofbeat.com"}
+]
+dynamic = ["version"]
+dependencies = [
+    "qt-extensions @ https://github.com/beatreichenbach/qt-extensions/archive/refs/heads/main.zip",
+    "PySide2",
+    "PyYAML",
+    "numpy",
+    "opencv-python",
+    "pyopencl",
+    "opencolorio",
+    "sentry-sdk",
+    "python-slugify[unidecode]"
+]
+requires-python = ">=3.10"
+license = {text = "MIT"}
+readme = "README.md"
+classifiers = [
+"Development Status :: 2 - Pre-Alpha",
+"Programming Language :: Python :: 3.10"
+]
+
+[project.optional-dependencies]
+dev = [
+    'mkdocs-material'
+]
+
+#[project.scripts]
+#realflare-cli = "realflare:main_cli"
+
+#[project.gui-scripts]
+#realflare-gui = "realflare:main"
+
+[build-system]
+requires = ["setuptools>=45", "setuptools_scm[toml]>=6.2"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["realflare*"]
+
+[tool.setuptools.package-data]
+realflare = ["**/*.cl", "**/*.png", "**/*.json", "**/*.yml"]
+
+[tool.setuptools_scm]
+write_to = "realflare/_version.py"
+version_scheme = "python-simplified-semver"
+
+[tool.pytest.ini_options]
+log_cli = true
+log_cli_level = "DEBUG"

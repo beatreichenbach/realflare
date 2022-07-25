@@ -1,0 +1,25 @@
+{
+  "resolution": [
+    512,
+    512
+  ],
+  "bin_size": 64,
+  "subdivisions": 1,
+  "wavelength_count": 1,
+  "wavelength_sub_count": 1,
+  "grid_count": 33,
+  "grid_length": 50.0,
+  "starburst": {
+    "resolution": [
+      256,
+      256
+    ],
+    "samples": 100
+  },
+  "ghost": {
+    "resolution": [
+      256,
+      256
+    ]
+  }
+}

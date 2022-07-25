@@ -1,0 +1,21 @@
+{
+  "aperture": {
+    "fstop": 8.0,
+    "file": "",
+    "blades": 8,
+    "softness": 0.01
+  },
+  "intensity": 1.0,
+  "lens_distance": 0.25,
+  "blur": 2.0,
+  "rotation": 0.0,
+  "rotation_weighting": 1.0,
+  "fadeout": [
+    0.75,
+    1.0
+  ],
+  "scale": [
+    1.0,
+    1.0
+  ]
+}

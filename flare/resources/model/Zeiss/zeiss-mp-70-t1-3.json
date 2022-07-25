@@ -1,0 +1,186 @@
+{
+  "name": "Zeiss MP 70/T1.3",
+  "year": 2008,
+  "patent_number": "7446944 B2",
+  "notes": "https://www.zeiss.com/consumer-products/us/cinematography/master-prime-lenses.html",
+  "focal_length": 50,
+  "fstop": 1.3,
+  "aperture_index": 14,
+  "lens_elements": [
+    {
+      "radius": 554.31,
+      "distance": 4.31,
+      "refractive_index": 1.69901,
+      "abbe_nr": 30.13,
+      "height": 35.0
+    },
+    {
+      "radius": 82.937,
+      "distance": 7.67,
+      "refractive_index": 1.0,
+      "abbe_nr": 0.0,
+      "height": 35.0
+    },
+    {
+      "radius": 2539.9,
+      "distance": 8.05,
+      "refractive_index": 1.80527,
+      "abbe_nr": 25.42,
+      "height": 35.0
+    },
+    {
+      "radius": -185.67,
+      "distance": 4.67,
+      "refractive_index": 1.81605,
+      "abbe_nr": 46.62,
+      "height": 35.0
+    },
+    {
+      "radius": -188.36,
+      "distance": 7.281,
+      "refractive_index": 1.0,
+      "abbe_nr": 0.0,
+      "height": 35.0
+    },
+    {
+      "radius": 52.33,
+      "distance": 16.11,
+      "refractive_index": 1.61803,
+      "abbe_nr": 63.33,
+      "height": 35.0
+    },
+    {
+      "radius": 12548.0,
+      "distance": 0.11,
+      "refractive_index": 1.0,
+      "abbe_nr": 0.0,
+      "height": 35.0
+    },
+    {
+      "radius": 70.795,
+      "distance": 4.2,
+      "refractive_index": 1.71743,
+      "abbe_nr": 29.62,
+      "height": 28.0
+    },
+    {
+      "radius": 55.033,
+      "distance": 2.534,
+      "refractive_index": 1.0,
+      "abbe_nr": 0.0,
+      "height": 25.0
+    },
+    {
+      "radius": 42.474,
+      "distance": 4.27,
+      "refractive_index": 1.80527,
+      "abbe_nr": 25.42,
+      "height": 25.0
+    },
+    {
+      "radius": 35.481,
+      "distance": 7.82,
+      "refractive_index": 1.81605,
+      "abbe_nr": 46.62,
+      "height": 25.0
+    },
+    {
+      "radius": 46.639,
+      "distance": 4.79,
+      "refractive_index": 1.0,
+      "abbe_nr": 0.0,
+      "height": 23.0
+    },
+    {
+      "radius": 183.02,
+      "distance": 4.2,
+      "refractive_index": 1.55839,
+      "abbe_nr": 54.01,
+      "height": 23.0
+    },
+    {
+      "radius": 25.119,
+      "distance": 9.8,
+      "refractive_index": 1.0,
+      "abbe_nr": 0.0,
+      "height": 15.0
+    },
+    {
+      "radius": 0.0,
+      "distance": 9.71,
+      "refractive_index": 1.0,
+      "abbe_nr": 0.0,
+      "height": 15.0
+    },
+    {
+      "radius": -23.041,
+      "distance": 4.2,
+      "refractive_index": 1.65416,
+      "abbe_nr": 39.63,
+      "height": 15.0
+    },
+    {
+      "radius": 39.525,
+      "distance": 16.23,
+      "refractive_index": 1.61803,
+      "abbe_nr": 63.33,
+      "height": 23.0
+    },
+    {
+      "radius": -44.668,
+      "distance": 0.35,
+      "refractive_index": 1.0,
+      "abbe_nr": 0.0,
+      "height": 23.0
+    },
+    {
+      "radius": 66.473,
+      "distance": 10.02,
+      "refractive_index": 1.60303,
+      "abbe_nr": 65.44,
+      "height": 25.0
+    },
+    {
+      "radius": -240.57,
+      "distance": 0.21,
+      "refractive_index": 1.0,
+      "abbe_nr": 0.0,
+      "height": 25.0
+    },
+    {
+      "radius": 466.39,
+      "distance": 7.51,
+      "refractive_index": 1.60303,
+      "abbe_nr": 65.44,
+      "height": 25.0
+    },
+    {
+      "radius": -88.45271,
+      "distance": 0.1,
+      "refractive_index": 1.0,
+      "abbe_nr": 0.0,
+      "height": 25.0
+    },
+    {
+      "radius": 91.728,
+      "distance": 4.2,
+      "refractive_index": 1.81605,
+      "abbe_nr": 46.62,
+      "height": 23.0
+    },
+    {
+      "radius": 27.982,
+      "distance": 16.46,
+      "refractive_index": 1.61803,
+      "abbe_nr": 63.33,
+      "height": 22.0
+    },
+    {
+      "radius": -128.64,
+      "distance": 39.014,
+      "refractive_index": 1.0,
+      "abbe_nr": 0.0,
+      "height": 22.0
+    }
+  ]
+}

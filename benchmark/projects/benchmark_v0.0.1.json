@@ -1,0 +1,225 @@
+{
+  "flare": {
+    "light_intensity": 0.0,
+    "light_color": [
+      0.0,
+      0.0,
+      0.0,
+      1.0
+    ],
+    "light_position": [
+      0.5,
+      0.5
+    ],
+    "lens": {
+      "sensor_size": [
+        36,
+        24
+      ],
+      "prescription_path": "$RES/model/Nikon/ai_50_135mm.json",
+      "glasses_path": "$RES/glass/schott",
+      "abbe_nr_adjustment": 0.0,
+      "min_area": 0.1,
+      "coating_lens_elements": [
+        [
+          544,
+          1.3406841906625615
+        ],
+        [
+          558,
+          1.2804426192457654
+        ],
+        [
+          460,
+          1.3679662398033106
+        ],
+        [
+          690,
+          1.3442672791527703
+        ],
+        [
+          488,
+          1.3372880201402626
+        ],
+        [
+          430,
+          1.2789086474207918
+        ],
+        [
+          526,
+          1.2740810193447802
+        ],
+        [
+          540,
+          1.3781994300681473
+        ],
+        [
+          676,
+          1.239703875920382
+        ],
+        [
+          590,
+          1.3678558854309486
+        ],
+        [
+          539,
+          1.3626980111330682
+        ],
+        [
+          518,
+          1.3114071959361029
+        ],
+        [
+          561,
+          1.2594154689626544
+        ],
+        [
+          685,
+          1.2227530947430407
+        ],
+        [
+          462,
+          1.3140982872288973
+        ],
+        [
+          534,
+          1.2259782557452525
+        ],
+        [
+          639,
+          1.3232809066119522
+        ],
+        [
+          456,
+          1.3151681208041581
+        ],
+        [
+          422,
+          1.2273210675221529
+        ],
+        [
+          447,
+          1.322707436859361
+        ],
+        [
+          393,
+          1.2437871169818249
+        ],
+        [
+          522,
+          1.221928583902217
+        ],
+        [
+          610,
+          1.2775311943212895
+        ],
+        [
+          475,
+          1.2976845068034422
+        ],
+        [
+          674,
+          1.2495692308252901
+        ],
+        [
+          596,
+          1.2567697247497693
+        ],
+        [
+          475,
+          1.3193258147031959
+        ],
+        [
+          488,
+          1.2955278585234893
+        ],
+        [
+          645,
+          1.2902243930587711
+        ],
+        [
+          526,
+          1.316133708286473
+        ]
+      ]
+    },
+    "starburst": {
+      "aperture": {
+        "fstop": 8.0,
+        "file": "",
+        "blades": 64,
+        "softness": 0.0
+      },
+      "intensity": 1.0,
+      "lens_distance": 0.1,
+      "blur": 0.0,
+      "rotation": 0.0,
+      "rotation_weighting": 1.0,
+      "fadeout": [
+        0.75,
+        1.0
+      ],
+      "scale": [
+        1.0,
+        1.0
+      ]
+    },
+    "ghost": {
+      "aperture": {
+        "fstop": 2.0,
+        "file": "",
+        "blades": 64,
+        "softness": 0.01
+      },
+      "fstop": 0.0
+    }
+  },
+  "render": {
+    "output_path": "D:/files/dev/027_flare/render/wavelengths_v002.exr",
+    "colorspace": "ACES - ACEScg",
+    "quality": {
+      "resolution": [
+        1920,
+        1080
+      ],
+      "bin_size": 64,
+      "anti_aliasing": 4,
+      "wavelength_count": 5,
+      "wavelength_sub_count": 8,
+      "grid_count": 129,
+      "grid_length": 60.0,
+      "cull_percentage": 0.0,
+      "starburst": {
+        "resolution": [
+          256,
+          256
+        ],
+        "samples": 200
+      },
+      "ghost": {
+        "resolution": [
+          512,
+          512
+        ]
+      }
+    },
+    "disable_starburst": false,
+    "disable_ghosts": false,
+    "debug_ghosts": false,
+    "debug_ghost": 3,
+    "diagram": {
+      "resolution": [
+        2048,
+        1024
+      ],
+      "debug_ghost": 10,
+      "light_position": 0.0,
+      "grid_count": 9,
+      "grid_length": 20.0,
+      "column_offset": 0
+    }
+  },
+  "elements": [
+    "FLARE"
+  ]
+}

@@ -127,3 +127,15 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# PyCharm
+.idea/
+
+# node
+node_modules
+coverage
+.map
+
+# Project specific
+todo.md
+_version.py
