@@ -1,0 +1,18 @@
+html {
+  font-size: 110%;
+}
+
+[data-md-color-scheme=slate] {
+  --md-default-bg-color: rgb(23, 24, 31);
+}
+
+[dir=ltr] .md-header__title {
+  margin-left: 0;
+}
+
+.md-header__topic:first-child {
+  font-family: "MuseoModerno";
+  font-style: italic;
+}
+
+/*# sourceMappingURL=custom.css.map */

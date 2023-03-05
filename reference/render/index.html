@@ -19,7 +19,7 @@
       
       
       <link rel="icon" href="../../assets/icon.png">
-      <meta name="generator" content="mkdocs-1.4.2, mkdocs-material-9.0.15">
+      <meta name="generator" content="mkdocs-1.4.2, mkdocs-material-9.1.0">
     
     
       
@@ -27,7 +27,7 @@
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.113286f1.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.402914a4.min.css">
       
         
         <link rel="stylesheet" href="../../assets/stylesheets/palette.a0c5b2b5.min.css">
@@ -41,8 +41,8 @@
         
         
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
-        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto+Mono:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto Mono";--md-code-font:"Roboto Mono"}</style>
       
     
     
@@ -53,6 +53,8 @@
     
     
     
+  <link rel="stylesheet" href="../../assets/stylesheets/custom.css"/>
+
   </head>
   
   
@@ -63,7 +65,7 @@
     
     
     
-    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="cyan" data-md-color-accent="light-blue">
+    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="black" data-md-color-accent="light-blue">
   
     
     
@@ -117,7 +119,7 @@
       <form class="md-header__option" data-md-component="palette">
         
           
-          <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="cyan" data-md-color-accent="light-blue"  aria-hidden="true"  type="radio" name="__palette" id="__palette_1">
+          <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="black" data-md-color-accent="light-blue"  aria-hidden="true"  type="radio" name="__palette" id="__palette_1">
           
         
       </form>
@@ -239,9 +241,7 @@
   
 
 
-  
-
-<nav class="md-nav md-nav--primary md-nav--lifted md-nav--integrated" aria-label="Navigation" data-md-level="0">
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
     <a href="../.." title="realflare" class="md-nav__button md-logo" aria-label="realflare" data-md-component="logo">
       
@@ -559,6 +559,107 @@
               </div>
             
             
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#output" class="md-nav__link">
+    Output
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#quality" class="md-nav__link">
+    Quality
+  </a>
+  
+    <nav class="md-nav" aria-label="Quality">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#rays" class="md-nav__link">
+    Rays
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#starburst" class="md-nav__link">
+    Starburst
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ghost" class="md-nav__link">
+    Ghost
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#debug" class="md-nav__link">
+    Debug
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#diagram" class="md-nav__link">
+    Diagram
+  </a>
+  
+    <nav class="md-nav" aria-label="Diagram">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#renderer" class="md-nav__link">
+    Renderer
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#rays_1" class="md-nav__link">
+    Rays
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
           
           
             <div class="md-content" data-md-component="content">
@@ -570,40 +671,40 @@
   
 
 
-<h1 id="render">Render</h1>
+<h1 id="render">Render<a class="headerlink" href="#render" title="Permanent link">&para;</a></h1>
 <div class="admonition info">
 <p class="admonition-title">Info</p>
 <p>Parameters marked with a <code>*</code> will change in future versions.</p>
 </div>
-<h2 id="output">Output</h2>
+<h2 id="output">Output<a class="headerlink" href="#output" title="Permanent link">&para;</a></h2>
 <p><code>output_path</code>: Path for the final image to be written to. Use <code>$F4</code> for padding</p>
 <p><code>colorspace</code>: ACES based colorspace name</p>
-<h2 id="quality">Quality</h2>
+<h2 id="quality">Quality<a class="headerlink" href="#quality" title="Permanent link">&para;</a></h2>
 <p><code>resolution</code>: Resolution of the final image</p>
 <p><code>bin_size *</code>: Size of the tiles used in the rasterizer</p>
 <p><code>subdivisions *</code>: The amount of anti aliasing subdivisions. Only supported options are 1, 2, 4, 8</p>
 <blockquote>
 <p><strong>Important</strong>: During Pre-Release don't change the bin_size and keep the resolution a multiple of bin_size. These parameters will be simplified and changed in the future.</p>
 </blockquote>
-<h3 id="rays">Rays</h3>
+<h3 id="rays">Rays<a class="headerlink" href="#rays" title="Permanent link">&para;</a></h3>
 <p><code>wavelength_count</code>: Amount of wavelengths used to trace through the lens system. Wavelengths are automatically chosen to cover the visible spectrum. Usually only 4 or 5 wavelengths need to be traced to give good results.</p>
 <p><code>wavelength_sub_count</code>: Amount of wavelengths that are interpolated during rasterization. Usually 8 give good results.</p>
 <p><code>grid_count</code>: Amount of points on the grid of rays that is traced through the lens system. Previews can look okay with 32 while final renders might need 64-128.</p>
 <p><code>grid_length</code>: Length of the grid of rays that is traced through the lens system. The grid is ideally as small as possible. Start with a value that is larger than the height of the lens (for example 50mm, that's the height not length of the lens) and go smaller until ghosts are not cut off anymore.</p>
-<h3 id="starburst">Starburst</h3>
+<h3 id="starburst">Starburst<a class="headerlink" href="#starburst" title="Permanent link">&para;</a></h3>
 <p><code>resolution</code>: Resolution of the Starburst aperture and pattern</p>
 <p><code>samples *</code>: Amount of samples for the pattern renderer</p>
-<h3 id="ghost">Ghost</h3>
+<h3 id="ghost">Ghost<a class="headerlink" href="#ghost" title="Permanent link">&para;</a></h3>
 <p><code>resolution</code>: Resolution of the Ghost aperture and pattern</p>
-<h2 id="debug">Debug</h2>
+<h2 id="debug">Debug<a class="headerlink" href="#debug" title="Permanent link">&para;</a></h2>
 <p><code>disable_starburst</code>: Disable the Starburst pattern in the final image</p>
 <p><code>disable_ghosts</code>: Disable the Ghosts in the final image</p>
 <p><code>debug_ghosts</code>: Only render one Ghost in the final image</p>
 <p><code>debug_ghost</code>: Index of the Ghost that should be rendered</p>
-<h2 id="diagram">Diagram</h2>
-<h3 id="renderer">Renderer</h3>
+<h2 id="diagram">Diagram<a class="headerlink" href="#diagram" title="Permanent link">&para;</a></h2>
+<h3 id="renderer">Renderer<a class="headerlink" href="#renderer" title="Permanent link">&para;</a></h3>
 <p><code>resolution</code>: Resolution of the diagram</p>
-<h3 id="rays_1">Rays</h3>
+<h3 id="rays_1">Rays<a class="headerlink" href="#rays_1" title="Permanent link">&para;</a></h3>
 <p><code>debug_ghost</code>: Index of the Ghost that should be rendered</p>
 <p><code>light_position</code>: Relative vertical position of the light source</p>
 <p><code>grid_count</code>: Amount of points on the grid of rays that is traced through the lens system</p>
@@ -694,11 +795,14 @@
       <div class="md-dialog__inner md-typeset"></div>
     </div>
     
-    <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.tabs", "navigation.sections", "toc.integrate", "navigation.top", "search.suggest", "search.highlight", "content.tabs.link", "content.code.annotation", "content.code.copy"], "search": "../../assets/javascripts/workers/search.208ed371.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
+    <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.tabs", "navigation.sections", "navigation.top", "search.suggest", "search.highlight", "content.tabs.link", "content.code.annotation", "content.code.copy"], "search": "../../assets/javascripts/workers/search.208ed371.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
     
     
-      <script src="../../assets/javascripts/bundle.2a6f1dda.min.js"></script>
+  
+      <script src="../../assets/javascripts/bundle.ce72ebac.min.js"></script>
       
     
+  <script src="../../assets/javascripts/custom.js"></script>
+
   </body>
 </html>
