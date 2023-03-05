@@ -7,6 +7,11 @@
   background-color: initial;
   position: absolute;
   top: 2.4rem;
+  top: 3.2rem;
+}
+
+[data-md-color-primary=black] .md-header {
+  background-color: initial;
 }
 
 .md-header:not(.md-header--shadow) {
@@ -37,15 +42,27 @@
   color: var(--md-primary-bg-color);
   margin-right: 0.5rem;
   margin-top: 0.5rem;
+  background-color: var(--colors-brand3);
+  border-radius: 0.25rem;
+  box-shadow: 0 1px 1px 0 rgba(0, 0, 0, 0.25), 0 0 0 1px var(--colors-brand4), 0 2px 5px 0 rgba(0, 0, 0, 0.25);
 }
 .md-typeset .md-button--secondary {
   background-color: initial;
+}
+
+button {
+  background: none;
+  text-decoration: inherit;
+  font-family: system-ui;
+  font-size: 1rem;
+  padding: 1rem 2rem;
 }
 
 /* parallax */
 .mdx-parallax {
   height: 100vh;
   margin-top: -2.4rem;
+  margin-top: -3.2rem;
   overflow-x: hidden;
   overflow-y: auto;
   overscroll-behavior-y: none;
@@ -58,6 +75,8 @@
   color: var(--md-typeset-color);
   display: block;
   position: relative;
+  border: 1px solid var(--md-default-bg-color--light);
+  border-style: solid none;
 }
 .mdx-parallax__group:first-child {
   background-color: initial;
@@ -126,12 +145,16 @@
 .mdx-hero__teaser {
   -webkit-backface-visibility: hidden;
   backface-visibility: hidden;
-  color: var(--md-primary-bg-color);
-  margin: 0 0.8rem;
+  margin: 0 0.8rem 6rem;
   max-width: 24rem;
 }
 .mdx-hero__teaser :not(.md-button) {
   text-shadow: 0 0 0.2rem rgba(33, 29, 45, 0.8);
+}
+.mdx-hero__teaser h1 {
+  color: var(--md-typeset-color);
+  font-size: 2rem;
+  font-weight: 400;
 }
 
 .mdx-hero__inner {

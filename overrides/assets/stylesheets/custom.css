@@ -1,3 +1,34 @@
+:root {
+  --colors-blackA1: rgba(0,0,0,0.012);
+  --colors-blackA2: rgba(0,0,0,0.027);
+  --colors-blackA3: rgba(0,0,0,0.047);
+  --colors-blackA4: rgba(0,0,0,0.071);
+  --colors-blackA5: rgba(0,0,0,0.09);
+  --colors-blackA6: rgba(0,0,0,0.114);
+  --colors-blackA7: rgba(0,0,0,0.141);
+  --colors-blackA8: rgba(0,0,0,0.22);
+  --colors-blackA9: rgba(0,0,0,0.439);
+  --colors-blackA10: rgba(0,0,0,0.478);
+  --colors-blackA11: rgba(0,0,0,0.565);
+  --colors-blackA12: rgba(0,0,0,0.91);
+  --colors-fixed-brand1: #ffffff;
+  --colors-fixed-brand2: #edf7fd;
+  --colors-fixed-brand3: #dbeffc;
+  --colors-fixed-brand4: #c8e7fa;
+  --colors-fixed-brand5: #b6dff8;
+  --colors-fixed-brand6: #a4d7f7;
+  --colors-fixed-brand7: #92cef5;
+  --colors-fixed-brand8: #80c6f3;
+  --colors-fixed-brand9: #6dbef1;
+  --colors-fixed-brand10: #5bb6f0;
+  --colors-fixed-brand11: #49AEEE;
+  --colors-fixed-brand12: #12212b;
+  --colors-brand1: #2668E2;
+  --colors-brand3: #49AEEE;
+  --colors-brand4: #45D6E6;
+  --colors-brand5: #40FDDE;
+}
+
 html {
   font-size: 110%;
 }
@@ -10,9 +41,32 @@ html {
   margin-left: 0;
 }
 
+.md-header__button.md-logo {
+  margin: 0.5rem 0.2rem;
+}
+
 .md-header__topic:first-child {
   font-family: "MuseoModerno";
   font-style: italic;
+  font-weight: 600;
+  font-size: 130%;
+}
+
+.md-typeset .md-button {
+  padding: 0.25rem 0.75rem;
+}
+
+.md-grid {
+  max-width: 80rem;
+}
+
+.md-tabs__link {
+  font-size: 0.8rem;
+}
+
+[data-md-color-primary=black] .md-header {
+  background-color: var(--md-default-bg-color);
+  backdrop-filter: blur(4px) brightness(0.25);
 }
 
 /*# sourceMappingURL=custom.css.map */
