@@ -38,4 +38,3 @@ var scroll_video = function () {
     }
 };
 parallax.addEventListener("scroll", scroll_video);
-//# sourceMappingURL=custom.js.map
