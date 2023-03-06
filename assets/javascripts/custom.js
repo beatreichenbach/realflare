@@ -37,4 +37,4 @@ var scroll_video = function () {
         requestAnimationFrame(function () { });
     }
 };
-parallax.addEventListener("scroll", scroll_video);
+parallax.addEventListener("scroll", debounce(scroll_video), { passive: true });

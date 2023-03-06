@@ -29,6 +29,10 @@
   --colors-brand5: #40FDDE;
 }
 
+::selection {
+  background: var(--colors-brand3);
+}
+
 html {
   font-size: 110%;
 }
@@ -37,16 +41,13 @@ html {
   --md-default-bg-color: rgb(23, 24, 31);
 }
 
-[dir=ltr] .md-header__title {
-  margin-left: 0;
-}
-
 .md-header__button.md-logo {
   margin: 0.5rem 0.2rem;
 }
 
 .md-header__topic:first-child {
-  font-family: "MuseoModerno";
+  margin-left: 0;
+  font-family: "MuseoModerno", "Roboto", sans-serif;
   font-style: italic;
   font-weight: 600;
   font-size: 130%;
@@ -64,9 +65,10 @@ html {
   font-size: 0.8rem;
 }
 
-[data-md-color-primary=black] .md-header {
+[data-md-color-primary=light-blue] .md-header {
   background-color: var(--md-default-bg-color);
-  backdrop-filter: blur(4px) brightness(0.25);
+  backdrop-filter: blur(4px) brightness(0.75);
+  border-bottom: 1px solid var(--md-default-bg-color--light);
 }
 
 /*# sourceMappingURL=custom.css.map */

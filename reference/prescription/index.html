@@ -12,20 +12,20 @@
         <meta name="author" content="Beat Reichenbach">
       
       
-        <link rel="canonical" href="https://beatreichenbach.github.io/flare/reference/flare/">
+        <link rel="canonical" href="https://beatreichenbach.github.io/flare/reference/prescription/">
       
       
-        <link rel="prev" href="../../guides/creating-a-prescription/">
+        <link rel="prev" href="../render/">
       
       
-        <link rel="next" href="../render/">
+        <link rel="next" href="../presets/">
       
       <link rel="icon" href="../../assets/logo.png">
       <meta name="generator" content="mkdocs-1.4.2, mkdocs-material-9.1.0">
     
     
       
-        <title>Flare - realflare</title>
+        <title>Prescription - realflare</title>
       
     
     
@@ -79,7 +79,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#flare" class="md-skip">
+        <a href="#prescriptions" class="md-skip">
           Skip to content
         </a>
       
@@ -111,7 +111,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Flare
+              Prescription
             
           </span>
         </div>
@@ -229,7 +229,7 @@
   
   
     <li class="md-tabs__item">
-      <a href="./" class="md-tabs__link md-tabs__link--active">
+      <a href="../flare/" class="md-tabs__link md-tabs__link--active">
         Reference
       </a>
     </li>
@@ -458,73 +458,11 @@
               
   
   
-    
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          Flare
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../flare/" class="md-nav__link">
         Flare
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#light" class="md-nav__link">
-    Light
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#lens" class="md-nav__link">
-    Lens
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#starburst" class="md-nav__link">
-    Starburst
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#ghost" class="md-nav__link">
-    Ghost
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -548,11 +486,21 @@
               
   
   
+    
   
-    <li class="md-nav__item">
-      <a href="../prescription/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         Prescription
       </a>
+      
     </li>
   
 
@@ -689,42 +637,6 @@
     
   
   
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#light" class="md-nav__link">
-    Light
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#lens" class="md-nav__link">
-    Lens
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#starburst" class="md-nav__link">
-    Starburst
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#ghost" class="md-nav__link">
-    Ghost
-  </a>
-  
-</li>
-      
-    </ul>
-  
 </nav>
                   </div>
                 </div>
@@ -741,34 +653,8 @@
   
 
 
-<h1 id="flare">Flare<a class="headerlink" href="#flare" title="Permanent link">&para;</a></h1>
-<p>The flare parameters can be stored in a preset and control the artistic look of the lens flare.</p>
-<div class="admonition info">
-<p class="admonition-title">Info</p>
-<p>Parameters marked with a <code>*</code> will change in future versions.</p>
-</div>
-<h2 id="light">Light<a class="headerlink" href="#light" title="Permanent link">&para;</a></h2>
-<p><code>light_position</code>: Position of the light source relative to the image</p>
-<h2 id="lens">Lens<a class="headerlink" href="#lens" title="Permanent link">&para;</a></h2>
-<p><code>sensor_size</code>: Size of the sensor in mm</p>
-<p><code>prescription_path *</code>: File path of the prescription <code>.json</code> file </p>
-<p><code>glasses_path *</code>: Folder path containing glass <code>.yml</code> files. Each lens element specifies a refractive index and Abbe number. Using those values the renderer finds the glass with the closest values and uses that to caluclate the dispersion. Different manufacturers might have glasses with different qualities that give unique looks.</p>
-<p><code>abbe_nr_adjustment</code>: Offset for all <a href="https://en.wikipedia.org/wiki/Abbe_number">Abbe numbers</a> in the prescription. This can be used to add more or less dispersion to the glasses. Adjusting this value overrides the lens prescription and is here to for creative experimentation.</p>
-<p><code>coating_lens_elements</code>: List of <a href="https://en.wikipedia.org/wiki/Anti-reflective_coating">anti-reflective coatings</a> for lens elements in a prescription. The <em>refractive index</em> depends on the material used for the coating (for example MgF2 with an index of 1.38.) The <em>wavelength</em> is the wavelength in nm that the coating is optimized for to reduce reflection.</p>
-<h2 id="starburst">Starburst<a class="headerlink" href="#starburst" title="Permanent link">&para;</a></h2>
-<p>The starburst pattern is the bright glare that appears where the light source is.</p>
-<p><code>aperture</code>:  Aperture Parameters</p>
-<p><code>intensity</code>: Intensity of the Starburst pattern</p>
-<p><code>lens_distance</code>: Distance from the sensor picking up the pattern to the aperture that is producing it</p>
-<p><code>blur</code>: Blur amount</p>
-<p><code>rotation</code>: Rotation amount</p>
-<p><code>rotation_weighting</code>: Weighting towards 1 will make the values on the outside of the rotation brighter</p>
-<p><code>fadeout</code>: Range (<em>from</em> and <em>to</em> of the radius) of the fadeout. To make sure there are no visible edges a radial fade is applied to the output.</p>
-<p><code>scale</code>: Overall scale of the Starburst pattern on the final image</p>
-<h2 id="ghost">Ghost<a class="headerlink" href="#ghost" title="Permanent link">&para;</a></h2>
-<p><code>aperture</code>:  Aperture Parameters</p>
-<p><code>fstop *</code>: Temporary value to control the amount of the frft applied to the ghost. Controls the look of the Ghost ringing for now</p>
-<p><code>wavelength *</code>: Used internally</p>
+<h1 id="prescriptions">Prescriptions<a class="headerlink" href="#prescriptions" title="Permanent link">&para;</a></h1>
+<p>Peace is a lie. There is only Passion.</p>
 
 
 

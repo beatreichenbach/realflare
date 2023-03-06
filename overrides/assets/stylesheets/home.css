@@ -1,16 +1,16 @@
 /* overrides */
-.md-main__inner {
+.md-main {
   display: none;
 }
 
-[data-md-color-primary=black] .md-tabs {
+[data-md-color-primary=light-blue] .md-tabs {
   background-color: initial;
   position: absolute;
   top: 2.4rem;
   top: 3.2rem;
 }
 
-[data-md-color-primary=black] .md-header {
+[data-md-color-primary=light-blue] .md-header {
   background-color: initial;
 }
 
@@ -30,6 +30,7 @@
 }
 
 .md-typeset {
+  --md-typeset-color: #bbbbbb;
   color: var(--md-typeset-color);
 }
 .md-typeset h2 {
@@ -61,7 +62,6 @@ button {
 /* parallax */
 .mdx-parallax {
   height: 100vh;
-  margin-top: -2.4rem;
   margin-top: -3.2rem;
   overflow-x: hidden;
   overflow-y: auto;
@@ -75,12 +75,15 @@ button {
   color: var(--md-typeset-color);
   display: block;
   position: relative;
-  border: 1px solid var(--md-default-bg-color--light);
-  border-style: solid none;
 }
 .mdx-parallax__group:first-child {
   background-color: initial;
   height: 140vh;
+}
+
+.md-content {
+  border: 1px solid var(--md-default-bg-color--light);
+  border-style: solid none;
 }
 
 .mdx-parallax__layer {
@@ -120,7 +123,7 @@ button {
   border-radius: 0.1rem;
   bottom: -2.4rem;
   color: var(--md-default-fg-color);
-  font-size: 0.5rem;
+  font-size: 0.75rem;
   padding: 0.1rem 0.4rem;
   position: absolute;
   right: 0.8rem;
@@ -146,10 +149,7 @@ button {
   -webkit-backface-visibility: hidden;
   backface-visibility: hidden;
   margin: 0 0.8rem 6rem;
-  max-width: 24rem;
-}
-.mdx-hero__teaser :not(.md-button) {
-  text-shadow: 0 0 0.2rem rgba(33, 29, 45, 0.8);
+  max-width: 26rem;
 }
 .mdx-hero__teaser h1 {
   color: var(--md-typeset-color);
