@@ -1,22 +1,18 @@
-var debounce = function (fn) {
-    var frame;
-    return function () {
-        var params = [];
-        for (var _i = 0; _i < arguments.length; _i++) {
-            params[_i] = arguments[_i];
-        }
+const debounce = (fn) => {
+    let frame;
+    return (...params) => {
         if (frame) {
             cancelAnimationFrame(frame);
         }
-        frame = requestAnimationFrame(function () {
-            fn.apply(void 0, params);
+        frame = requestAnimationFrame(() => {
+            fn(...params);
         });
     };
 };
-var header = document.querySelector(".md-header");
-var hero = document.querySelector(".mdx-parallax__group");
-var updateHtml = function () {
-    var aboveContent = parallax.scrollTop < hero.offsetTop + hero.offsetHeight;
+const header = document.querySelector(".md-header");
+const hero = document.querySelector(".mdx-parallax__group");
+const updateHtml = () => {
+    const aboveContent = parallax.scrollTop < hero.offsetTop + hero.offsetHeight;
     if (aboveContent) {
         header.classList.remove("md-header--shadow");
     }
@@ -24,17 +20,35 @@ var updateHtml = function () {
         header.classList.add("md-header--shadow");
     }
 };
-var parallax = document.querySelector(".mdx-parallax");
+const parallax = document.querySelector(".mdx-parallax");
 parallax.addEventListener("scroll", debounce(updateHtml), { passive: true });
 updateHtml();
-var video_parent = document.querySelector(".mdx-parallax__group:first-child");
-var video = document.querySelector(".mdx-hero__video video");
-var scroll_video = function () {
+const video_parent = document.querySelector(".mdx-parallax__group:first-child");
+const video = document.querySelector(".mdx-hero__video video");
+const scroll_video = () => {
     if (video.duration) {
-        var scrolled = parallax.scrollTop / video_parent.scrollHeight;
-        var time = Math.min(Math.max(scrolled, 0), 1);
+        const scrolled = parallax.scrollTop / video_parent.scrollHeight;
+        const time = Math.min(Math.max(scrolled, 0), 1);
         video.currentTime = video.duration * time;
-        requestAnimationFrame(function () { });
+        requestAnimationFrame(() => { });
     }
 };
 parallax.addEventListener("scroll", debounce(scroll_video), { passive: true });
+const show_hidden = () => {
+    transition_elements.forEach((element) => {
+        const rect = element.getBoundingClientRect();
+        const visible = rect.top <= (window.innerHeight || document.documentElement.clientHeight);
+        if (visible) {
+            element.removeAttribute("hidden");
+            transition_elements.splice(transition_elements.indexOf(element), 1);
+        }
+    });
+    if (transition_elements.length == 0) {
+        parallax.removeEventListener("scroll", show_hidden_debounce);
+    }
+};
+const transition_elements = [
+    ...document.querySelectorAll(".mdx-parallax [hidden]"),
+];
+const show_hidden_debounce = debounce(show_hidden);
+parallax.addEventListener("scroll", show_hidden_debounce, { passive: true });
