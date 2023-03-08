@@ -39,8 +39,8 @@
         
         
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7COffice+Code+Pro,+Source+Code+Pro,+Menlo,+monospace:400,400i,700,700i&display=fallback">
-        <style>:root{--md-text-font:"Roboto";--md-code-font:"Office Code Pro, Source Code Pro, Menlo, monospace"}</style>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
       
     
     
@@ -87,7 +87,7 @@
 
 <header class="md-header" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href="." title="realflare" class="md-header__button md-logo" aria-label="realflare" data-md-component="logo">
+    <a href="." title="Realflare" class="md-header__button md-logo" aria-label="Realflare" data-md-component="logo">
       
   <img src="assets/logo.svg" alt="logo">
 
@@ -98,8 +98,8 @@
     <div class="md-header__title" data-md-component="header-title">
       <div class="md-header__ellipsis">
         <div class="md-header__topic">
-          <a href="." title="realflare" class="md-header__button md-logo" aria-label="realflare" data-md-component="logo">
-            <img class="md-header__wordmark" src="/flare/assets/wordmark.svg" alt="realflare"/>
+          <a href="." title="Realflare" class="md-header__button md-wordmark" aria-label="Realflare" data-md-component="logo">
+            <img src="/flare/assets/wordmark.svg" alt="realflare"/>
           </a>
         </div>
         <div class="md-header__topic" data-md-component="header-topic">
@@ -265,10 +265,10 @@
 
                 <div class="mdx-hero__inner">
                     <div class="mdx-hero__teaser md-typeset">
-                        <h1>Physically-Based Lens Flares</h1>
+                        <h1>Physically-Based Lens Flares <a href="#pre-alpha"><pre class="mdx-prealpha">Pre-Alpha!</pre></a></h1>
                         <p>Render complex lens flares from real and accurate lens prescriptions using a ray tracing algorithm that simulates light passing through a camera lens.</p>
-                        <a href="getting-started/" class="md-button">Get started</a>
-                        <a href="#python-tool" class="md-button md-button--secondary">Learn more</a>
+                        <a href="installation/" class="md-button">Get started</a>
+                        <a href="#what-to-expect" class="md-button md-button--secondary">Learn more</a>
                         <a href="http://artofbeat.com" class="mdx-hero__attribution" tabindex="-1"><strong>© Beat Reichenbach</strong></a>
                     </div>
                     <div class="mdx-hero__more"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4.97 13.22a.75.75 0 0 1 1.06 0L11 18.19V3.75a.75.75 0 0 1 1.5 0v14.44l4.97-4.97a.749.749 0 0 1 1.275.326.749.749 0 0 1-.215.734l-6.25 6.25a.75.75 0 0 1-1.06 0l-6.25-6.25a.75.75 0 0 1 0-1.06Z"/></svg></div>
@@ -282,37 +282,52 @@
         <div class="md-content md-grid" data-md-component="content">
            <div class="md-content__inner">
               <header class="md-typeset" hidden>
-                 <h1 id="python-tool">It's a python tool<a href="#python-tool" class="headerlink" title="Permanent link">¶</a></h1>
+                 <h1 id="what-to-expect">What you can expect<a href="#what-to-expect" class="headerlink" title="Permanent link">¶</a></h1>
               </header>
               <div class="mdx-expect">
                  <ul class="mdx-expect__list">
                     <li class="mdx-expect__item md-typeset" hidden>
-                       <div class="mdx-expect__icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.3.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2023 Fonticons, Inc.--><path d="M149.1 64.8 138.7 96H64c-35.3 0-64 28.7-64 64v256c0 35.3 28.7 64 64 64h384c35.3 0 64-28.7 64-64V160c0-35.3-28.7-64-64-64h-74.7l-10.4-31.2C356.4 45.2 338.1 32 317.4 32H194.6c-20.7 0-39 13.2-45.5 32.8zM256 192a96 96 0 1 1 0 192 96 96 0 1 1 0-192z"/></svg></div>
-                       <div class="mdx-expect__description">
-                          <h2>It's like a camera</h2>
-                          <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
-                       </div>
+                        <div class="mdx-expect__icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.3.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2023 Fonticons, Inc.--><path d="M149.1 64.8 138.7 96H64c-35.3 0-64 28.7-64 64v256c0 35.3 28.7 64 64 64h384c35.3 0 64-28.7 64-64V160c0-35.3-28.7-64-64-64h-74.7l-10.4-31.2C356.4 45.2 338.1 32 317.4 32H194.6c-20.7 0-39 13.2-45.5 32.8zM256 192a96 96 0 1 1 0 192 96 96 0 1 1 0-192z"/></svg></div>
+                        <div class="mdx-expect__description">
+                           <h2>Real Camera Parameters</h2>
+                           <p>Lens flares are generated by tracing rays through lens systems based on real values. The lens and its parameters such as glass thickness and anti-reflective coating dictate the look.</p>
+                        </div>
                     </li>
                     <li class="mdx-expect__item md-typeset" hidden>
-                       <div class="mdx-expect__icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.3.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2023 Fonticons, Inc.--><path d="M149.1 64.8 138.7 96H64c-35.3 0-64 28.7-64 64v256c0 35.3 28.7 64 64 64h384c35.3 0 64-28.7 64-64V160c0-35.3-28.7-64-64-64h-74.7l-10.4-31.2C356.4 45.2 338.1 32 317.4 32H194.6c-20.7 0-39 13.2-45.5 32.8zM256 192a96 96 0 1 1 0 192 96 96 0 1 1 0-192z"/></svg></div>
-                       <div class="mdx-expect__description">
-                          <h2>Works on all devices</h2>
-                          <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
-                       </div>
+                        <div class="mdx-expect__icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512"><!--! Font Awesome Free 6.3.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2023 Fonticons, Inc.--><path d="M392.8 1.2c-17-4.9-34.7 5-39.6 22l-128 448c-4.9 17 5 34.7 22 39.6s34.7-5 39.6-22l128-448c4.9-17-5-34.7-22-39.6zm80.6 120.1c-12.5 12.5-12.5 32.8 0 45.3l89.3 89.4-89.4 89.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0l112-112c12.5-12.5 12.5-32.8 0-45.3l-112-112c-12.5-12.5-32.8-12.5-45.3 0zm-306.7 0c-12.5-12.5-32.8-12.5-45.3 0l-112 112c-12.5 12.5-12.5 32.8 0 45.3l112 112c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L77.3 256l89.4-89.4c12.5-12.5 12.5-32.8 0-45.3z"/></svg></div>
+                        <div class="mdx-expect__description">
+                           <h2>Cross Platform Support</h2>
+                           <p>Everything is written in python and opencl which allows the application to run on Windows and Linux and doesn't require a GPU... in theory.</p>
+                        </div>
                     </li>
                     <li class="mdx-expect__item md-typeset" hidden>
-                       <div class="mdx-expect__icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.3.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2023 Fonticons, Inc.--><path d="M149.1 64.8 138.7 96H64c-35.3 0-64 28.7-64 64v256c0 35.3 28.7 64 64 64h384c35.3 0 64-28.7 64-64V160c0-35.3-28.7-64-64-64h-74.7l-10.4-31.2C356.4 45.2 338.1 32 317.4 32H194.6c-20.7 0-39 13.2-45.5 32.8zM256 192a96 96 0 1 1 0 192 96 96 0 1 1 0-192z"/></svg></div>
-                       <div class="mdx-expect__description">
-                          <h2>Made to measure</h2>
-                          <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
-                       </div>
+                        <div class="mdx-expect__icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.3.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2023 Fonticons, Inc.--><path d="M0 416c0-17.7 14.3-32 32-32h54.7c12.3-28.3 40.5-48 73.3-48s61 19.7 73.3 48H480c17.7 0 32 14.3 32 32s-14.3 32-32 32H233.3c-12.3 28.3-40.5 48-73.3 48s-61-19.7-73.3-48H32c-17.7 0-32-14.3-32-32zm192 0a32 32 0 1 0-64 0 32 32 0 1 0 64 0zm192-160a32 32 0 1 0-64 0 32 32 0 1 0 64 0zm-32-80c32.8 0 61 19.7 73.3 48H480c17.7 0 32 14.3 32 32s-14.3 32-32 32h-54.7c-12.3 28.3-40.5 48-73.3 48s-61-19.7-73.3-48H32c-17.7 0-32-14.3-32-32s14.3-32 32-32h246.7c12.3-28.3 40.5-48 73.3-48zM192 64a32 32 0 1 0 0 64 32 32 0 1 0 0-64zm73.3 0H480c17.7 0 32 14.3 32 32s-14.3 32-32 32H265.3c-12.3 28.3-40.5 48-73.3 48s-61-19.7-73.3-48H32c-17.7 0-32-14.3-32-32s14.3-32 32-32h86.7C131 35.7 159.2 16 192 16s61 19.7 73.3 48z"/></svg></div>
+                         <div class="mdx-expect__description">
+                            <h2>Total Control</h2>
+                            <p>With nearly all render parameters exposed, you can expect to be overwhelmed until the UI gets cleaned up. But for now, you have total control to adjust every tiny setting.</p>
+                        </div>
                     </li>
                     <li class="mdx-expect__item md-typeset" hidden>
-                       <div class="mdx-expect__icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.3.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2023 Fonticons, Inc.--><path d="M149.1 64.8 138.7 96H64c-35.3 0-64 28.7-64 64v256c0 35.3 28.7 64 64 64h384c35.3 0 64-28.7 64-64V160c0-35.3-28.7-64-64-64h-74.7l-10.4-31.2C356.4 45.2 338.1 32 317.4 32H194.6c-20.7 0-39 13.2-45.5 32.8zM256 192a96 96 0 1 1 0 192 96 96 0 1 1 0-192z"/></svg></div>
-                       <div class="mdx-expect__description">
-                          <h2>Fast and lightweight</h2>
-                          <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
-                       </div>
+                        <div class="mdx-expect__icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12.293.004c6.625.162 11.865 5.664 11.703 12.29-.162 6.625-5.664 11.865-12.29 11.703C5.081 23.835-.159 18.333.003 11.707l.001-.025C.18 5.066 5.678-.158 12.293.004zm0 1.238c-5.941-.164-10.89 4.52-11.054 10.461s4.52 10.89 10.461 11.054c5.941.164 10.89-4.52 11.054-10.461l.001-.025c.15-5.932-4.53-10.866-10.462-11.029zm5.842 8.302h2.4c.976 0 .682-.873.682-.873a9.587 9.587 0 0 0-2.111-3.431l-.005.011a10.052 10.052 0 0 0-3.355-2.329.612.612 0 0 0-.894.622c-.044.802-.142 2.395-.142 2.395s.016.769-.627.769c-.813.011-1.489-.044-1.489-.044a2.314 2.314 0 0 1-1.255-.545L8.868 3.511a1.09 1.09 0 0 0-1.407-.196 9.758 9.758 0 0 0-4.713 5.384c-.256.714.333.806.731.806h6a2.086 2.086 0 0 1 1.68.627c.785.824 1.331 1.369 1.331 1.369s.48.54 1.26 1.358c.431.459.632 1.089.545 1.713 0 0-.295 5.744-.295 6-.027.398.038.993.769.775a9.756 9.756 0 0 0 5.618-4.424 1.091 1.091 0 0 0-.12-1.418l-2.471-2.607a2.303 2.303 0 0 1-.496-1.282s-.022-.682.033-1.489c.044-.643.802-.583.802-.583zm-2.362 1.374c-.475.469-1.484.229-2.22-.545-.736-.775-.924-1.801-.45-2.254.475-.453 1.502-.239 2.239.536.737.774.906 1.794.431 2.263z"/></svg></div>
+                        <div class="mdx-expect__description">
+                            <h2>Nuke Integration</h2>
+                            <p>There are clear plans on integrating this application into Nuke. However, there are a lot of issues to solve before that process can even begin.</p>
+                        </div>
+                    </li>
+                    <li class="mdx-expect__item md-typeset" hidden>
+                        <div class="mdx-expect__icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.3.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2023 Fonticons, Inc.--><path d="M512 256v2.7c-.4 36.5-33.6 61.3-70.1 61.3H344c-26.5 0-48 21.5-48 48 0 3.4.4 6.7 1 9.9 2.1 10.2 6.5 20 10.8 29.9 6.1 13.8 12.1 27.5 12.1 42 0 31.8-21.6 60.7-53.4 62-3.5.1-7 .2-10.6.2C114.6 512 0 397.4 0 256S114.6 0 256 0s256 114.6 256 256zm-384 32a32 32 0 1 0-64 0 32 32 0 1 0 64 0zm0-96a32 32 0 1 0 0-64 32 32 0 1 0 0 64zm160-96a32 32 0 1 0-64 0 32 32 0 1 0 64 0zm96 96a32 32 0 1 0 0-64 32 32 0 1 0 0 64z"/></svg></div>
+                        <div class="mdx-expect__description">
+                            <h2>OpenColorIO Support</h2>
+                            <p>Realflare includes support for OCIO. Let's be <strong>real</strong> though, the viewers are locked to sRGB. But hopefully there's more support coming soon.</p>
+                        </div>
+                    </li>
+                    <li class="mdx-expect__item md-typeset" hidden>
+                        <div class="mdx-expect__icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.3.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2023 Fonticons, Inc.--><path d="M256 32c14.2 0 27.3 7.5 34.5 19.8l216 368c7.3 12.4 7.3 27.7.2 40.1S486.3 480 472 480H40c-14.3 0-27.6-7.7-34.7-20.1s-7-27.8.2-40.1l216-368C228.7 39.5 241.8 32 256 32zm0 128c-13.3 0-24 10.7-24 24v112c0 13.3 10.7 24 24 24s24-10.7 24-24V184c0-13.3-10.7-24-24-24zm32 224a32 32 0 1 0-64 0 32 32 0 1 0 64 0z"/></svg></div>
+                        <div class="mdx-expect__description">
+                            <h2>Pre-Alpha</h2>
+                            <p>Seriously, this application is not ready to be used.</p>
+                            <p><a href="#pre-alpha" aria-label="pre-alpha"><span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13.22 19.03a.75.75 0 0 1 0-1.06L18.19 13H3.75a.75.75 0 0 1 0-1.5h14.44l-4.97-4.97a.749.749 0 0 1 .326-1.275.749.749 0 0 1 .734.215l6.25 6.25a.75.75 0 0 1 0 1.06l-6.25 6.25a.75.75 0 0 1-1.06 0Z"/></svg></span> Learn more</a></p>
+                        </div>
                     </li>
                  </ul>
               </div>
@@ -323,63 +338,64 @@
         <div class="md-content md-grid" data-md-component="content">
             <div class="md-content__inner">
                 <header class="md-typeset" hidden>
-                    <h1 id="more-than-just-a-static-site">More than just a static site<a href="#more-than-just-a-static-site" class="headerlink" title="Permanent link">¶</a></h1>
+                    <h1 id="more-than-just-a-gizmo">More than just a gizmo<a href="#more-than-just-a-gizmo" class="headerlink" title="Permanent link">¶</a></h1>
                 </header>
                 <div class="mdx-spotlight">
                     <figure class="mdx-spotlight__feature" hidden>
-                        <a href="setup/setting-up-site-search/" tabindex="-1" title="Built-in search">
-                            <img src="assets/images/spotlight/mainwindow.png" alt="Built-in search" loading="lazy" width="500" height="327">
+                        <a href="guides/creating-a-flare/" tabindex="-1" title="Flexible View Management">
+                            <img src="assets/images/spotlight/mainwindow.png" alt="Flexible View Management" loading="lazy" width="500" height="327">
                         </a>
                         <figcaption class="md-typeset">
                             <h2>Flexible View Management</h2>
-                            <p>Material for MkDocs makes your documentation <strong>instantly searchable</strong> with zero effort: say goodbye to costly third-party crawler-based solutions that can take hours to update. Ship your documentation with a <strong>highly customizable </strong> and <strong>blazing fast search</strong> running entirely <strong>in the user's browser</strong> at no extra cost. </p>
-                            <p>Even better: search inside code blocks, exclude specific sections or entire pages, boost important pages in the results and build searchable documentation that <strong>works offline</strong>.</p>
+                            <p>Fully customize your application the way that works for you. There are so many panels with sliders, it would be a shame if you couldn't see them all at once.</p>
+                            <p>Since the application currently constantly errors, there's also a built-in Logger to keep track of all the broken code.</p>
                             <p>
-                                <a href="setup/setting-up-site-search/" aria-label="Built-in search">
+                                <a href="guides/creating-a-flare/" aria-label="Flexible View Management">
                                     <span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13.22 19.03a.75.75 0 0 1 0-1.06L18.19 13H3.75a.75.75 0 0 1 0-1.5h14.44l-4.97-4.97a.749.749 0 0 1 .326-1.275.749.749 0 0 1 .734.215l6.25 6.25a.75.75 0 0 1 0 1.06l-6.25 6.25a.75.75 0 0 1-1.06 0Z"/></svg></span> Learn more
                                 </a>
                             </p>
                         </figcaption>
                     </figure>
                     <figure class="mdx-spotlight__feature" hidden>
-                        <a href="reference/code-blocks/#code-annotations" title="Code annotations" tabindex="-1">
-                            <img src="assets/images/spotlight/viewer.png" alt="Code annotations" loading="lazy" width="500" height="327">
+                        <a href="reference/render/#starburst" title="Starburst Patterns" tabindex="-1">
+                            <img src="assets/images/spotlight/starburst.png" alt="Starburst Patterns" loading="lazy" width="500" height="327">
                         </a>
                         <figcaption class="md-typeset">
-                            <h2>Viewers</h2>
-                            <p> Some examples need more explanation than others, which is why Material for MkDocs offers a <strong>unique and elegant</strong> way to add <strong>rich text</strong> almost <strong>anywhere in a code block</strong>. </p>
-                            <p> Code annotations can host formatted <strong>text</strong>, <strong>images</strong>, <strong>diagrams</strong>, <strong>code blocks</strong>, call-outs, content tabs, even interactive elements – basically everything that can be expressed in Markdown or HTML. Of course, code annotations <strong>work beautifully on mobile</strong> and other touch devices <strong> and can be printed</strong>. </p>
+                            <h2>Starburst Patterns</h2>
+                            <p>Create <strong>stunning</strong> glares that are based on an aperture shape.</p>
+                            <p>The research for all of this was done by Hullin et al. in their paper <strong>Physically-Based Real-Time Lens Flare Rendering</strong> and many others.</p>
                             <p>
-                                <a href="setup/setting-up-site-search/" aria-label="Built-in search">
+                                <a href="reference/render/#starburst" aria-label="Starburst Patterns">
                                     <span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13.22 19.03a.75.75 0 0 1 0-1.06L18.19 13H3.75a.75.75 0 0 1 0-1.5h14.44l-4.97-4.97a.749.749 0 0 1 .326-1.275.749.749 0 0 1 .734.215l6.25 6.25a.75.75 0 0 1 0 1.06l-6.25 6.25a.75.75 0 0 1-1.06 0Z"/></svg></span> Learn more
                                 </a>
                             </p>
                         </figcaption>
                     </figure>
                     <figure class="mdx-spotlight__feature" hidden>
-                        <a href="setup/setting-up-social-cards/" tabindex="-1" title="Social cards">
-                            <img src="assets/images/spotlight/mainwindow.png" alt="Social cards" loading="lazy" width="500" height="327">
+                        <a href="reference/presets/" tabindex="-1" title="Presets">
+                            <img src="assets/images/spotlight/presets.png" alt="Presets" loading="lazy" width="500" height="327">
                         </a>
                         <figcaption class="md-typeset">
-                            <h2>Social cards</h2>
-                            <p><strong>Make an impact on social media</strong> and <strong>increase engagement</strong> when sharing links to your documentation by leveraging the built-in social plugin. Material for MkDocs makes it effortless to generate a <strong>beautiful preview image</strong> for each page, which will drive more interested users to your Open Source or commercial project. </p>
+                            <h2>Presets</h2>
+                            <p>The preset system is so bad right now, that it's not even working. It's basically a bunch of .json files, but they're all interlinked, and it's really convoluted.
+                                Essentially I have to redo all that but as soon as that's done, you can expect a revolutionary preset system with thumbnails.</p>
                             <p>
-                                <a href="setup/setting-up-site-search/" aria-label="Built-in search">
+                                <a href="reference/presets/" aria-label="Presets">
                                     <span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13.22 19.03a.75.75 0 0 1 0-1.06L18.19 13H3.75a.75.75 0 0 1 0-1.5h14.44l-4.97-4.97a.749.749 0 0 1 .326-1.275.749.749 0 0 1 .734.215l6.25 6.25a.75.75 0 0 1 0 1.06l-6.25 6.25a.75.75 0 0 1-1.06 0Z"/></svg></span> Learn more
                                 </a>
                             </p>
                         </figcaption>
                     </figure>
                     <figure class="mdx-spotlight__feature" hidden>
-                        <a href="reference/icons-emojis/#search" tabindex="-1" title="10,000+ icons and emojis">
-                            <img src="assets/images/spotlight/viewer.png" alt="10,000+ icons and emojis" loading="lazy" width="500" height="327">
+                        <a href="knowledge/optics/" tabindex="-1" title="Knowledge Base">
+                            <img src="assets/images/spotlight/viewer.png" alt="Knowledge Base" loading="lazy" width="500" height="327">
                         </a>
                         <figcaption class="md-typeset">
-                            <h2> 10,000+ icons and emojis</h2>
-                            <p> Supercharge your technical writing by making better use of the processing power of the visual cortex: Material for MkDocs ships <strong>more than 10,000 icons and emojis</strong>, which can be used <strong>in Markdown and HTML</strong> with simple shortcodes and an easy-to-remember syntax. Add color to icons and animate them. <strong>Make it pop.</strong></p>
-                            <p> Use our dedicated <a href="reference/icons-emojis/#search">icon search</a> to quickly find the perfect icon for almost every use case and <strong>add custom icon sets</strong> with minimal configuration. </p>
+                            <h2>More than a Tool</h2>
+                            <p>This project was always more. It was supposed to be a way for me to learn about optics, about renderers, python, qt, c++ and whatever else came along. As I am working on this project I want to start documenting my journey and share what I learned from everyone else.</p>
+                            <p>Without people who documented everything they did, I would have never been able to write my own renderer in OpenCL, I would have never been able to learn about the math required to generate these shapes. I think it's only fair to document all those articles and share it with everyone else.</p>
                             <p>
-                                <a href="setup/setting-up-site-search/" aria-label="Built-in search">
+                                <a href="knowledge/optics/" aria-label="Knowledge Base">
                                     <span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13.22 19.03a.75.75 0 0 1 0-1.06L18.19 13H3.75a.75.75 0 0 1 0-1.5h14.44l-4.97-4.97a.749.749 0 0 1 .326-1.275.749.749 0 0 1 .734.215l6.25 6.25a.75.75 0 0 1 0 1.06l-6.25 6.25a.75.75 0 0 1-1.06 0Z"/></svg></span> Learn more
                                 </a>
                             </p>
@@ -390,13 +406,26 @@
         </div>
     </section>
     <section class="mdx-parallax__group" data-md-color-scheme="slate">
+        <div class="mdx-banner">
+            <div class="md-content md-grid" data-md-component="content">
+                <div class="md-content__inner">
+                    <header class="md-typeset" hidden>
+                        <h1 id="trusted-in-the-industry">Real Flares. Real Juice.<a href="#trusted-in-the-industry" class="headerlink" title="Permanent link">¶</a></h1>
+                    </header>
+                </div>
+            </div>
+        </div>
+    </section>
+    <section class="mdx-parallax__group" data-md-color-scheme="slate">
         <div class="md-content md-grid" data-md-component="content">
             <div class="md-content__inner">
                 <header class="md-typeset" hidden>
-                    <h1 id="trusted-in-the-industry">Trusted in the industry<a href="#trusted-in-the-industry" class="headerlink" title="Permanent link">¶</a></h1>
+                    <h1 id="pre-alpha">Pre-Alpha<a href="#pre-alpha" class="headerlink" title="Permanent link">¶</a></h1>
                 </header>
                 <div class="mdx-trust md-typeset" hidden>
-                    <h3>Industry leaders, as well as many successful Open Source projects, rely on Material for MkDocs to create professional and beautiful documentation – <strong>no frontend experience required</strong>. Choose a mature and actively maintained solution and <strong>start writing in minutes</strong>. </h3>
+                    <h3>No Seriously!</h3>
+                    <p>This application does <strong>not</strong> really work yet and is currently being developed.
+                        There's a myriad of reasons why you shouldn't try to use this tool. However...</p>
                     <p><a href="installation" class="md-button">Get started</a></p>
                 </div>
             </div>
@@ -480,12 +509,12 @@
 
 <nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href="." title="realflare" class="md-nav__button md-logo" aria-label="realflare" data-md-component="logo">
+    <a href="." title="Realflare" class="md-nav__button md-logo" aria-label="Realflare" data-md-component="logo">
       
   <img src="assets/logo.svg" alt="logo">
 
     </a>
-    realflare
+    Realflare
   </label>
   
     <div class="md-nav__source">

@@ -28,6 +28,16 @@ html {
   font-size: 110%;
 }
 
+@media screen and (min-width: 100em) {
+  html {
+    font-size: 115%;
+  }
+}
+@media screen and (min-width: 125em) {
+  html {
+    font-size: 120%;
+  }
+}
 .md-typeset .md-button {
   padding: 0.25rem 1rem;
   margin-right: 0.5rem;
@@ -72,6 +82,10 @@ html {
   font-size: 150%;
 }
 
+.md-header__inner {
+  padding-right: 1rem;
+}
+
 .md-header__topic:first-child {
   margin-left: 0;
   font-family: "MuseoModerno", "Roboto", sans-serif;
@@ -79,14 +93,12 @@ html {
   font-weight: 600;
 }
 
-.md-header__button.md-logo {
+.md-header__button.md-logo, .md-header__button.md-wordmark {
   padding: 0;
+  margin: 0.2rem;
 }
-.md-header__button.md-logo img, .md-header__button.md-logo svg {
-  height: 1.6rem;
-}
-
-.md-header__wordmark {
+.md-header__button.md-logo img, .md-header__button.md-logo svg, .md-header__button.md-wordmark img, .md-header__button.md-wordmark svg {
+  display: block;
   height: 1.6rem;
   width: auto;
 }

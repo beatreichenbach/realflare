@@ -1,8 +1,4 @@
 /* overrides */
-.md-main__inner {
-  display: none;
-}
-
 .md-content header {
   display: block;
   transition: opacity 0.75s;
@@ -18,6 +14,18 @@
   margin-top: 0.175em;
 }
 
+.md-main__inner {
+  margin: 0;
+}
+.md-main__inner > .md-content, .md-main__inner > .md-sidebar--secondary {
+  display: none;
+}
+
+@media screen and (min-width: 76.25em) {
+  .md-sidebar--primary {
+    display: none;
+  }
+}
 /* transitions */
 .js .md-content header[hidden] {
   opacity: 0;
@@ -43,6 +51,17 @@
 .js .mdx-trust[hidden] {
   opacity: 0;
   transform: translateY(1.6rem);
+}
+
+/* general */
+pre.mdx-prealpha {
+  display: inline-block;
+  position: absolute;
+  margin: 0 0 0 0.72rem;
+  vertical-align: top;
+  text-transform: uppercase;
+  font-size: 0.72rem;
+  color: #ff5723;
 }
 
 /* parallax */
@@ -236,7 +255,18 @@
   margin-top: 0.8rem;
 }
 
-/* trust */
+/* banner */
+.mdx-banner {
+  padding: 4rem 0 6rem;
+  background-image: url("/flare/assets/images/flare.png");
+  background-size: 100% auto;
+}
+.mdx-banner h1 {
+  color: var(--md-primary-bg-color);
+  font-size: 2rem;
+  font-weight: 700;
+}
+
 .mdx-trust {
   display: block;
   max-width: 40rem;
