@@ -33,7 +33,7 @@ const scroll_video = () => {
         requestAnimationFrame(() => { });
     }
 };
-parallax.addEventListener("scroll", debounce(scroll_video), { passive: true });
+parallax.addEventListener("scroll", debounce(scroll_video));
 const show_hidden = () => {
     transition_elements.forEach((element) => {
         const rect = element.getBoundingClientRect();
