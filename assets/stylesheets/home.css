@@ -232,9 +232,6 @@ pre.mdx-prealpha {
   gap: 3.2rem;
   margin: 0 0 3.2rem;
 }
-.mdx-spotlight__feature:nth-child(odd) {
-  flex-direction: row-reverse;
-}
 .mdx-spotlight__feature > a {
   display: block;
   flex-shrink: 0;
@@ -255,6 +252,17 @@ pre.mdx-prealpha {
   margin-top: 0.8rem;
 }
 
+@media screen and (min-width: 60em) {
+  .mdx-spotlight__feature:nth-child(odd) {
+    flex-direction: row-reverse;
+  }
+}
+@media screen and (max-width: 59.9375em) {
+  .mdx-spotlight__feature {
+    flex-direction: column;
+    gap: 0;
+  }
+}
 /* video */
 .mdx-parallax__video {
   width: 100%;
@@ -265,12 +273,16 @@ pre.mdx-prealpha {
 .mdx-banner {
   padding: 4rem 0 6rem;
   background-image: url("/flare/assets/images/flare.png");
-  background-size: 100% auto;
+  background-size: cover;
+  background-repeat: no-repeat;
 }
 .mdx-banner h1 {
   color: var(--md-primary-bg-color);
   font-size: 2rem;
   font-weight: 700;
+}
+.mdx-banner .md-content__inner {
+  text-align: center;
 }
 
 .mdx-trust {
