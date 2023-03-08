@@ -255,6 +255,12 @@ pre.mdx-prealpha {
   margin-top: 0.8rem;
 }
 
+/* video */
+.mdx-parallax__video {
+  width: 100%;
+  height: auto;
+}
+
 /* banner */
 .mdx-banner {
   padding: 4rem 0 6rem;
