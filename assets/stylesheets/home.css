@@ -272,7 +272,7 @@ pre.mdx-prealpha {
 /* banner */
 .mdx-banner {
   padding: 4rem 0 6rem;
-  background-image: url("/flare/assets/images/flare.png");
+  background-image: url("/realflare/assets/images/flare.png");
   background-size: cover;
   background-repeat: no-repeat;
 }
