@@ -132,12 +132,13 @@ pre.mdx-prealpha {
   -webkit-backface-visibility: hidden;
   backface-visibility: hidden;
   margin: 0 0.8rem 6rem;
-  max-width: 26rem;
+  max-width: 36rem;
 }
 .mdx-hero__teaser h1 {
   color: var(--md-primary-bg-color);
-  font-size: 2rem;
-  font-weight: 700;
+  font-size: 3.6rem;
+  font-weight: 900;
+  text-transform: uppercase;
 }
 
 .mdx-hero__inner {
