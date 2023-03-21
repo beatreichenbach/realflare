@@ -7,6 +7,18 @@
 {% block extrahead %}
     {{ super() }}
     <link rel="stylesheet" href="{{ 'assets/stylesheets/home.css' | url }}"/>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="{{ title }}" />
+    <meta property="og:description" content="{{ config.site_description }}" />
+    <meta property="og:url" content="{{ page.canonical_url }}" />
+    <meta property="og:image" content="{{ 'assets/images/header.png' | url }}" />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="{{ title }}" />
+    <meta name="twitter:description" content="{{ config.site_description }}" />
+    <meta name="twitter:image" content="{{ 'assets/images/header.png' | url }}" />
 {% endblock %}
 
 {% block tabs %}
@@ -14,7 +26,7 @@
 
     <section class="mdx-parallax__group" data-md-color-scheme="slate">
         <div class="mdx-hero__scrollwrap mdx-hero__video">
-            <video muted preload><source type="video/mp4" src="assets/hero.mp4"></video>
+            <video muted preload><source type="video/mp4" src="{{ 'assets/hero.mp4' | url }}"></video>
         </div>
         <div class="mdx-hero" data-mdx-component="hero">
             <div class="mdx-hero__scrollwrap md-grid">
@@ -23,10 +35,10 @@
 
                 <div class="mdx-hero__inner">
                     <div class="mdx-hero__teaser md-typeset">
-                        <h1>Physically-Based Lens Flares <a href="#pre-alpha"><pre class="mdx-prealpha">Pre-Alpha!</pre></a></h1>
+                        <h1>Physically-Based Lens Flares <a href="{{ '#pre-alpha' | url }}"><pre class="mdx-prealpha">Pre-Alpha!</pre></a></h1>
                         <p>Render complex lens flares from real and accurate lens prescriptions using a ray tracing algorithm that simulates light passing through a camera lens.</p>
-                        <a href="installation/" class="md-button">Get started</a>
-                        <a href="#what-to-expect" class="md-button md-button--secondary">Learn more</a>
+                        <a href="{{ 'installation' | url }}" class="md-button">Get started</a>
+                        <a href="{{ '#what-to-expect' | url }}" class="md-button md-button--secondary">Learn more</a>
                         <a href="http://artofbeat.com" class="mdx-hero__attribution" tabindex="-1"><strong>© Beat Reichenbach</strong></a>
                     </div>
                     <div class="mdx-hero__more">{% include ".icons/octicons/arrow-down-24.svg" %}</div>
@@ -40,7 +52,7 @@
         <div class="md-content md-grid" data-md-component="content">
            <div class="md-content__inner">
               <header class="md-typeset" hidden>
-                 <h1 id="what-to-expect">What you can expect<a href="#what-to-expect" class="headerlink" title="Permanent link">¶</a></h1>
+                 <h1 id="what-to-expect">What you can expect<a href="{{ '#what-to-expect' | url }}" class="headerlink" title="Permanent link">¶</a></h1>
               </header>
               <div class="mdx-expect">
                  <ul class="mdx-expect__list">
@@ -84,7 +96,7 @@
                         <div class="mdx-expect__description">
                             <h2>Pre-Alpha</h2>
                             <p>Seriously, this application is not ready to be used.</p>
-                            <p><a href="#pre-alpha" aria-label="pre-alpha"><span class="twemoji">{% include ".icons/octicons/arrow-right-24.svg" %}</span> Learn more</a></p>
+                            <p><a href="{{ '#pre-alpha' | url }}" aria-label="pre-alpha"><span class="twemoji">{% include ".icons/octicons/arrow-right-24.svg" %}</span> Learn more</a></p>
                         </div>
                     </li>
                  </ul>
@@ -95,7 +107,7 @@
 
     <section class="mdx-parallax__group" data-md-color-scheme="slate">
         <div class="md-content md-grid" data-md-component="content">
-            <video class="mdx-parallax__video" controls autoplay loop muted><source type="video/mp4" src="assets/flare.mp4"></video>
+            <video class="mdx-parallax__video" controls autoplay loop muted><source type="video/mp4" src="{{ 'assets/flare.mp4' | url }}"></video>
         </div>
     </section>
 
@@ -103,64 +115,64 @@
         <div class="md-content md-grid" data-md-component="content">
             <div class="md-content__inner">
                 <header class="md-typeset" hidden>
-                    <h1 id="more-than-just-a-gizmo">More than just a gizmo<a href="#more-than-just-a-gizmo" class="headerlink" title="Permanent link">¶</a></h1>
+                    <h1 id="more-than-just-a-gizmo">More than just a gizmo<a href="{{ '#more-than-just-a-gizmo' | url }}" class="headerlink" title="Permanent link">¶</a></h1>
                 </header>
                 <div class="mdx-spotlight">
                     <figure class="mdx-spotlight__feature" hidden>
-                        <a href="guides/creating-a-flare/" tabindex="-1" title="Flexible View Management">
-                            <img src="assets/images/spotlight/mainwindow.png" alt="Flexible View Management" loading="lazy" width="500" height="327">
+                        <a href="{{ 'guides/creating-a-flare' | url }}" tabindex="-1" title="Flexible View Management">
+                            <img src="{{ 'assets/images/spotlight/mainwindow.png' | url }}" alt="Flexible View Management" loading="lazy" width="500" height="327">
                         </a>
                         <figcaption class="md-typeset">
                             <h2>Flexible View Management</h2>
                             <p>Fully customize your application the way that works for you. There are so many panels with sliders, it would be a shame if you couldn't see them all at once.</p>
                             <p>Since the application currently constantly errors, there's also a built-in Logger to keep track of all the broken code.</p>
                             <p>
-                                <a href="guides/creating-a-flare/" aria-label="Flexible View Management">
+                                <a href="{{ 'guides/creating-a-flare' | url }}" aria-label="Flexible View Management">
                                     <span class="twemoji">{% include ".icons/octicons/arrow-right-24.svg" %}</span> Learn more
                                 </a>
                             </p>
                         </figcaption>
                     </figure>
                     <figure class="mdx-spotlight__feature" hidden>
-                        <a href="reference/render/#starburst" title="Starburst Patterns" tabindex="-1">
-                            <img src="assets/images/spotlight/starburst.png" alt="Starburst Patterns" loading="lazy" width="500" height="327">
+                        <a href="{{ 'reference/render/#starburst' | url }}" title="Starburst Patterns" tabindex="-1">
+                            <img src="{{ 'assets/images/spotlight/starburst.png' | url }}" alt="Starburst Patterns" loading="lazy" width="500" height="327">
                         </a>
                         <figcaption class="md-typeset">
                             <h2>Starburst Patterns</h2>
                             <p>Create <strong>stunning</strong> glares that are based on an aperture shape.</p>
                             <p>The research for all of this was done by Hullin et al. in their paper <strong>Physically-Based Real-Time Lens Flare Rendering</strong> and many others.</p>
                             <p>
-                                <a href="reference/render/#starburst" aria-label="Starburst Patterns">
+                                <a href="{{ 'reference/render/#starburst' | url }}" aria-label="Starburst Patterns">
                                     <span class="twemoji">{% include ".icons/octicons/arrow-right-24.svg" %}</span> Learn more
                                 </a>
                             </p>
                         </figcaption>
                     </figure>
                     <figure class="mdx-spotlight__feature" hidden>
-                        <a href="reference/presets/" tabindex="-1" title="Presets">
-                            <img src="assets/images/spotlight/presets.png" alt="Presets" loading="lazy" width="500" height="327">
+                        <a href="{{ 'reference/presets' | url }}" tabindex="-1" title="Presets">
+                            <img src="{{ 'assets/images/spotlight/presets.png' | url }}" alt="Presets" loading="lazy" width="500" height="327">
                         </a>
                         <figcaption class="md-typeset">
                             <h2>Presets</h2>
                             <p>The preset system is so bad right now, that it's not even working. It's basically a bunch of .json files, but they're all interlinked, and it's really convoluted.
                                 Essentially I have to redo all that but as soon as that's done, you can expect a revolutionary preset system with thumbnails.</p>
                             <p>
-                                <a href="reference/presets/" aria-label="Presets">
+                                <a href="{{ 'reference/presets' | url }}" aria-label="Presets">
                                     <span class="twemoji">{% include ".icons/octicons/arrow-right-24.svg" %}</span> Learn more
                                 </a>
                             </p>
                         </figcaption>
                     </figure>
                     <figure class="mdx-spotlight__feature" hidden>
-                        <a href="knowledge/optics/" tabindex="-1" title="Knowledge Base">
-                            <img src="assets/images/spotlight/viewer.png" alt="Knowledge Base" loading="lazy" width="500" height="327">
+                        <a href="{{ 'knowledge/optics' | url }}" tabindex="-1" title="Knowledge Base">
+                            <img src="{{ 'assets/images/spotlight/viewer.png' | url }}" alt="Knowledge Base" loading="lazy" width="500" height="327">
                         </a>
                         <figcaption class="md-typeset">
                             <h2>More than a Tool</h2>
                             <p>This project was always more. It was supposed to be a way for me to learn about optics, about renderers, python, qt, c++ and whatever else came along. As I am working on this project I want to start documenting my journey and share what I learned from everyone else.</p>
                             <p>Without people who documented everything they did, I would have never been able to write my own renderer in OpenCL, I would have never been able to learn about the math required to generate these shapes. I think it's only fair to document all those articles and share it with everyone else.</p>
                             <p>
-                                <a href="knowledge/optics/" aria-label="Knowledge Base">
+                                <a href="{{ 'knowledge/optics' | url }}" aria-label="Knowledge Base">
                                     <span class="twemoji">{% include ".icons/octicons/arrow-right-24.svg" %}</span> Learn more
                                 </a>
                             </p>
@@ -175,7 +187,7 @@
             <div class="md-content md-grid" data-md-component="content">
                 <div class="md-content__inner">
                     <header class="md-typeset" hidden>
-                        <h1 id="trusted-in-the-industry">Real Flares. Real Juice.<a href="#trusted-in-the-industry" class="headerlink" title="Permanent link">¶</a></h1>
+                        <h1 id="trusted-in-the-industry">Real Flares. Real Juice.<a href="{{ '#trusted-in-the-industry' | url }}" class="headerlink" title="Permanent link">¶</a></h1>
                     </header>
                 </div>
             </div>
@@ -185,13 +197,13 @@
         <div class="md-content md-grid" data-md-component="content">
             <div class="md-content__inner">
                 <header class="md-typeset" hidden>
-                    <h1 id="pre-alpha">Pre-Alpha<a href="#pre-alpha" class="headerlink" title="Permanent link">¶</a></h1>
+                    <h1 id="pre-alpha">Pre-Alpha<a href="{{ '#pre-alpha' | url }}" class="headerlink" title="Permanent link">¶</a></h1>
                 </header>
                 <div class="mdx-trust md-typeset" hidden>
                     <h3>No Seriously!</h3>
                     <p>This application does <strong>not</strong> really work yet and is currently being developed.
                         There's a myriad of reasons why you shouldn't try to use this tool. However...</p>
-                    <p><a href="installation" class="md-button">Get started</a></p>
+                    <p><a href="{{ 'installation' | url }}" class="md-button">Get started</a></p>
                 </div>
             </div>
         </div>

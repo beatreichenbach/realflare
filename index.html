@@ -54,7 +54,20 @@
     
   <link rel="stylesheet" href="assets/stylesheets/custom.css"/>
 
+
     <link rel="stylesheet" href="assets/stylesheets/home.css"/>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="" />
+    <meta property="og:description" content="Physically-Based Lens Flare Tool" />
+    <meta property="og:url" content="https://beatreichenbach.github.io/realflare/" />
+    <meta property="og:image" content="assets/images/header.png" />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="" />
+    <meta name="twitter:description" content="Physically-Based Lens Flare Tool" />
+    <meta name="twitter:image" content="assets/images/header.png" />
 
   </head>
   
@@ -99,7 +112,7 @@
       <div class="md-header__ellipsis">
         <div class="md-header__topic">
           <a href="." title="Realflare" class="md-header__button md-wordmark" aria-label="Realflare" data-md-component="logo">
-            <img src="/realflare/assets/wordmark.svg" alt="realflare"/>
+            <img src="assets/wordmark.svg" alt="realflare"/>
           </a>
         </div>
         <div class="md-header__topic" data-md-component="header-topic">
@@ -267,7 +280,7 @@
                     <div class="mdx-hero__teaser md-typeset">
                         <h1>Physically-Based Lens Flares <a href="#pre-alpha"><pre class="mdx-prealpha">Pre-Alpha!</pre></a></h1>
                         <p>Render complex lens flares from real and accurate lens prescriptions using a ray tracing algorithm that simulates light passing through a camera lens.</p>
-                        <a href="installation/" class="md-button">Get started</a>
+                        <a href="installation" class="md-button">Get started</a>
                         <a href="#what-to-expect" class="md-button md-button--secondary">Learn more</a>
                         <a href="http://artofbeat.com" class="mdx-hero__attribution" tabindex="-1"><strong>© Beat Reichenbach</strong></a>
                     </div>
@@ -349,7 +362,7 @@
                 </header>
                 <div class="mdx-spotlight">
                     <figure class="mdx-spotlight__feature" hidden>
-                        <a href="guides/creating-a-flare/" tabindex="-1" title="Flexible View Management">
+                        <a href="guides/creating-a-flare" tabindex="-1" title="Flexible View Management">
                             <img src="assets/images/spotlight/mainwindow.png" alt="Flexible View Management" loading="lazy" width="500" height="327">
                         </a>
                         <figcaption class="md-typeset">
@@ -357,7 +370,7 @@
                             <p>Fully customize your application the way that works for you. There are so many panels with sliders, it would be a shame if you couldn't see them all at once.</p>
                             <p>Since the application currently constantly errors, there's also a built-in Logger to keep track of all the broken code.</p>
                             <p>
-                                <a href="guides/creating-a-flare/" aria-label="Flexible View Management">
+                                <a href="guides/creating-a-flare" aria-label="Flexible View Management">
                                     <span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13.22 19.03a.75.75 0 0 1 0-1.06L18.19 13H3.75a.75.75 0 0 1 0-1.5h14.44l-4.97-4.97a.749.749 0 0 1 .326-1.275.749.749 0 0 1 .734.215l6.25 6.25a.75.75 0 0 1 0 1.06l-6.25 6.25a.75.75 0 0 1-1.06 0Z"/></svg></span> Learn more
                                 </a>
                             </p>
@@ -379,7 +392,7 @@
                         </figcaption>
                     </figure>
                     <figure class="mdx-spotlight__feature" hidden>
-                        <a href="reference/presets/" tabindex="-1" title="Presets">
+                        <a href="reference/presets" tabindex="-1" title="Presets">
                             <img src="assets/images/spotlight/presets.png" alt="Presets" loading="lazy" width="500" height="327">
                         </a>
                         <figcaption class="md-typeset">
@@ -387,14 +400,14 @@
                             <p>The preset system is so bad right now, that it's not even working. It's basically a bunch of .json files, but they're all interlinked, and it's really convoluted.
                                 Essentially I have to redo all that but as soon as that's done, you can expect a revolutionary preset system with thumbnails.</p>
                             <p>
-                                <a href="reference/presets/" aria-label="Presets">
+                                <a href="reference/presets" aria-label="Presets">
                                     <span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13.22 19.03a.75.75 0 0 1 0-1.06L18.19 13H3.75a.75.75 0 0 1 0-1.5h14.44l-4.97-4.97a.749.749 0 0 1 .326-1.275.749.749 0 0 1 .734.215l6.25 6.25a.75.75 0 0 1 0 1.06l-6.25 6.25a.75.75 0 0 1-1.06 0Z"/></svg></span> Learn more
                                 </a>
                             </p>
                         </figcaption>
                     </figure>
                     <figure class="mdx-spotlight__feature" hidden>
-                        <a href="knowledge/optics/" tabindex="-1" title="Knowledge Base">
+                        <a href="knowledge/optics" tabindex="-1" title="Knowledge Base">
                             <img src="assets/images/spotlight/viewer.png" alt="Knowledge Base" loading="lazy" width="500" height="327">
                         </a>
                         <figcaption class="md-typeset">
@@ -402,7 +415,7 @@
                             <p>This project was always more. It was supposed to be a way for me to learn about optics, about renderers, python, qt, c++ and whatever else came along. As I am working on this project I want to start documenting my journey and share what I learned from everyone else.</p>
                             <p>Without people who documented everything they did, I would have never been able to write my own renderer in OpenCL, I would have never been able to learn about the math required to generate these shapes. I think it's only fair to document all those articles and share it with everyone else.</p>
                             <p>
-                                <a href="knowledge/optics/" aria-label="Knowledge Base">
+                                <a href="knowledge/optics" aria-label="Knowledge Base">
                                     <span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13.22 19.03a.75.75 0 0 1 0-1.06L18.19 13H3.75a.75.75 0 0 1 0-1.5h14.44l-4.97-4.97a.749.749 0 0 1 .326-1.275.749.749 0 0 1 .734.215l6.25 6.25a.75.75 0 0 1 0 1.06l-6.25 6.25a.75.75 0 0 1-1.06 0Z"/></svg></span> Learn more
                                 </a>
                             </p>
