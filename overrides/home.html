@@ -7,18 +7,6 @@
 {% block extrahead %}
     {{ super() }}
     <link rel="stylesheet" href="{{ 'assets/stylesheets/home.css' | url }}"/>
-    <meta property="og:type" content="website" />
-    <meta property="og:title" content="{{ title }}" />
-    <meta property="og:description" content="{{ config.site_description }}" />
-    <meta property="og:url" content="{{ page.canonical_url }}" />
-    <meta property="og:image" content="{{ 'assets/images/header.png' | url }}" />
-    <meta property="og:image:type" content="image/png" />
-    <meta property="og:image:width" content="1200" />
-    <meta property="og:image:height" content="630" />
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="{{ title }}" />
-    <meta name="twitter:description" content="{{ config.site_description }}" />
-    <meta name="twitter:image" content="{{ 'assets/images/header.png' | url }}" />
 {% endblock %}
 
 {% block tabs %}
@@ -35,8 +23,8 @@
 
                 <div class="mdx-hero__inner">
                     <div class="mdx-hero__teaser md-typeset">
-                        <h1>Physically-Based Lens Flares <a href="{{ '#pre-alpha' | url }}"><pre class="mdx-prealpha">Pre-Alpha!</pre></a></h1>
-                        <p>Render complex lens flares from real and accurate lens prescriptions using a ray tracing algorithm that simulates light passing through a camera lens.</p>
+                        <h1>{{ config.site_tagline }} <a href="{{ '#pre-alpha' | url }}"><pre class="mdx-prealpha">Pre-Alpha!</pre></a></h1>
+                        <p>{{ config.site_description }}</p>
                         <a href="{{ 'installation' | url }}" class="md-button">Get started</a>
                         <a href="{{ '#what-to-expect' | url }}" class="md-button md-button--secondary">Learn more</a>
                         <a href="http://artofbeat.com" class="mdx-hero__attribution" tabindex="-1"><strong>© Beat Reichenbach</strong></a>
