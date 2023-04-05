@@ -771,6 +771,16 @@
 <p><a href="https://www.reedbeta.com/blog/antialiasing-to-splat-or-not/">Antialiasing: To Splat or Not</a>
 <a href="https://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.183.3579&amp;rep=rep1&amp;type=pdf">Filter Importance Sampling</a>
 <a href="https://github.com/blender/cycles/blob/c40170f6ea8828757eb2cb8db960d3bf4620d03f/src/scene/film.cpp">Blender Cycles implementation of importance sampling</a></p>
+<h1 id="rasterization-workflow">Rasterization Workflow<a class="headerlink" href="#rasterization-workflow" title="Permanent link">&para;</a></h1>
+<h2 id="primitive-shader">Primitive Shader<a class="headerlink" href="#primitive-shader" title="Permanent link">&para;</a></h2>
+<p>The prim shader calculates the area per primitive. This will later be used to calculate the intensity.
+It also calculates the bounds per primitive for all wavelengths. There were a few optimizations that didn't work.
+To interpolate between different wavelengths, we have to store prims in the binning queue that are outside rrel.
+Only if the prim of all wavelengths is outside rrel can the primitive be culled.</p>
+<p>Culling areas that were really small also didn't seem like it was helping as it just introduced small artefacts in caustics and didn't speed up the renderer.</p>
+<h2 id="vertex-shader">Vertex Shader<a class="headerlink" href="#vertex-shader" title="Permanent link">&para;</a></h2>
+<h2 id="binner">Binner<a class="headerlink" href="#binner" title="Permanent link">&para;</a></h2>
+<h2 id="rasterizer">Rasterizer<a class="headerlink" href="#rasterizer" title="Permanent link">&para;</a></h2>
 
 
 
