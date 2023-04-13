@@ -667,11 +667,53 @@
 
 
 <h1 id="command-line">Command Line<a class="headerlink" href="#command-line" title="Permanent link">&para;</a></h1>
-<pre><code>@echo off
-pushd &quot;%~dp0&quot;
-venv\Scripts\python.exe -m flare --frame-start 1 --frame-end 100 --project %UserName%\.flare\project.json --arg &quot;flare.light_position [0.8,-0.8] [0.6,1]&quot; --output render/nikon_v003/render.$F4.exr
-popd .
-cmd /k
+<p>To render out sequences of frames realflare provides a command line interface <code>cli</code>. The basic usage expects a project file <code>.json</code> and frames to render.</p>
+<p><code>python -m flare [options]</code></p>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>--arg "A V V"</code></td>
+<td>argument being interpolated from frame-start to frame-end.<br/>Use the full path to the property in the config with values that can be converted to the type in python. Make sure to not include any spaces.<br/>For example: <code>--arg "flare.light_position [0.8,-0.8] [0.6,1]"</code></td>
+</tr>
+<tr>
+<td><code>--frame-start F</code></td>
+<td>start frame</td>
+</tr>
+<tr>
+<td><code>--frame-end F</code></td>
+<td>end frame</td>
+</tr>
+<tr>
+<td><code>--colorspace S</code></td>
+<td>the output colorspace.<br/>For example <code>--colorspace "ACES - ACEScg"</code></td>
+</tr>
+<tr>
+<td><code>--gui</code></td>
+<td>run the application in gui mode</td>
+</tr>
+<tr>
+<td><code>--output S</code></td>
+<td>the output image path. Use <code>$F4</code> to replace frame numbers.<br/>For example: <code>--output render.$F4.exr</code></td>
+</tr>
+<tr>
+<td><code>--project S</code></td>
+<td>the project to render the flare, a path to a <code>.json</code> file</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition info">
+<p class="admonition-title">Info</p>
+<p>When specifying arguments to animate the flare, the full path of the parameter with respect to the flare needs to be given.
+To find the argument names check the project.json file. <code>Another example: flare.ghost.aperture.fstop</code></p>
+</div>
+<p>Example usage:</p>
+<pre><code>venv\Scripts\python.exe -m flare --frame-start 1 --frame-end 100 --project %UserName%\.flare\project.json --arg &quot;flare.light_position [0.8,-0.8] [0.6,1]&quot; --output render/nikon_v003/render.$F4.exr
 </code></pre>
 
 
