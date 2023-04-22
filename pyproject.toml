@@ -46,3 +46,7 @@ log_cli_level = "DEBUG"
 
 [tool.semantic_release]
 version_variable = "realflare/__init__.py:__version__"
+branch = "main"
+build_command = "python -m build --sdist --wheel"
+upload_to_pypi = false
+upload_to_repository = false
