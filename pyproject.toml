@@ -1,4 +1,3 @@
-#https://packaging.python.org/en/latest/specifications/declaring-project-metadata/
 [project]
 name = "realflare"
 description = "Physically-Based Lens Flare Tool"
@@ -27,17 +26,12 @@ classifiers = [
 
 [project.optional-dependencies]
 dev = [
-    'mkdocs-material'
+    "mkdocs-material",
+    "python-semantic-release"
 ]
 
-#[project.scripts]
-#realflare-cli = "realflare:main_cli"
-
-#[project.gui-scripts]
-#realflare-gui = "realflare:main"
-
 [build-system]
-requires = ["setuptools>=45", "setuptools_scm[toml]>=6.2"]
+requires = ["setuptools"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
@@ -46,10 +40,9 @@ include = ["realflare*"]
 [tool.setuptools.package-data]
 realflare = ["**/*.cl", "**/*.png", "**/*.json", "**/*.yml"]
 
-[tool.setuptools_scm]
-write_to = "realflare/_version.py"
-version_scheme = "python-simplified-semver"
-
 [tool.pytest.ini_options]
 log_cli = true
 log_cli_level = "DEBUG"
+
+[tool.semantic_release]
+version_variable = "realflare/__init__.py:__version__"
