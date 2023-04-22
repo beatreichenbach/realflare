@@ -7,9 +7,9 @@ import pyopencl
 import PyOpenColorIO
 
 
-if 'REALFLARE_REBUILD' in os.environ:
-    del os.environ['REALFLARE_REBUILD']
+def run():
+    if 'REALFLARE_REBUILD' in os.environ:
+        del os.environ['REALFLARE_REBUILD']
 
-
-with open('/output/output.md', 'w') as f:
-    f.write('hello')
+    with open('/output/output.md', 'w') as f:
+        f.write('hello')
