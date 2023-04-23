@@ -62,7 +62,7 @@ class Settings(QtCore.QObject):
         if os.path.exists(path):
             return
 
-        package_library_path = str(files('flare').joinpath('resources'))
+        package_library_path = str(files('realflare').joinpath('resources'))
         shutil.copytree(package_library_path, path)
 
     def load(self):
