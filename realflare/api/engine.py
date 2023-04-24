@@ -8,6 +8,7 @@ import numpy as np
 import pyopencl as cl
 from PySide2 import QtCore
 
+from realflare.api.tasks import opencl
 from realflare.api.tasks.diagram import DiagramTask
 from realflare.api.tasks.preprocessing import PreprocessTask
 from realflare.utils import color
@@ -54,38 +55,7 @@ class Engine(QtCore.QObject):
 
     def _init_opencl(self):
         self.clear_cache()
-
-        try:
-            self.context = cl.create_some_context(interactive=False)
-            self.queue = cl.CommandQueue(self.context)
-        except cl.Error as e:
-            logging.error(e)
-            return
-
-        device = self.queue.device
-        if device.type != cl.device_type.GPU:
-            e = ValueError(f'realflare is not supported on this device: {device.name}')
-            logging.error(e)
-            self.queue = None
-            return
-
-        # info = cl.device_info
-        # logging.debug(f'int.size: {cl.cltypes.int().itemsize}')
-        # logging.debug(f'int2.size: {cl.cltypes.int2.itemsize}')
-        # logging.debug(f'float.size: {cl.cltypes.float().itemsize}')
-        # logging.debug(f'float2.size: {cl.cltypes.float2.itemsize}')
-        # logging.debug(f'ulong4.size: {cl.cltypes.ulong4.itemsize}')
-
-        # logging.debug(('MAX_COMPUTE_UNITS', device.get_info(info.MAX_COMPUTE_UNITS)))
-        # logging.debug(('MAX_WORK_GROUP_SIZE', device.get_info(info.MAX_WORK_GROUP_SIZE)))
-        # logging.debug(('LOCAL_MEM_SIZE', device.get_info(info.LOCAL_MEM_SIZE)))
-        # logging.debug(('MAX_MEM_ALLOC_SIZE', device.get_info(info.MAX_MEM_ALLOC_SIZE)))
-        # logging.debug(('GLOBAL_MEM_SIZE', device.get_info(info.GLOBAL_MEM_SIZE)))
-        # logging.debug(('MAX_CONSTANT_BUFFER_SIZE', device.get_info(info.MAX_CONSTANT_BUFFER_SIZE)))
-        # logging.debug(
-        #     ('CL_DEVICE_OPENCL_C_VERSION', device.get_info(info.OPENCL_C_VERSION))
-        # )
-
+        self.queue = opencl.queue()
         self._init_tasks()
         self._init_renderers()
 
