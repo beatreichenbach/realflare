@@ -1,10 +1,10 @@
 [project]
 name = "realflare"
 description = "Physically-Based Lens Flare Tool"
+version = "0.0.1"
 authors = [
     {name = "Beat Reichenbach", email = "info@artofbeat.com"}
 ]
-dynamic = ["version"]
 dependencies = [
     "qt-extensions @ https://github.com/beatreichenbach/qt-extensions/archive/refs/heads/main.zip",
     "PySide2",
@@ -48,6 +48,6 @@ log_cli_level = "DEBUG"
 version_variable = "realflare/__init__.py:__version__"
 branch = "main"
 build_command = "python -m build --sdist --wheel"
-commit_version_number = true
 upload_to_pypi = false
 upload_to_repository = false
+version_toml = "pyproject.toml:project.version"
