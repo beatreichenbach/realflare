@@ -1,7 +1,7 @@
 [project]
 name = "realflare"
 description = "Physically-Based Lens Flare Tool"
-version = "0.0.1"
+version = "0.1.0"
 authors = [
     {name = "Beat Reichenbach", email = "info@artofbeat.com"}
 ]
@@ -51,4 +51,5 @@ branch = "main"
 build_command = "python -m build --sdist --wheel"
 upload_to_pypi = false
 upload_to_repository = false
+upload_to_release = false
 version_toml = "pyproject.toml:project.version"
