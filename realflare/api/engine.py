@@ -130,10 +130,11 @@ class Engine(QtCore.QObject):
         project.render.quality.resolution = project.render.diagram.resolution
         project.render.quality.grid_count = project.render.diagram.grid_count
         project.render.quality.grid_length = project.render.diagram.grid_length
-        project.render.debug_ghost = project.render.diagram.debug_ghost
-        project.render.debug_ghosts = True
+        path_indexes = (project.render.diagram.debug_ghost,)
 
-        intersections = self.intersection_task.run(project.flare, project.render)
+        intersections = self.intersection_task.run(
+            project.flare, project.render, path_indexes
+        )
         image = self.diagram_task.run(project.flare.lens, project.render, intersections)
         element = RenderElement(RenderElement.Type.DIAGRAM, image)
         self._update_element(element)
