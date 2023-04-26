@@ -26,20 +26,19 @@ exit /B 1
 
 :run
 @REM create venv
-%python% -m venv venv
 set venv=%~dp0venv\Scripts\python.exe
 if not exist %venv% (
-    %venv% -m pip install --upgrade pip
-    %venv% -m realflare --gui
+    %python% -m venv venv
 )
 
 @REM install repo
+%venv% -m pip install --upgrade pip
 %venv% -m pip install --upgrade realflare@https://github.com/beatreichenbach/realflare/archive/refs/heads/main.zip
 
 @REM create run.bat
 set run=run.bat
 if not exist %run% (
-    echo @echo off > %run%
+    echo @echo off >> %run%
     echo %venv% -m realflare --gui >> %run%
     echo if %%errorlevel%% neq 0 pause >> %run%
 )
