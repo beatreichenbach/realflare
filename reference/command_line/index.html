@@ -668,7 +668,7 @@
 
 <h1 id="command-line">Command Line<a class="headerlink" href="#command-line" title="Permanent link">&para;</a></h1>
 <p>To render out sequences of frames realflare provides a command line interface <code>cli</code>. The basic usage expects a project file <code>.json</code> and frames to render.</p>
-<p><code>python -m flare [options]</code></p>
+<p><code>python -m realflare [options]</code></p>
 <table>
 <thead>
 <tr>
@@ -713,7 +713,7 @@
 To find the argument names check the project.json file. <code>Another example: flare.ghost.aperture.fstop</code></p>
 </div>
 <p>Example usage:</p>
-<pre><code>venv\Scripts\python.exe -m flare --frame-start 1 --frame-end 100 --project %UserName%\.flare\project.json --arg &quot;flare.light_position [0.8,-0.8] [0.6,1]&quot; --output render/nikon_v003/render.$F4.exr
+<pre><code>venv\Scripts\python.exe -m realflare --frame-start 1 --frame-end 100 --project %UserName%\.realflare\project.json --arg &quot;flare.light_position [0.8,-0.8] [0.6,1]&quot; --output render/nikon_v003/render.$F4.exr
 </code></pre>
 
 

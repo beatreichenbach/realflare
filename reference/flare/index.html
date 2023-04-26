@@ -764,7 +764,7 @@
 <p><code>light_position</code>: Position of the light source relative to the image</p>
 <h2 id="lens">Lens<a class="headerlink" href="#lens" title="Permanent link">&para;</a></h2>
 <p><code>sensor_size</code>: Size of the sensor in mm</p>
-<p><code>prescription_path *</code>: File path of the prescription <code>.json</code> file </p>
+<p><code>lens_model_path *</code>: File path of the prescription <code>.json</code> file </p>
 <p><code>glasses_path *</code>: Folder path containing glass <code>.yml</code> files. Each lens element specifies a refractive index and Abbe number. Using those values the renderer finds the glass with the closest values and uses that to caluclate the dispersion. Different manufacturers might have glasses with different qualities that give unique looks.</p>
 <p><code>abbe_nr_adjustment</code>: Offset for all <a href="https://en.wikipedia.org/wiki/Abbe_number">Abbe numbers</a> in the prescription. This can be used to add more or less dispersion to the glasses. Adjusting this value overrides the lens prescription and is here to for creative experimentation.</p>
 <p><code>coating_lens_elements</code>: List of <a href="https://en.wikipedia.org/wiki/Anti-reflective_coating">anti-reflective coatings</a> for lens elements in a prescription. The <em>refractive index</em> depends on the material used for the coating (for example MgF2 with an index of 1.38.) The <em>wavelength</em> is the wavelength in nm that the coating is optimized for to reduce reflection.</p>
