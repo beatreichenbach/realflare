@@ -10,7 +10,7 @@ def timer(func):
         result = func(*args, **kwargs)
         label = f'{func.__qualname__}:'
         ms = (time.perf_counter() - start_time) * 1000
-        logging.info(f'{label: <40}{ms:9.3f}')
+        logging.info(f'{label: <40}{ms:9.3f}ms')
         return result
 
     return wrapper
@@ -25,4 +25,4 @@ class Timer:
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         ms = (time.perf_counter() - self.start_time) * 1000
-        logging.info(f'{self.label: <40}{ms:9.3f}')
+        logging.info(f'{self.label: <40}{ms:9.3f}ms')

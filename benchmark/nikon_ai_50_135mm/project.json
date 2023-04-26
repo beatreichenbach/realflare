@@ -175,7 +175,7 @@
     }
   },
   "render": {
-    "output_path": "D:/files/dev/027_flare/render/wavelengths_v002.exr",
+    "output_path": "",
     "colorspace": "ACES - ACEScg",
     "quality": {
       "resolution": [

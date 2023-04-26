@@ -178,6 +178,10 @@ class Engine(QtCore.QObject):
         array: np.ndarray | None = None,
         colorspace: str = 'ACES - ACEScg',
     ) -> None:
+        if not output_path:
+            logging.warning('no output path specified')
+            return
+
         # TODO: clean up, image/array etc
         if array is None:
             if image is None:
@@ -188,9 +192,6 @@ class Engine(QtCore.QObject):
                         'RenderElement \'FLARE\' has not been rendered yet'
                     )
             array = image.array
-
-        if not output_path:
-            raise ValueError('output_path cannot be empty')
 
         if not os.path.isdir(os.path.dirname(output_path)):
             os.makedirs(os.path.dirname(output_path))
@@ -204,6 +205,9 @@ class Engine(QtCore.QObject):
 
     @staticmethod
     def parse_output_path(path: str, frame: int) -> str:
+        if not path:
+            # abspath assumes '' as relative path
+            return path
         path = re.sub(r'\$F(\d)?', r'{:0\g<1>d}', path)
         path = path.format(frame)
         path = os.path.abspath(path)

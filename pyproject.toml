@@ -27,7 +27,8 @@ classifiers = [
 [project.optional-dependencies]
 dev = [
     "mkdocs-material",
-    "python-semantic-release"
+    "python-semantic-release",
+    "py-markdown-table"
 ]
 
 [build-system]

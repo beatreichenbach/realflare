@@ -29,7 +29,6 @@ def parse_args(args):
     parser.add_argument(
         '--output',
         type=str,
-        default='render.$F4.exr',
         help='Output image',
     )
     parser.add_argument(
