@@ -20,7 +20,7 @@ Requires [Python 3.10](https://www.python.org/downloads/windows)
 2. `python -m realflare --gui`
 
 ### Automatic (Windows)
-1. Download (save link as) [setup.bat](https://raw.githubusercontent.com/beatreichenbach/realflare/main/setup.bat)
+1. Download (save link as) [setup.bat](https://raw.githubusercontent.com/beatreichenbach/realflare/main/scripts/setup.bat)
 2. Place the file in a folder where you'd like to install Realflare. For example C:\Users\beat\Desktop\Realflare
 3. Doubleclick setup.bat to install in the current folder
 4. Doubleclick run.bat to launch the tool
