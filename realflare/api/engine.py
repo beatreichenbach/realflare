@@ -152,7 +152,7 @@ class Engine(QtCore.QObject):
                     # get position of center of sample
                     position = QtCore.QPointF(
                         (x + 0.5) / half_width - 1,
-                        (y + 0.5) / half_height - 1,
+                        1 - (y + 0.5) / half_height,
                     )
                     project.flare.light_position = position
                     rays = self.raytracing_task.run(
@@ -164,11 +164,11 @@ class Engine(QtCore.QObject):
                     )
                     flare_array = flare.array[:, :, :3]
                     image_array += values[0] * flare_array
-                    np.flip(flare_array, 0)
+                    flare_array = np.flip(flare_array, 0)
                     image_array += values[1] * flare_array
-                    np.flip(flare_array, 1)
+                    flare_array = np.flip(flare_array, 1)
                     image_array += values[2] * flare_array
-                    np.flip(flare_array, 0)
+                    flare_array = np.flip(flare_array, 0)
                     image_array += values[3] * flare_array
             image_array /= width * height
 
