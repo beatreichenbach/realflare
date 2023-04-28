@@ -1,23 +1,10 @@
 # Realflare
 Render complex lens flares from real and accurate lens prescriptions using a ray tracing algorithm that simulates light passing through a camera lens.
 
-For detailed installation instructions, configuration options, and a demo, please visit
-[beatreichenbach.github.io/realflare](https://beatreichenbach.github.io/realflare)
-
-
 ## Installation
 
-Requires [Python 3.10](https://www.python.org/downloads/windows)
-
-### Manual
-1. `pip install realflare@https://github.com/beatreichenbach/realflare/archive/refs/heads/main.zip`
-2. `python -m realflare --gui`
-
-### Automatic (Windows)
-1. Download (save link as) [setup.bat](https://raw.githubusercontent.com/beatreichenbach/realflare/main/setup.bat)
-2. Place the file in a folder where you'd like to install Realflare. For example C:\Users\beat\Desktop\Realflare
-3. Doubleclick setup.bat to install in the current folder
-4. Doubleclick run.bat to launch the tool
+For detailed installation instructions, configuration options, and a demo, please visit the 
+[documentation](https://beatreichenbach.github.io/realflare/installation).
 
 ## License
 

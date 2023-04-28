@@ -1,5 +1,13 @@
 <!--next-version-placeholder-->
 
+## v0.1.2 (2023-04-26)
+### Fix
+* **render:** Use path indexes for diagram ([`4c34414`](https://github.com/beatreichenbach/realflare/commit/4c344147f660be01f11eef99fb98d52709f0276f))
+* **build:** Upgrade pip and fix venv install ([`da8fc72`](https://github.com/beatreichenbach/realflare/commit/da8fc7258b31ed937cded88ae0687b530aec4578))
+
+### Documentation
+* Add changelog ([`924ea7e`](https://github.com/beatreichenbach/realflare/commit/924ea7e7c0740706249382f1435b720f6c56a978))
+
 ## v0.1.1 (2023-04-25)
 ### Feature
 * **benchmark:** Initial setup ([`33f40e2`](https://github.com/beatreichenbach/realflare/commit/33f40e29fa03e7460a860bde7cde86287b657378))

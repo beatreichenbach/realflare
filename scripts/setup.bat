@@ -1,6 +1,9 @@
 @echo off
 
+
 rem Check if Python 3.10 is installed
+echo Finding Python 3.10
+
 python --version 2>nul | findstr /B /C:"Python 3.10" >nul
 if %errorlevel% equ 0 (
     set python=python
@@ -25,19 +28,24 @@ pause
 exit /B 1
 
 :run
+echo Python 3.10 found: %python%
+
 @REM create venv
 set venv=%~dp0venv\Scripts\python.exe
 if not exist %venv% (
+    echo Installing venv
     %python% -m venv venv
 )
 
 @REM install repo
 %venv% -m pip install --upgrade pip
+echo Installing Realflare
 %venv% -m pip install --upgrade realflare@https://github.com/beatreichenbach/realflare/archive/refs/heads/main.zip
 
 @REM create run.bat
 set run=run.bat
 if not exist %run% (
+    echo Creating run.bat
     echo @echo off >> %run%
     echo %venv% -m realflare --gui >> %run%
     echo if %%errorlevel%% neq 0 pause >> %run%
