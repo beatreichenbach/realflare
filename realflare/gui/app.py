@@ -505,8 +505,8 @@ def exec_():
     app = QtWidgets.QApplication(sys.argv)
 
     app.setApplicationName('realflare')
-    app.setApplicationVersion('v0.0.1')
-    app.setApplicationDisplayName('realflare')
+    app.setApplicationVersion(realflare.__version__)
+    app.setApplicationDisplayName('Realflare')
     icon_path = files('realflare').joinpath('assets').joinpath('icon.png')
     icon = QtGui.QIcon(str(icon_path))
     app.setWindowIcon(icon)
