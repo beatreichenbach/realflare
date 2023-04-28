@@ -114,6 +114,12 @@ class Flare:
     light_color: QtGui.QColor = QtGui.QColor(1, 1, 1)
     light_position: QtCore.QPointF = QtCore.QPointF(0, 0)
 
+    # image
+    image_file: str = ''
+    image_threshold: float = 0
+    image_samples: int = 16
+    image_show_sample: bool = False
+
     # lens
     lens: Lens = field(default_factory=Lens)
 

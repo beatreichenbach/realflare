@@ -20,6 +20,7 @@ from qt_extensions.properties import (
     PointFProperty,
     StringProperty,
     PropertyWidget,
+    BoolProperty,
 )
 from qt_extensions.box import CollapsibleBox
 from qt_extensions.typeutils import cast, cast_json
@@ -70,6 +71,34 @@ class FlareEditor(PropertyEditor):
         prop.decimals = 2
         prop.tooltip = 'The position of the light source in NDC space (-1, 1).'
         light_group.add_property(prop)
+
+        # light image
+        light_image_group = light_group.add_group(
+            'image', collapsible=True, style=CollapsibleBox.Style.SIMPLE
+        )
+        light_image_group.create_hierarchy = False
+
+        prop = PathProperty(name='image_file')
+        prop.method = PathProperty.Method.OPEN_FILE
+        prop.dir_fallback = aperture_dir
+        prop.tooltip = (
+            "The path to the image file. Variables such as $RES can be used. "
+            "For more information see documentation. (To come...)"
+        )
+        light_image_group.add_property(prop)
+
+        prop = FloatProperty(name='image_threshold')
+        prop.line_min = 0
+        prop.slider_max = 1
+        light_image_group.add_property(prop)
+
+        prop = IntProperty(name='image_samples')
+        prop.line_min = 1
+        prop.slider_visible = False
+        light_image_group.add_property(prop)
+
+        prop = BoolProperty(name='image_show_sample')
+        light_image_group.add_property(prop)
 
         # lens
         lens_group = flare_group.add_group(
