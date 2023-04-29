@@ -8,6 +8,7 @@ from PySide2 import QtWidgets, QtCore
 
 from realflare.api import data, engine
 from realflare.api.data import Render, AntiAliasing
+from realflare.api.tasks import opencl
 from realflare.gui.settings import Settings
 from qt_extensions.properties import (
     IntProperty,
@@ -179,6 +180,15 @@ class RenderEditor(PropertyEditor):
         prop.ratio_visible = False
         prop.tooltip = 'Resolution of the ghost.'
         ghost_group.add_property(prop)
+
+        # system
+        system_group = self.add_group(
+            'system', collapsible=True, style=CollapsibleBox.Style.BUTTON
+        )
+
+        prop = StringProperty('device')
+        prop.menu = opencl.devices()
+        system_group.add_property(prop)
 
         # debug
         debug_group = self.add_group(

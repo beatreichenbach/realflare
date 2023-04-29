@@ -173,8 +173,9 @@ class Render:
         grid_length: float = 50
         column_offset: int = 0
 
-    # # device
-    # device: str = ''
+    @hash_dataclass
+    class System:
+        device: str = ''
 
     # output
     output_path: str = ''
@@ -182,6 +183,9 @@ class Render:
 
     # quality
     quality: Quality = field(default_factory=Quality)
+
+    # system
+    system: System = field(default_factory=System)
 
     # debug
     disable_starburst: bool = False

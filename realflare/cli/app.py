@@ -75,7 +75,8 @@ def exec_(parser):
 
     # start engine
     QtCore.QCoreApplication()
-    engine = Engine()
+    device = project.render.system.device
+    engine = Engine(device)
 
     # set values per frame and
     frame_start = parser.frame_start

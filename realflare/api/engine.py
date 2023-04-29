@@ -44,18 +44,19 @@ class Engine(QtCore.QObject):
     element_changed: QtCore.Signal = QtCore.Signal(RenderElement)
     render_finished: QtCore.Signal = QtCore.Signal()
 
-    def __init__(self, parent: QtCore.QObject | None = None) -> None:
+    def __init__(self, device: str = '', parent: QtCore.QObject | None = None) -> None:
         super().__init__(parent)
 
         self.project: Project | None = None
         self.images: dict[RenderElement.Type, Image] = {}
         self.queue = None
 
-        self._init_opencl()
-
-    def _init_opencl(self):
-        self.clear_cache()
-        self.queue = opencl.queue()
+        try:
+            self.queue = opencl.queue(device)
+            logging.debug(f'Engine initialized on: {self.queue.device.name}')
+        except (cl.Error, ValueError) as e:
+            logging.error(e)
+            return
         self._init_tasks()
         self._init_renderers()
 

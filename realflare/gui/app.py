@@ -42,6 +42,7 @@ class MainWindow(DockWindow):
 
         self._queue: Project | None = None
 
+        self.api_thread: QtCore.QThread | None = None
         self.rendering: bool = False
         self.settings = Settings()
         self.project = Project()
@@ -49,23 +50,25 @@ class MainWindow(DockWindow):
         self._project_path = ''
         self._project_hash = None
         self._project_changed = False
+        self._device = ''
 
         self.project_path = ''
         self.recent_dir = os.path.expanduser('~')
 
-        self._init_engine()
         self._init_widgets()
         self._init_menu()
         self.load_settings()
 
-        self.api_thread.start()
+        self._init_engine()
 
     def _init_engine(self):
         self.api_thread = QtCore.QThread()
-        self.engine = Engine()
+        device = self.project.render.system.device
+        self.engine = Engine(device)
         if self.engine.queue is None:
             return
         self.engine.moveToThread(self.api_thread)
+        self.api_thread.start()
 
         self.engine.element_changed.connect(self._render_element_change)
         self.engine.render_finished.connect(self._render_finish)
@@ -355,8 +358,7 @@ class MainWindow(DockWindow):
         self.api_thread.quit()
         Engine.clear_cache()
         self._init_engine()
-        self.api_thread.start()
-        self.refresh()
+        self._render_finish()
 
     def reset_view(self) -> None:
         # reset the view to default window states
@@ -399,7 +401,11 @@ class MainWindow(DockWindow):
             return
             # TODO: figure out how to do this
             # self.api_thread.requestInterruption()
-        elif self._queue is not None and self.api_thread.isRunning():
+        elif (
+            self._queue is not None
+            and self.api_thread is not None
+            and self.api_thread.isRunning()
+        ):
             self.render_requested.emit(self._queue)
             self._queue = None
             self.rendering = True
@@ -429,7 +435,6 @@ class MainWindow(DockWindow):
 
     def _test_changes(self, quick: bool = True) -> None:
         # TODO: quick seems dumb, rewrite all that
-
         if quick and self._project_changed:
             return
 
@@ -449,6 +454,11 @@ class MainWindow(DockWindow):
 
     def _update_render_config(self, editor: RenderEditor):
         self.project.render = editor.render_config()
+
+        if self.project.render.system.device != self._device:
+            self._device = self.project.render.system.device
+            self.restart()
+
         self._test_changes()
         self.refresh()
 
