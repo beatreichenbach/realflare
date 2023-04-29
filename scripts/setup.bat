@@ -31,16 +31,18 @@ exit /B 1
 echo Python 3.10 found: %python%
 
 @REM create venv
-set venv=%~dp0venv\Scripts\python.exe
+set venv="%~dp0venv\Scripts\python.exe"
 if not exist %venv% (
     echo Installing venv
     %python% -m venv venv
+    if %%errorlevel%% neq 0 goto error
 )
 
 @REM install repo
 %venv% -m pip install --upgrade pip
 echo Installing Realflare
 %venv% -m pip install --upgrade realflare@https://github.com/beatreichenbach/realflare/archive/refs/heads/main.zip
+if %%errorlevel%% neq 0 goto error
 
 @REM create run.bat
 set run=run.bat
@@ -54,3 +56,10 @@ if not exist %run% (
 @REM success
 echo Installation successful
 pause
+exit
+
+@REM error
+:error
+echo Installation failed
+pause
+exit
