@@ -205,19 +205,29 @@ class Buffer(MemoryObject):
         self._buffer = None
 
 
-def queue() -> cl.CommandQueue | None:
-    try:
-        context = cl.create_some_context(interactive=False)
-        command_queue = cl.CommandQueue(context)
-        device = command_queue.device
-        if device.type != cl.device_type.GPU:
-            raise ValueError(
-                f'realflare is not supported on this device: {device.name}'
-            )
-        return command_queue
-    except (cl.Error, ValueError) as e:
-        logging.error(e)
-        return
+def devices() -> dict[str, str]:
+    cl_devices = {
+        platform.name: {device.name: device.name for device in platform.get_devices()}
+        for platform in cl.get_platforms()
+    }
+    return cl_devices
+
+
+def queue(device: str = '') -> cl.CommandQueue | None:
+    for platform in cl.get_platforms():
+        for cl_device in platform.get_devices():
+            if device and cl_device.name != device:
+                continue
+            if cl_device.type != cl.device_type.GPU:
+                continue
+
+            context = cl.Context(devices=[cl_device])
+            command_queue = cl.CommandQueue(context)
+            return command_queue
+    if device:
+        raise ValueError(f'invalid device: {device}')
+    else:
+        raise ValueError('no supported device found')
 
 
 class OpenCL:

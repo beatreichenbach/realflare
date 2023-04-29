@@ -84,15 +84,15 @@ class RasterizingTask(OpenCL):
             'rasterizer': cl.Kernel(self.program, 'rasterizer'),
         }
 
-        device = self.queue.get_info(cl.command_queue_info.DEVICE)
-        kernel_work_group_size = self.kernels['rasterizer'].get_work_group_info(
-            cl.kernel_work_group_info.WORK_GROUP_SIZE, device
-        )
-        private_mem_size = self.kernels['rasterizer'].get_work_group_info(
-            cl.kernel_work_group_info.PRIVATE_MEM_SIZE, device
-        )
-        logging.debug(f'private_mem_size: {private_mem_size}')
-        logging.debug(f'kernel_work_group_size: {kernel_work_group_size}')
+        # device = self.queue.get_info(cl.command_queue_info.DEVICE)
+        # kernel_work_group_size = self.kernels['rasterizer'].get_work_group_info(
+        #     cl.kernel_work_group_info.WORK_GROUP_SIZE, device
+        # )
+        # private_mem_size = self.kernels['rasterizer'].get_work_group_info(
+        #     cl.kernel_work_group_info.PRIVATE_MEM_SIZE, device
+        # )
+        # logging.debug(f'private_mem_size: {private_mem_size}')
+        # logging.debug(f'kernel_work_group_size: {kernel_work_group_size}')
 
     @lru_cache(1)
     def update_quads(self, grid_count: int) -> Buffer:
