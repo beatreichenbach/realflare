@@ -14,6 +14,27 @@ from qt_extensions.typeutils import hashable_dict
 from realflare.gui.settings import Settings
 
 
+def apply_threshold(array: np.ndarray, threshold: float) -> np.ndarray:
+    # flatten the array to a 1-dimensional array
+    intensity_array = np.mean(array, axis=2, keepdims=True)
+    intensity_array = intensity_array.ravel()
+
+    # determine the index that corresponds to the nth percentile
+    index = np.percentile(intensity_array, threshold * 100)
+
+    # create a boolean mask that selects all values greater than the value at the index
+    mask = intensity_array > index
+    # mask = np.broadcast_to(mask, (mask.shape[0], mask., 3))
+
+    # ise the boolean mask to create a new array where the lowest values are set to 0
+    masked_array = np.reshape(array.copy(), (-1, 3))
+
+    masked_array[~mask] = np.zeros((3,), np.float32)
+
+    masked_array = masked_array.reshape(array.shape)
+    return masked_array
+
+
 class PreprocessTask(OpenCL):
     def __init__(self, queue: cl.CommandQueue) -> None:
         super().__init__(queue)
@@ -81,13 +102,7 @@ class ImageSamplingTask(OpenCL):
         array = np.float32(array)
 
         # apply threshold
-        def threshold_func(c):
-            intensity = (c[0] + c[1] + c[2]) / 3
-            if intensity < threshold:
-                return np.zeros((3,))
-            return c
-
-        sample_data = np.apply_along_axis(threshold_func, 2, array)
+        sample_data = apply_threshold(array, threshold)
 
         return sample_data
 

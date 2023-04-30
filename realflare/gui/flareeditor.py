@@ -79,6 +79,7 @@ class FlareEditor(PropertyEditor):
         light_image_group.create_hierarchy = False
 
         prop = PathProperty(name='image_file')
+        prop.label = 'File'
         prop.method = PathProperty.Method.OPEN_FILE
         prop.dir_fallback = aperture_dir
         prop.tooltip = (
@@ -88,16 +89,19 @@ class FlareEditor(PropertyEditor):
         light_image_group.add_property(prop)
 
         prop = FloatProperty(name='image_threshold')
+        prop.label = 'Threshold'
         prop.line_min = 0
         prop.slider_max = 1
         light_image_group.add_property(prop)
 
         prop = IntProperty(name='image_samples')
+        prop.label = 'Samples'
         prop.line_min = 1
         prop.slider_visible = False
         light_image_group.add_property(prop)
 
         prop = BoolProperty(name='image_show_sample')
+        prop.label = 'Show Samples'
         light_image_group.add_property(prop)
 
         # lens
