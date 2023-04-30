@@ -28,7 +28,7 @@ from realflare.gui.presetbrowser import PresetBrowser
 from qt_extensions.mainwindow import DockWindow, DockWidgetState, SplitterState
 from qt_extensions import theme
 from qt_extensions.messagebox import MessageBox
-from qt_extensions.typeutils import cast, cast_json
+from qt_extensions.typeutils import cast, cast_basic
 
 
 # TODO: linked fields don't carry over from preset files
@@ -255,7 +255,7 @@ class MainWindow(DockWindow):
             if not path:
                 return False
             self.project_path = path
-        data = cast_json(self.project)
+        data = cast_basic(self.project)
         self.settings.update_recent_paths(self.project_path)
         self._update_recent_menu()
         result = self.settings.save_data(data, self.project_path)

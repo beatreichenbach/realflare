@@ -11,7 +11,7 @@ from PySide2 import QtWidgets, QtCore, QtGui
 import realflare
 from realflare.api.data import Project, Prescription
 from qt_extensions.mainwindow import DockWidgetState, SplitterState
-from qt_extensions.typeutils import cast, cast_json
+from qt_extensions.typeutils import cast, cast_basic
 
 
 @dataclasses.dataclass()
@@ -70,7 +70,7 @@ class Settings(QtCore.QObject):
         self.config = cast(SettingsConfig, data)
 
     def save(self):
-        data = cast_json(self.config)
+        data = cast_basic(self.config)
         self.save_data(data, self._config_path)
 
     def load_data(self, path: str) -> dict:

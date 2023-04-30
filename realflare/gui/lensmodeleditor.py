@@ -23,7 +23,7 @@ from qt_extensions.properties import (
     StringProperty,
     PropertyEditor,
 )
-from qt_extensions.typeutils import cast, cast_json
+from qt_extensions.typeutils import cast, cast_basic
 
 
 class ContentWidget(QtWidgets.QWidget):
@@ -386,7 +386,7 @@ class LensModelDialog(QtWidgets.QWidget):
             except OSError:
                 pass
 
-        json_data = cast_json(prescription)
+        json_data = cast_basic(prescription)
         Settings().save_data(json_data, path)
 
         logging.debug(f'File saved: {path}')

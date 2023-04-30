@@ -22,7 +22,7 @@ from qt_extensions.properties import (
     PropertyWidget,
 )
 from qt_extensions.box import CollapsibleBox
-from qt_extensions.typeutils import cast, cast_basic, cast_json
+from qt_extensions.typeutils import cast, cast_basic
 
 
 class RenderEditor(PropertyEditor):
@@ -35,12 +35,6 @@ class RenderEditor(PropertyEditor):
         self._init_actions()
 
     def _init_editor(self) -> None:
-        # # device
-        # prop = StringProperty(name='device')
-        # devices = [device.name for device in engine.load_devices()]
-        # prop.menu = devices
-        # self.add_property(prop)
-
         # output
         output_group = self.add_group(
             'output', collapsible=True, style=CollapsibleBox.Style.BUTTON
@@ -324,7 +318,7 @@ class RenderEditor(PropertyEditor):
                 config = config.quality
             else:
                 return
-            json_data = cast_json(config)
+            json_data = cast_basic(config)
             settings.save_data(json_data, file_path)
 
     def load_preset(

@@ -22,7 +22,7 @@ from qt_extensions.properties import (
     PropertyWidget,
 )
 from qt_extensions.box import CollapsibleBox
-from qt_extensions.typeutils import cast, cast_json
+from qt_extensions.typeutils import cast, cast_basic
 
 from realflare.api import data
 
@@ -395,7 +395,7 @@ class FlareEditor(PropertyEditor):
                 config = config.ghost
             else:
                 return
-            json_data = cast_json(config)
+            json_data = cast_basic(config)
             self.settings.save_data(json_data, file_path)
 
     def load_preset(
