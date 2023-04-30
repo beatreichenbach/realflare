@@ -10,7 +10,7 @@ class File:
         self.path = path
         self.mtime = os.path.getmtime(path)
         hasher = hashlib.sha256()
-        hasher.update(str(self.mtime).encode('utf-8'))
+        hasher.update((str(self.mtime) + path).encode('utf-8'))
         self._hash = int.from_bytes(hasher.digest(), 'big')
 
     def __add__(self, other):

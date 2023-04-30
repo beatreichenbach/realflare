@@ -10,7 +10,7 @@ from PySide2 import QtCore
 
 from realflare.api.tasks import opencl
 from realflare.api.tasks.diagram import DiagramTask
-from realflare.api.tasks.preprocessing import PreprocessTask
+from realflare.api.tasks.preprocessing import PreprocessTask, ImageSamplingTask
 from realflare.utils import color
 
 from realflare.api import data
@@ -70,6 +70,7 @@ class Engine(QtCore.QObject):
         self.compositing_task = CompositingTask(self.queue)
         self.diagram_task = DiagramTask(self.queue)
         self.preprocess_task = PreprocessTask(self.queue)
+        self.image_sampling_task = ImageSamplingTask(self.queue)
 
     def _init_renderers(self):
         self.renderers = OrderedDict()
@@ -114,13 +115,74 @@ class Engine(QtCore.QObject):
         else:
             path_indexes = self.preprocess_task.run(project.flare, project.render)
 
-        # logging.debug(path_indexes)
-        rays = self.raytracing_task.run(project.flare, project.render, path_indexes)
         ghost = self.image(RenderElement.Type.GHOST)
-        image = self.rasterizing_task.run(project.flare, project.render, rays, ghost)
-        # image, image_cl = self.compositing_task.run(
-        #     flare_cl, self.starburst_cl, flare_config, render_config
-        # )
+
+        if project.flare.image_file:
+            sample_data = self.image_sampling_task.run(project.flare, project.render)
+
+            if project.flare.image_show_sample:
+                image = Image(self.queue.context, array=sample_data)
+                element = RenderElement(RenderElement.Type.FLARE, image)
+                self._update_element(element)
+                return
+
+            height, width, channels = sample_data.shape
+            half_width = int(width / 2)
+            half_height = int(height / 2)
+
+            image_shape = (
+                project.render.quality.resolution.height(),
+                project.render.quality.resolution.width(),
+                3,
+            )
+            image_array = np.zeros(image_shape, np.float32)
+
+            for y in range(half_height):
+                for x in range(half_width):
+                    values = np.float32(
+                        [
+                            sample_data[y, x],
+                            sample_data[height - y - 1, x],
+                            sample_data[height - y - 1, width - x - 1],
+                            sample_data[y, width - x - 1],
+                        ]
+                    )
+                    if np.sum(values) == 0:
+                        continue
+
+                    # get position of center of sample
+                    position = QtCore.QPointF(
+                        (x + 0.5) / half_width - 1,
+                        1 - (y + 0.5) / half_height,
+                    )
+                    project.flare.light_position = position
+                    rays = self.raytracing_task.run(
+                        project.flare, project.render, path_indexes
+                    )
+
+                    flare = self.rasterizing_task.run(
+                        project.flare, project.render, rays, ghost
+                    )
+                    flare_array = flare.array[:, :, :3]
+                    image_array += values[0] * flare_array
+                    flare_array = np.flip(flare_array, 0)
+                    image_array += values[1] * flare_array
+                    flare_array = np.flip(flare_array, 1)
+                    image_array += values[2] * flare_array
+                    flare_array = np.flip(flare_array, 0)
+                    image_array += values[3] * flare_array
+            image_array /= width * height
+
+            image = Image(self.queue.context, array=image_array)
+        else:
+            rays = self.raytracing_task.run(project.flare, project.render, path_indexes)
+
+            image = self.rasterizing_task.run(
+                project.flare, project.render, rays, ghost
+            )
+            # image, image_cl = self.compositing_task.run(
+            #     flare_cl, self.starburst_cl, flare_config, render_config
+            # )
         element = RenderElement(RenderElement.Type.FLARE, image)
         self._update_element(element)
 
