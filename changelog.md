@@ -1,5 +1,12 @@
 <!--next-version-placeholder-->
 
+## v0.3.0 (2023-04-30)
+### Feature
+* Add image based light ([`421444f`](https://github.com/beatreichenbach/realflare/commit/421444fb7721f7ba32a1d6d099f938f49049080b))
+
+### Documentation
+* Update changelog ([`25e833f`](https://github.com/beatreichenbach/realflare/commit/25e833fff44adb8fa60b69ce8ddfa3117243fe6c))
+
 ## v0.2.0 (2023-04-29)
 ### Feature
 * Add system parameters, allow selecting opencl device ([#51](https://github.com/beatreichenbach/realflare/issues/51)) ([`cf29045`](https://github.com/beatreichenbach/realflare/commit/cf29045f9068556e1d05efc733d6b0d84c050eea))
