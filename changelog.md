@@ -1,5 +1,12 @@
 <!--next-version-placeholder-->
 
+## v0.3.1 (2023-04-30)
+### Fix
+* **build:** Setup.bat typo ([`9600623`](https://github.com/beatreichenbach/realflare/commit/9600623ec9a1b99f883e1afee426f8275532cb88))
+
+### Documentation
+* Update changelog ([`c74e2b5`](https://github.com/beatreichenbach/realflare/commit/c74e2b5c5b899baf086d6bd48648c948fdb7a42c))
+
 ## v0.3.0 (2023-04-30)
 ### Feature
 * Add image based light ([`421444f`](https://github.com/beatreichenbach/realflare/commit/421444fb7721f7ba32a1d6d099f938f49049080b))
