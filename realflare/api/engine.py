@@ -209,7 +209,9 @@ class Engine(QtCore.QObject):
             raise KeyError(f'no image stored for render element: {element_type.name}')
 
     @timer
-    def render(self, project: data.Project):
+    def render(self, project: data.Project) -> bool:
+        # returns True on success
+        # TODO: give feedback with different messages, render_finished when success, different statuses etc, render_failed if error etc.
         self.project = project
 
         # build task queue, a list of all required tasks for the requested outputs
@@ -229,11 +231,14 @@ class Engine(QtCore.QObject):
                         raise InterruptedError
         except InterruptedError:
             logging.debug('render interrupted by user')
+            return False
         except Exception as e:
             logging.exception(e)
+            return False
         finally:
             self.project = None
             self.render_finished.emit()
+        return True
 
     def write_image(
         self,
@@ -252,9 +257,8 @@ class Engine(QtCore.QObject):
                 try:
                     image = self.images[RenderElement.Type.FLARE]
                 except KeyError:
-                    raise ValueError(
-                        'RenderElement \'FLARE\' has not been rendered yet'
-                    )
+                    logging.warning('RenderElement \'FLARE\' has not been rendered yet')
+                    return
             array = image.array
 
         if not os.path.isdir(os.path.dirname(output_path)):

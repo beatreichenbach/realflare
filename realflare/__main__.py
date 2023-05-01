@@ -11,7 +11,7 @@ from realflare.gui import app as gui_app
 os.environ["OPENCV_IO_ENABLE_OPENEXR"] = "1"
 
 
-def parse_args(args):
+def argument_parser():
     parser = argparse.ArgumentParser(
         description='Lens Flare',
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
@@ -58,7 +58,7 @@ def parse_args(args):
         default=1,
         help='end frame number',
     )
-    return parser.parse_args(args)
+    return parser
 
 
 def main():
@@ -75,9 +75,10 @@ def main():
         environment=environment,
     )
 
-    parser = parse_args(sys.argv[1:])
+    parser = argument_parser()
+    args = parser.parse_args(sys.argv[1:])
 
-    if parser.gui:
+    if args.gui:
         gui_app.exec_()
     else:
         cli_app.exec_(parser)
