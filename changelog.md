@@ -1,5 +1,13 @@
 <!--next-version-placeholder-->
 
+## v0.3.2 (2023-04-30)
+### Fix
+* Error handling(#59) ([`3f58677`](https://github.com/beatreichenbach/realflare/commit/3f586777016549e38859b73e006ea4fe872ad3ae))
+
+### Documentation
+* Update benchmark ([`bafe442`](https://github.com/beatreichenbach/realflare/commit/bafe442ce0736fb358dbac5cd0be0381dfde9bac))
+* Update changelog ([`827fe32`](https://github.com/beatreichenbach/realflare/commit/827fe32713ad6ae3a70a0a7fc71fecd83c2b3bcc))
+
 ## v0.3.1 (2023-04-30)
 ### Fix
 * **build:** Setup.bat typo ([`9600623`](https://github.com/beatreichenbach/realflare/commit/9600623ec9a1b99f883e1afee426f8275532cb88))
