@@ -68,12 +68,12 @@ class GroupEditor(ParameterEditor):
 
         group = self.add_group('Group', style=CollapsibleBox.Style.SIMPLE)
         group.create_hierarchy = False
-        prop = StringParameter('name')
+        parm = StringParameter('name')
 
         regex = QtCore.QRegularExpression(r'[\w\d\.-]+')
-        prop.text.setValidator(QtGui.QRegularExpressionValidator(regex, prop))
+        parm.text.setValidator(QtGui.QRegularExpressionValidator(regex, parm))
 
-        group.add_parameter(prop)
+        group.add_parameter(parm)
 
     def update_editor(self, name: str) -> None:
         self.form.blockSignals(True)
@@ -96,27 +96,27 @@ class LensModelEditor(ParameterEditor):
         model_group.create_hierarchy = False
 
         # model
-        prop = StringParameter('name')
-        prop.tooltip = 'The name of the lens. Only for reference.'
-        self.name_parameter = model_group.add_parameter(prop)
+        parm = StringParameter('name')
+        parm.tooltip = 'The name of the lens. Only for reference.'
+        self.name_parameter = model_group.add_parameter(parm)
 
-        prop = IntParameter('year')
-        prop.slider_visible = False
-        prop.line_min = 0
-        prop.line_max = 9999
-        prop.tooltip = 'The year of the lens / patent. Only for reference.'
-        model_group.add_parameter(prop)
+        parm = IntParameter('year')
+        parm.slider_visible = False
+        parm.line_min = 0
+        parm.line_max = 9999
+        parm.tooltip = 'The year of the lens / patent. Only for reference.'
+        model_group.add_parameter(parm)
 
-        prop = StringParameter('patent_number')
-        prop.tooltip = (
+        parm = StringParameter('patent_number')
+        parm.tooltip = (
             'Patent number if the lens is based on a patent. Only for reference.'
         )
-        model_group.add_parameter(prop)
+        model_group.add_parameter(parm)
 
-        prop = StringParameter('notes')
-        prop.tooltip = 'Additional information for the lens. Only for reference.'
-        prop.area = True
-        model_group.add_parameter(prop)
+        parm = StringParameter('notes')
+        parm.tooltip = 'Additional information for the lens. Only for reference.'
+        parm.area = True
+        model_group.add_parameter(parm)
 
         # specs
         specs_group = self.add_group(
@@ -129,41 +129,41 @@ class LensModelEditor(ParameterEditor):
             for box in group.keys():
                 box.collapsed = False
 
-        prop = FloatParameter('focal_length')
-        prop.slider_min = 10
-        prop.slider_max = 100
-        prop.slider_visible = False
-        prop.tooltip = 'Focal Length in mm of the lens. Used for mapping the light source to the ray direction.'
-        specs_group.add_parameter(prop)
+        parm = FloatParameter('focal_length')
+        parm.slider_min = 10
+        parm.slider_max = 100
+        parm.slider_visible = False
+        parm.tooltip = 'Focal Length in mm of the lens. Used for mapping the light source to the ray direction.'
+        specs_group.add_parameter(parm)
 
-        prop = FloatParameter('fstop')
-        prop.label = 'Minimum F-Stop'
-        prop.slider_min = 1
-        prop.slider_max = 32
-        prop.slider_visible = False
-        prop.tooltip = 'Minimum possible F-Stop of the lens. Not currently used.'
-        specs_group.add_parameter(prop)
+        parm = FloatParameter('fstop')
+        parm.label = 'Minimum F-Stop'
+        parm.slider_min = 1
+        parm.slider_max = 32
+        parm.slider_visible = False
+        parm.tooltip = 'Minimum possible F-Stop of the lens. Not currently used.'
+        specs_group.add_parameter(parm)
 
-        prop = IntParameter('aperture_index')
-        prop.line_min = 0
-        prop.slider_visible = False
-        prop.tooltip = (
+        parm = IntParameter('aperture_index')
+        parm.line_min = 0
+        parm.slider_visible = False
+        parm.tooltip = (
             'The number of the entry in the lens elements that is the aperture. '
             'Make sure to include a lens element with radius 0, refractive index 1 and correct '
             'height for the aperture. The height is currently not automatically calculated.'
         )
-        specs_group.add_parameter(prop)
+        specs_group.add_parameter(parm)
 
-        prop = TabDataParameter('lens_elements')
+        parm = TabDataParameter('lens_elements')
         fields = dataclasses.fields(Prescription.LensElement)
-        prop.headers = [field.name for field in fields]
-        prop.types = [field.type for field in fields]
-        prop.tooltip = (
+        parm.headers = [field.name for field in fields]
+        parm.types = [field.type for field in fields]
+        parm.tooltip = (
             "A list of all the lens elements including the aperture. In patents the usual "
             "labels are: radius 'r', distance 'd', refractive index 'n', abbe number 'v'. "
             "The height is rarely given and can be dialed in by comparing the diagram with the render."
         )
-        specs_group.add_parameter(prop)
+        specs_group.add_parameter(parm)
 
         # optimization
         # optimization_group = prescription_group.add_group(
@@ -171,8 +171,8 @@ class LensModelEditor(ParameterEditor):
         # )
         # optimization_group.create_hierarchy = False
         #
-        # prop = StringParameter('cull_ghosts')
-        # optimization_group.add_parameter(prop)
+        # parm = StringParameter('cull_ghosts')
+        # optimization_group.add_parameter(parm)
 
         # init defaults
         default_config = Prescription()

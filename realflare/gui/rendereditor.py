@@ -41,17 +41,17 @@ class RenderEditor(ParameterEditor):
         )
         output_group.create_hierarchy = False
 
-        prop = PathParameter('output_path')
-        prop.method = PathParameter.Method.SAVE_FILE
-        prop.tooltip = (
+        parm = PathParameter('output_path')
+        parm.method = PathParameter.Method.SAVE_FILE
+        parm.tooltip = (
             'Output image path. Use $F4 to replace frame numbers. '
             'For example: render.$F4.exr'
         )
-        output_group.add_parameter(prop)
+        output_group.add_parameter(parm)
 
-        prop = StringParameter('colorspace')
-        prop.tooltip = 'Colorspace of the OCIO config. For example: \'ACES - ACEScg\''
-        output_group.add_parameter(prop)
+        parm = StringParameter('colorspace')
+        parm.tooltip = 'Colorspace of the OCIO config. For example: \'ACES - ACEScg\''
+        output_group.add_parameter(parm)
 
         layout = output_group.layout()
         row = layout.rowCount()
@@ -75,26 +75,26 @@ class RenderEditor(ParameterEditor):
             'renderer', collapsible=True, style=CollapsibleBox.Style.SIMPLE
         )
         renderer_group.create_hierarchy = False
-        prop = SizeParameter('resolution')
-        prop.slider_visible = False
-        prop.ratio_visible = False
-        prop.tooltip = 'Resolution of the flare image.'
-        renderer_group.add_parameter(prop)
+        parm = SizeParameter('resolution')
+        parm.slider_visible = False
+        parm.ratio_visible = False
+        parm.tooltip = 'Resolution of the flare image.'
+        renderer_group.add_parameter(parm)
 
-        prop = IntParameter('bin_size')
-        prop.slider_visible = False
-        prop.tooltip = (
+        parm = IntParameter('bin_size')
+        parm.slider_visible = False
+        parm.tooltip = (
             'Bin size of the renderer. Larger values will require less memory '
             'but increase render time.'
         )
-        renderer_group.add_parameter(prop)
+        renderer_group.add_parameter(parm)
 
-        prop = EnumParameter('anti_aliasing')
-        prop.label = 'Anti Aliasing'
-        prop.enum = AntiAliasing
-        prop.formatter = AntiAliasing.format
-        prop.tooltip = 'Super sampling multiplier for anti-aliasing.'
-        renderer_group.add_parameter(prop)
+        parm = EnumParameter('anti_aliasing')
+        parm.label = 'Anti Aliasing'
+        parm.enum = AntiAliasing
+        parm.formatter = AntiAliasing.format
+        parm.tooltip = 'Super sampling multiplier for anti-aliasing.'
+        renderer_group.add_parameter(parm)
 
         # rays
         rays_group = quality_group.add_group(
@@ -102,95 +102,95 @@ class RenderEditor(ParameterEditor):
         )
         rays_group.create_hierarchy = False
 
-        prop = IntParameter('wavelength_count')
-        prop.label = 'Wavelengths'
-        prop.line_min = 1
-        prop.slider_min = 1
-        prop.tooltip = (
+        parm = IntParameter('wavelength_count')
+        parm.label = 'Wavelengths'
+        parm.line_min = 1
+        parm.slider_min = 1
+        parm.tooltip = (
             'The amount of wavelengths that get traced through the lens system in a '
             'range of 390nm - 700nm. '
             'Final quality can often be achieved with a value of 5.'
         )
-        rays_group.add_parameter(prop)
+        rays_group.add_parameter(parm)
 
-        prop = IntParameter('wavelength_sub_count')
-        prop.label = 'Wavelength Substeps'
-        prop.line_min = 1
-        prop.slider_min = 1
-        prop.tooltip = (
+        parm = IntParameter('wavelength_sub_count')
+        parm.label = 'Wavelength Substeps'
+        parm.line_min = 1
+        parm.slider_min = 1
+        parm.tooltip = (
             'The amount of sub steps that get rendered between each ray-traced '
             'wavelength. This happens during the rendering stage and interpolates '
             'between the ray-traced wavelengths to generate a smoother transition.'
         )
-        rays_group.add_parameter(prop)
+        rays_group.add_parameter(parm)
 
-        prop = IntParameter('grid_subdivisions')
-        prop.slider_max = 256
-        prop.tooltip = (
+        parm = IntParameter('grid_subdivisions')
+        parm.slider_max = 256
+        parm.tooltip = (
             'The subdivisions of the grid that gets traced through the lens system. '
             'The more distortion the lens produces, the more subdivisions are needed. '
             'Good results can be achieved at a range of 64-128 rarely needing values up '
             'to 200.'
         )
-        rays_group.add_parameter(prop)
+        rays_group.add_parameter(parm)
 
-        prop = FloatParameter('grid_length')
-        prop.slider_max = 100
-        prop.tooltip = (
+        parm = FloatParameter('grid_length')
+        parm.slider_max = 100
+        parm.tooltip = (
             'Length in mm of the grid that gets traced through the lens system. '
             'This value is roughly the size of the diameter of the lens. '
             'It\'s best to keep this value as small as possible. Values too small will '
             'lead to cut off shapes in the render.'
         )
-        rays_group.add_parameter(prop)
+        rays_group.add_parameter(parm)
 
-        prop = FloatParameter('cull_percentage')
-        prop.slider_max = 1
-        prop.line_min = 0
-        prop.line_max = 1
-        prop.tooltip = (
+        parm = FloatParameter('cull_percentage')
+        parm.slider_max = 1
+        parm.line_min = 0
+        parm.line_max = 1
+        parm.tooltip = (
             'A percentage for how many of the darkest ghosts to cull. '
             '0.2 means 20% of the darkest ghosts are culled which speeds up performance.'
         )
-        rays_group.add_parameter(prop)
+        rays_group.add_parameter(parm)
 
         # starburst
         starburst_group = quality_group.add_group(
             'starburst', collapsible=True, style=CollapsibleBox.Style.SIMPLE
         )
 
-        prop = SizeParameter('resolution')
-        prop.slider_visible = False
-        prop.ratio_visible = False
-        prop.tooltip = 'Resolution of the starburst pattern.'
-        starburst_group.add_parameter(prop)
+        parm = SizeParameter('resolution')
+        parm.slider_visible = False
+        parm.ratio_visible = False
+        parm.tooltip = 'Resolution of the starburst pattern.'
+        starburst_group.add_parameter(parm)
 
-        prop = IntParameter('samples')
-        prop.slider_visible = False
-        prop.tooltip = (
+        parm = IntParameter('samples')
+        parm.slider_visible = False
+        parm.tooltip = (
             'Number of samples. High quality renders might need up to 2048 samples.'
         )
-        starburst_group.add_parameter(prop)
+        starburst_group.add_parameter(parm)
 
         # ghost
         ghost_group = quality_group.add_group(
             'ghost', collapsible=True, style=CollapsibleBox.Style.SIMPLE
         )
 
-        prop = SizeParameter('resolution')
-        prop.slider_visible = False
-        prop.ratio_visible = False
-        prop.tooltip = 'Resolution of the ghost.'
-        ghost_group.add_parameter(prop)
+        parm = SizeParameter('resolution')
+        parm.slider_visible = False
+        parm.ratio_visible = False
+        parm.tooltip = 'Resolution of the ghost.'
+        ghost_group.add_parameter(parm)
 
         # system
         system_group = self.add_group(
             'system', collapsible=True, style=CollapsibleBox.Style.BUTTON
         )
 
-        prop = StringParameter('device')
-        prop.menu = opencl.devices()
-        system_group.add_parameter(prop)
+        parm = StringParameter('device')
+        parm.menu = opencl.devices()
+        system_group.add_parameter(parm)
 
         # debug
         debug_group = self.add_group(
@@ -198,18 +198,18 @@ class RenderEditor(ParameterEditor):
         )
         debug_group.create_hierarchy = False
 
-        prop = BoolParameter('disable_starburst')
-        debug_group.add_parameter(prop)
+        parm = BoolParameter('disable_starburst')
+        debug_group.add_parameter(parm)
 
-        prop = BoolParameter('disable_ghosts')
-        debug_group.add_parameter(prop)
+        parm = BoolParameter('disable_ghosts')
+        debug_group.add_parameter(parm)
 
-        prop = BoolParameter('debug_ghosts')
-        debug_group.add_parameter(prop)
+        parm = BoolParameter('debug_ghosts')
+        debug_group.add_parameter(parm)
 
-        prop = IntParameter('debug_ghost')
-        prop.slider_max = 100
-        debug_group.add_parameter(prop)
+        parm = IntParameter('debug_ghost')
+        parm.slider_max = 100
+        debug_group.add_parameter(parm)
 
         # diagram
         diagram_group = self.add_group(
@@ -221,37 +221,37 @@ class RenderEditor(ParameterEditor):
         )
         diagram_renderer_group.create_hierarchy = False
 
-        prop = SizeParameter('resolution')
-        prop.slider_visible = False
-        prop.ratio_visible = False
-        diagram_renderer_group.add_parameter(prop)
+        parm = SizeParameter('resolution')
+        parm.slider_visible = False
+        parm.ratio_visible = False
+        diagram_renderer_group.add_parameter(parm)
 
         diagram_rays_group = diagram_group.add_group(
             'rays', collapsible=True, style=CollapsibleBox.Style.SIMPLE
         )
         diagram_rays_group.create_hierarchy = False
 
-        prop = IntParameter('debug_ghost')
-        prop.slider_max = 100
-        diagram_rays_group.add_parameter(prop)
+        parm = IntParameter('debug_ghost')
+        parm.slider_max = 100
+        diagram_rays_group.add_parameter(parm)
 
-        prop = FloatParameter('light_position')
-        prop.slider_min = -1
-        prop.slider_max = 1
-        diagram_rays_group.add_parameter(prop)
+        parm = FloatParameter('light_position')
+        parm.slider_min = -1
+        parm.slider_max = 1
+        diagram_rays_group.add_parameter(parm)
 
-        prop = IntParameter('grid_subdivisions')
-        prop.slider_max = 256
-        diagram_rays_group.add_parameter(prop)
+        parm = IntParameter('grid_subdivisions')
+        parm.slider_max = 256
+        diagram_rays_group.add_parameter(parm)
 
-        prop = FloatParameter('grid_length')
-        prop.slider_max = 100
-        diagram_rays_group.add_parameter(prop)
+        parm = FloatParameter('grid_length')
+        parm.slider_max = 100
+        diagram_rays_group.add_parameter(parm)
 
-        prop = IntParameter('column_offset')
-        prop.slider_min = -20
-        prop.slider_max = 20
-        diagram_rays_group.add_parameter(prop)
+        parm = IntParameter('column_offset')
+        parm.slider_min = -20
+        parm.slider_max = 20
+        diagram_rays_group.add_parameter(parm)
 
         # init defaults
         default_config = data.Render()

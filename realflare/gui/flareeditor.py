@@ -51,28 +51,28 @@ class FlareEditor(ParameterEditor):
         )
         light_group.create_hierarchy = False
 
-        prop = FloatParameter(name='light_intensity')
-        prop.label = 'Intensity'
-        prop.tooltip = (
+        parm = FloatParameter(name='light_intensity')
+        parm.label = 'Intensity'
+        parm.tooltip = (
             'A multiplier on the overall brightness of the lens flare. '
             'Currently not used.'
         )
-        prop.setEnabled(False)
-        light_group.add_parameter(prop)
+        parm.setEnabled(False)
+        light_group.add_parameter(parm)
 
-        prop = ColorParameter(name='light_color')
-        prop.label = 'Color'
-        prop.tooltip = (
+        parm = ColorParameter(name='light_color')
+        parm.label = 'Color'
+        parm.tooltip = (
             'A global multiplier on the color of the lens flare. Currently not used.'
         )
-        prop.setEnabled(False)
-        light_group.add_parameter(prop)
+        parm.setEnabled(False)
+        light_group.add_parameter(parm)
 
-        prop = PointFParameter(name='light_position')
-        prop.label = 'Position'
-        prop.decimals = 2
-        prop.tooltip = 'The position of the light source in NDC space (-1, 1).'
-        light_group.add_parameter(prop)
+        parm = PointFParameter(name='light_position')
+        parm.label = 'Position'
+        parm.decimals = 2
+        parm.tooltip = 'The position of the light source in NDC space (-1, 1).'
+        light_group.add_parameter(parm)
 
         # light image
         light_image_group = light_group.add_group(
@@ -80,31 +80,31 @@ class FlareEditor(ParameterEditor):
         )
         light_image_group.create_hierarchy = False
 
-        prop = PathParameter(name='image_file')
-        prop.label = 'File'
-        prop.method = PathParameter.Method.OPEN_FILE
-        prop.dir_fallback = aperture_dir
-        prop.tooltip = (
+        parm = PathParameter(name='image_file')
+        parm.label = 'File'
+        parm.method = PathParameter.Method.OPEN_FILE
+        parm.dir_fallback = aperture_dir
+        parm.tooltip = (
             "The path to the image file. Variables such as $RES can be used. "
             "For more information see documentation. (To come...)"
         )
-        light_image_group.add_parameter(prop)
+        light_image_group.add_parameter(parm)
 
-        prop = FloatParameter(name='image_threshold')
-        prop.label = 'Threshold'
-        prop.line_min = 0
-        prop.slider_max = 1
-        light_image_group.add_parameter(prop)
+        parm = FloatParameter(name='image_threshold')
+        parm.label = 'Threshold'
+        parm.line_min = 0
+        parm.slider_max = 1
+        light_image_group.add_parameter(parm)
 
-        prop = IntParameter(name='image_samples')
-        prop.label = 'Samples'
-        prop.line_min = 1
-        prop.slider_visible = False
-        light_image_group.add_parameter(prop)
+        parm = IntParameter(name='image_samples')
+        parm.label = 'Samples'
+        parm.line_min = 1
+        parm.slider_visible = False
+        light_image_group.add_parameter(parm)
 
-        prop = BoolParameter(name='image_show_sample')
-        prop.label = 'Show Samples'
-        light_image_group.add_parameter(prop)
+        parm = BoolParameter(name='image_show_sample')
+        parm.label = 'Show Samples'
+        light_image_group.add_parameter(parm)
 
         # lens
         lens_group = flare_group.add_group(
@@ -112,27 +112,27 @@ class FlareEditor(ParameterEditor):
         )
         self.groups[lens_group.name] = lens_group
 
-        prop = SizeParameter(name='sensor_size')
-        prop.ratio_visible = False
-        prop.tooltip = (
+        parm = SizeParameter(name='sensor_size')
+        parm.ratio_visible = False
+        parm.tooltip = (
             'The sensor size of the camera. A larger sensor size will show '
             'more of the flare.'
         )
-        lens_group.add_parameter(prop)
+        lens_group.add_parameter(parm)
 
-        prop = StringParameter(name='prescription_path')
-        prop.label = 'Lens Model'
-        prop.menu = self.settings.load_lens_models()
-        prop.tooltip = (
+        parm = StringParameter(name='prescription_path')
+        parm.label = 'Lens Model'
+        parm.menu = self.settings.load_lens_models()
+        parm.tooltip = (
             'The path to the lens model file (\'*.json\'). Variables such as $MODEL '
             'can be used. For more information see documentation. (To come...)'
         )
-        lens_group.add_parameter(prop)
+        lens_group.add_parameter(parm)
 
-        prop = StringParameter(name='glasses_path')
-        prop.label = 'Glass Make'
-        prop.menu = self.settings.load_glass_makes()
-        prop.tooltip = (
+        parm = StringParameter(name='glasses_path')
+        parm.label = 'Glass Make'
+        parm.menu = self.settings.load_glass_makes()
+        parm.tooltip = (
             'A path to a folder with glass files (\'.yml\'). '
             'The make of the glasses used for lens element lookup. '
             'Each lens element has a refractive index and abbe number that is used to '
@@ -141,28 +141,28 @@ class FlareEditor(ParameterEditor):
             'glass is responsible for the amount of dispersion. Variables such as $GLASS '
             'can be used. '
         )
-        lens_group.add_parameter(prop)
+        lens_group.add_parameter(parm)
 
-        prop = FloatParameter(name='abbe_nr_adjustment')
-        prop.slider_min = -20
-        prop.slider_max = 20
-        prop.tooltip = (
+        parm = FloatParameter(name='abbe_nr_adjustment')
+        parm.slider_min = -20
+        parm.slider_max = 20
+        parm.tooltip = (
             'An offset for the abbe number values of the lens elements in the lens model.'
             ' This is a experimental way to play around with the quality of the glass.'
         )
-        lens_group.add_parameter(prop)
+        lens_group.add_parameter(parm)
 
-        prop = FloatParameter(name='min_area')
-        prop.line_min = 0
-        prop.slider_max = 1
-        prop.tooltip = (
+        parm = FloatParameter(name='min_area')
+        parm.line_min = 0
+        parm.slider_max = 1
+        parm.tooltip = (
             'The minimum area of each primitive. The area of the deformed primitives on '
             'the sensor is used to calculate the intensity of the primitive. '
             'Along the edges of fresnel refraction the primitives get very small which '
             'leads to over bright results. '
             'This parameter can be used to creatively lessen some of the artefacts.'
         )
-        lens_group.add_parameter(prop)
+        lens_group.add_parameter(parm)
 
         # coating
         coating_group = lens_group.add_group(
@@ -170,12 +170,12 @@ class FlareEditor(ParameterEditor):
         )
         coating_group.create_hierarchy = False
 
-        prop = TabDataParameter(name='coating_lens_elements')
-        prop.label = 'Lens Elements'
-        prop.headers = ['wavelength', 'refractive_index']
-        prop.types = [int, float]
-        prop.decimals = 2
-        prop.tooltip = (
+        parm = TabDataParameter(name='coating_lens_elements')
+        parm.label = 'Lens Elements'
+        parm.headers = ['wavelength', 'refractive_index']
+        parm.types = [int, float]
+        parm.decimals = 2
+        parm.tooltip = (
             'Lens Coating for each lens element. A lens coating consists of two '
             'parameters, a wavelength in nm that the coating is optimized for '
             '(thickness = lambda / 4) and the material of the coating (refractive '
@@ -183,35 +183,35 @@ class FlareEditor(ParameterEditor):
             'However materials with such low refractive indices are hard to find '
             'or expensive. A common material is MgF2 with n = 1.38.'
         )
-        coating_group.add_parameter(prop)
-        self._coating_tab_data = prop
+        coating_group.add_parameter(parm)
+        self._coating_tab_data = parm
 
         coating_group.add_separator()
 
-        prop = SizeParameter(name='random_wavelength_range')
-        prop.keep_ratio = False
-        prop.ratio_visible = False
-        prop.line_min = 390
-        prop.line_max = 700
-        prop.default = QtCore.QSize(prop.line_min, prop.line_max)
-        prop.tooltip = (
+        parm = SizeParameter(name='random_wavelength_range')
+        parm.keep_ratio = False
+        parm.ratio_visible = False
+        parm.line_min = 390
+        parm.line_max = 700
+        parm.default = QtCore.QSize(parm.line_min, parm.line_max)
+        parm.tooltip = (
             'A range in nm for creating random wavelengths in the coating list.'
         )
-        coating_group.add_parameter(prop)
-        self._coating_wavelength_range = prop
+        coating_group.add_parameter(parm)
+        self._coating_wavelength_range = parm
 
-        prop = SizeFParameter(name='random_refractive_index_range')
-        prop.keep_ratio = False
-        prop.ratio_visible = False
-        prop.line_min = 1
-        prop.line_max = 2
-        prop.decimals = 2
-        prop.default = QtCore.QSizeF(prop.line_min, prop.line_max)
-        prop.tooltip = (
+        parm = SizeFParameter(name='random_refractive_index_range')
+        parm.keep_ratio = False
+        parm.ratio_visible = False
+        parm.line_min = 1
+        parm.line_max = 2
+        parm.decimals = 2
+        parm.default = QtCore.QSizeF(parm.line_min, parm.line_max)
+        parm.tooltip = (
             'A range for creating random refractive indices in the coating list.'
         )
-        coating_group.add_parameter(prop)
-        self._coating_refractive_index_range = prop
+        coating_group.add_parameter(parm)
+        self._coating_refractive_index_range = parm
 
         randomize_button = QtWidgets.QPushButton('Randomize')
         randomize_button.pressed.connect(lambda: self.randomize_coatings())
@@ -228,114 +228,114 @@ class FlareEditor(ParameterEditor):
             'aperture', collapsible=True, style=CollapsibleBox.Style.SIMPLE
         )
 
-        prop = FloatParameter(name='fstop')
-        prop.label = 'F-Stop'
-        prop.slider_min = 0
-        prop.slider_max = 32
-        prop.tooltip = (
+        parm = FloatParameter(name='fstop')
+        parm.label = 'F-Stop'
+        parm.slider_min = 0
+        parm.slider_max = 32
+        parm.tooltip = (
             'The F-Stop of the aperture. This controls the size of the aperture.'
         )
-        starburst_aperture_group.add_parameter(prop)
+        starburst_aperture_group.add_parameter(parm)
 
-        prop = PathParameter(name='file')
-        prop.method = PathParameter.Method.OPEN_FILE
-        prop.dir_fallback = aperture_dir
-        prop.tooltip = (
+        parm = PathParameter(name='file')
+        parm.method = PathParameter.Method.OPEN_FILE
+        parm.dir_fallback = aperture_dir
+        parm.tooltip = (
             "The path to the image file. Variables such as $APT can be used. "
             "For more information see documentation. (To come...)"
         )
-        starburst_aperture_group.add_parameter(prop)
+        starburst_aperture_group.add_parameter(parm)
 
-        prop = IntParameter(name='blades')
-        prop.slider_min = 1
-        prop.slider_max = 12
-        prop.line_min = 1
-        prop.tooltip = 'Number of blades for the aperture.'
-        starburst_aperture_group.add_parameter(prop)
+        parm = IntParameter(name='blades')
+        parm.slider_min = 1
+        parm.slider_max = 12
+        parm.line_min = 1
+        parm.tooltip = 'Number of blades for the aperture.'
+        starburst_aperture_group.add_parameter(parm)
 
-        prop = FloatParameter(name='rotation')
-        prop.slider_min = -180
-        prop.slider_max = 180
-        prop.tooltip = 'Rotation in degrees of the aperture. Currently not used.'
-        prop.setEnabled(False)
-        starburst_aperture_group.add_parameter(prop)
+        parm = FloatParameter(name='rotation')
+        parm.slider_min = -180
+        parm.slider_max = 180
+        parm.tooltip = 'Rotation in degrees of the aperture. Currently not used.'
+        parm.setEnabled(False)
+        starburst_aperture_group.add_parameter(parm)
 
-        prop = FloatParameter(name='corner_radius')
-        prop.slider_min = 0
-        prop.slider_max = 1
-        prop.tooltip = 'Corner radius for blades. Currently not used.'
-        prop.setEnabled(False)
-        starburst_aperture_group.add_parameter(prop)
+        parm = FloatParameter(name='corner_radius')
+        parm.slider_min = 0
+        parm.slider_max = 1
+        parm.tooltip = 'Corner radius for blades. Currently not used.'
+        parm.setEnabled(False)
+        starburst_aperture_group.add_parameter(parm)
 
-        prop = FloatParameter(name='softness')
-        prop.slider_min = 0
-        prop.slider_max = 1
-        prop.tooltip = 'Softness of the aperture.'
-        starburst_aperture_group.add_parameter(prop)
+        parm = FloatParameter(name='softness')
+        parm.slider_min = 0
+        parm.slider_max = 1
+        parm.tooltip = 'Softness of the aperture.'
+        starburst_aperture_group.add_parameter(parm)
 
-        prop = FloatParameter(name='dust_amount')
-        prop.tooltip = 'Amount of dust particles. Currently not used.'
-        prop.setEnabled(False)
-        starburst_aperture_group.add_parameter(prop)
+        parm = FloatParameter(name='dust_amount')
+        parm.tooltip = 'Amount of dust particles. Currently not used.'
+        parm.setEnabled(False)
+        starburst_aperture_group.add_parameter(parm)
 
-        prop = FloatParameter(name='scratches_amount')
-        prop.tooltip = 'Amount of scratches. Currently not used.'
-        prop.setEnabled(False)
-        starburst_aperture_group.add_parameter(prop)
+        parm = FloatParameter(name='scratches_amount')
+        parm.tooltip = 'Amount of scratches. Currently not used.'
+        parm.setEnabled(False)
+        starburst_aperture_group.add_parameter(parm)
 
-        prop = FloatParameter(name='grating_amount')
-        prop.tooltip = (
+        parm = FloatParameter(name='grating_amount')
+        parm.tooltip = (
             'Amount of grating along the edges of the aperture. '
             'This can be used to generate rainbow circles. Currently not used.'
         )
-        prop.setEnabled(False)
-        starburst_aperture_group.add_parameter(prop)
+        parm.setEnabled(False)
+        starburst_aperture_group.add_parameter(parm)
 
         # starburst
 
-        prop = FloatParameter(name='intensity')
-        prop.tooltip = (
+        parm = FloatParameter(name='intensity')
+        parm.tooltip = (
             'A multiplier on the overall brightness of the starburst pattern.'
         )
-        starburst_group.add_parameter(prop)
+        starburst_group.add_parameter(parm)
 
-        prop = FloatParameter(name='lens_distance')
-        prop.line_min = 0.001
-        prop.slider_max = 1
-        prop.tooltip = (
+        parm = FloatParameter(name='lens_distance')
+        parm.line_min = 0.001
+        parm.slider_max = 1
+        parm.tooltip = (
             'The distance in mm away from the aperture where the far-field pattern '
             'is being recorded. This changes the perceived size of the starburst.'
         )
-        starburst_group.add_parameter(prop)
+        starburst_group.add_parameter(parm)
 
-        prop = FloatParameter(name='blur')
-        prop.tooltip = 'Blur of the starburst.'
-        starburst_group.add_parameter(prop)
+        parm = FloatParameter(name='blur')
+        parm.tooltip = 'Blur of the starburst.'
+        starburst_group.add_parameter(parm)
 
-        prop = FloatParameter(name='rotation')
-        prop.slider_max = 2
-        prop.tooltip = 'Random rotation during sampling (in radians?).'
-        starburst_group.add_parameter(prop)
+        parm = FloatParameter(name='rotation')
+        parm.slider_max = 2
+        parm.tooltip = 'Random rotation during sampling (in radians?).'
+        starburst_group.add_parameter(parm)
 
-        prop = FloatParameter(name='rotation_weighting')
-        prop.slider_max = 4
-        prop.tooltip = (
+        parm = FloatParameter(name='rotation_weighting')
+        parm.slider_max = 4
+        parm.tooltip = (
             'The weighting for the rotation. '
             'Equal weighted = 1, weighted towards the inside = 0, weighted towards '
             'outside = 2.'
         )
-        starburst_group.add_parameter(prop)
+        starburst_group.add_parameter(parm)
 
-        prop = PointFParameter(name='fadeout')
-        prop.tooltip = (
+        parm = PointFParameter(name='fadeout')
+        parm.tooltip = (
             'A gradient to fade out the starburst towards the edges of the frame. '
             'This prevents visible borders of the starburst frame.'
         )
-        starburst_group.add_parameter(prop)
+        starburst_group.add_parameter(parm)
 
-        prop = SizeFParameter(name='scale')
-        prop.tooltip = 'A multiplier on the overall scale of the starburst pattern.'
-        starburst_group.add_parameter(prop)
+        parm = SizeFParameter(name='scale')
+        parm.tooltip = 'A multiplier on the overall scale of the starburst pattern.'
+        starburst_group.add_parameter(parm)
 
         # ghost
         ghost_group = flare_group.add_group(
@@ -348,62 +348,62 @@ class FlareEditor(ParameterEditor):
             'aperture', collapsible=True, style=CollapsibleBox.Style.SIMPLE
         )
 
-        prop = FloatParameter(name='fstop')
-        prop.label = 'F-Stop'
-        prop.slider_min = 0
-        prop.slider_max = 32
-        ghost_aperture_group.add_parameter(prop)
+        parm = FloatParameter(name='fstop')
+        parm.label = 'F-Stop'
+        parm.slider_min = 0
+        parm.slider_max = 32
+        ghost_aperture_group.add_parameter(parm)
 
-        prop = PathParameter(name='file')
-        prop.method = PathParameter.Method.OPEN_FILE
-        prop.dir_fallback = aperture_dir
-        ghost_aperture_group.add_parameter(prop)
+        parm = PathParameter(name='file')
+        parm.method = PathParameter.Method.OPEN_FILE
+        parm.dir_fallback = aperture_dir
+        ghost_aperture_group.add_parameter(parm)
 
-        prop = IntParameter(name='blades')
-        prop.slider_min = 1
-        prop.slider_max = 12
-        prop.line_min = 1
+        parm = IntParameter(name='blades')
+        parm.slider_min = 1
+        parm.slider_max = 12
+        parm.line_min = 1
 
-        ghost_aperture_group.add_parameter(prop)
+        ghost_aperture_group.add_parameter(parm)
 
-        prop = FloatParameter(name='rotation')
-        prop.slider_min = -180
-        prop.slider_max = 180
-        prop.setEnabled(False)
-        ghost_aperture_group.add_parameter(prop)
+        parm = FloatParameter(name='rotation')
+        parm.slider_min = -180
+        parm.slider_max = 180
+        parm.setEnabled(False)
+        ghost_aperture_group.add_parameter(parm)
 
-        prop = FloatParameter(name='corner_radius')
-        prop.slider_min = 0
-        prop.slider_max = 1
-        prop.setEnabled(False)
-        ghost_aperture_group.add_parameter(prop)
+        parm = FloatParameter(name='corner_radius')
+        parm.slider_min = 0
+        parm.slider_max = 1
+        parm.setEnabled(False)
+        ghost_aperture_group.add_parameter(parm)
 
-        prop = FloatParameter(name='softness')
-        prop.slider_min = 0
-        prop.slider_max = 1
-        ghost_aperture_group.add_parameter(prop)
+        parm = FloatParameter(name='softness')
+        parm.slider_min = 0
+        parm.slider_max = 1
+        ghost_aperture_group.add_parameter(parm)
 
-        prop = FloatParameter(name='dust_amount')
-        prop.setEnabled(False)
-        ghost_aperture_group.add_parameter(prop)
+        parm = FloatParameter(name='dust_amount')
+        parm.setEnabled(False)
+        ghost_aperture_group.add_parameter(parm)
 
-        prop = FloatParameter(name='scratches_amount')
-        prop.setEnabled(False)
-        ghost_aperture_group.add_parameter(prop)
+        parm = FloatParameter(name='scratches_amount')
+        parm.setEnabled(False)
+        ghost_aperture_group.add_parameter(parm)
 
-        prop = FloatParameter(name='grating_amount')
-        prop.setEnabled(False)
-        ghost_aperture_group.add_parameter(prop)
+        parm = FloatParameter(name='grating_amount')
+        parm.setEnabled(False)
+        ghost_aperture_group.add_parameter(parm)
 
         # ghost
-        prop = FloatParameter(name='fstop')
-        prop.slider_min = 0
-        prop.slider_max = 32
-        prop.tooltip = (
+        parm = FloatParameter(name='fstop')
+        parm.slider_min = 0
+        parm.slider_max = 32
+        parm.tooltip = (
             'F-Stop that controls the strength of the ringing pattern visible '
             'on ghosts.'
         )
-        ghost_group.add_parameter(prop)
+        ghost_group.add_parameter(parm)
 
         # init defaults
         default_config = data.Flare()

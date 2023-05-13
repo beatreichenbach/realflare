@@ -25,16 +25,16 @@ class SettingsEditor(ParameterEditor):
         )
         color_group.create_hierarchy = False
 
-        prop = PathParameter('ocio')
-        prop.label = 'OCIO Config'
-        prop.method = PathParameter.Method.SAVE_FILE
-        prop.tooltip = (
+        parm = PathParameter('ocio')
+        parm.label = 'OCIO Config'
+        parm.method = PathParameter.Method.SAVE_FILE
+        parm.tooltip = (
             'Path to the config.ocio file. '
             'Currently a ACES config is required. '
             'If no path is set here, the system will fall back to '
             'the environment variable \'OCIO\''
         )
-        color_group.add_parameter(prop)
+        color_group.add_parameter(parm)
 
         # crash reporting
         crash_group = self.add_group(
@@ -42,13 +42,13 @@ class SettingsEditor(ParameterEditor):
         )
         crash_group.create_hierarchy = False
 
-        prop = BoolParameter('sentry')
-        prop.label = 'Automated Crash Reporting'
-        prop.tooltip = (
+        parm = BoolParameter('sentry')
+        parm.label = 'Automated Crash Reporting'
+        parm.tooltip = (
             'Automatically upload crash reports using Sentry.io. '
             'Crash reports don\'t include any personal information.'
         )
-        crash_group.add_parameter(prop)
+        crash_group.add_parameter(parm)
 
     def config(self) -> SettingsConfig:
         values = self.values()
