@@ -3,17 +3,17 @@ import logging
 import os
 import sys
 
-import sentry_sdk
-
 from realflare.cli import app as cli_app
 from realflare.gui import app as gui_app
+from realflare.utils.settings import Settings
 
 os.environ["OPENCV_IO_ENABLE_OPENEXR"] = "1"
 
 
 def argument_parser():
     parser = argparse.ArgumentParser(
-        description='Lens Flare',
+        prog='Realflare',
+        description='Physically-Based Lens Flares',
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
     parser.add_argument(
@@ -61,19 +61,32 @@ def argument_parser():
     return parser
 
 
+def sentry():
+    settings = Settings()
+    settings.load()
+
+    if settings.config.sentry is None:
+        from realflare.gui import sentry
+
+        sentry.request_permission()
+
+    if settings.config.sentry:
+        import sentry_sdk
+
+        environment = 'production'
+        if os.getenv('REALFLARE_DEV'):
+            environment = 'development'
+            logging.getLogger().setLevel(logging.DEBUG)
+
+        sentry_sdk.init(
+            dsn='https://ca69319449554a2885eb98218ede9110@o4504738332016640.ingest.sentry.io/4504738333655040',
+            traces_sample_rate=1.0,
+            environment=environment,
+        )
+
+
 def main():
-    environment = 'production'
-    logging.getLogger().setLevel(logging.INFO)
-
-    if os.getenv('REALFLARE_DEV'):
-        environment = 'development'
-        logging.getLogger().setLevel(logging.DEBUG)
-
-    sentry_sdk.init(
-        dsn="https://ca69319449554a2885eb98218ede9110@o4504738332016640.ingest.sentry.io/4504738333655040",
-        traces_sample_rate=1.0,
-        environment=environment,
-    )
+    sentry()
 
     parser = argument_parser()
     args = parser.parse_args(sys.argv[1:])
