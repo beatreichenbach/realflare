@@ -43,7 +43,10 @@ class RenderEditor(ParameterEditor):
 
         prop = PathParameter('output_path')
         prop.method = PathParameter.Method.SAVE_FILE
-        prop.tooltip = 'Output image path. Use $F4 to replace frame numbers. For example: render.$F4.exr'
+        prop.tooltip = (
+            'Output image path. Use $F4 to replace frame numbers. '
+            'For example: render.$F4.exr'
+        )
         output_group.add_parameter(prop)
 
         prop = StringParameter('colorspace')
@@ -80,7 +83,10 @@ class RenderEditor(ParameterEditor):
 
         prop = IntParameter('bin_size')
         prop.slider_visible = False
-        prop.tooltip = 'Bin size of the renderer. Larger values will require less memory but increase render time.'
+        prop.tooltip = (
+            'Bin size of the renderer. Larger values will require less memory '
+            'but increase render time.'
+        )
         renderer_group.add_parameter(prop)
 
         prop = EnumParameter('anti_aliasing')
@@ -101,7 +107,8 @@ class RenderEditor(ParameterEditor):
         prop.line_min = 1
         prop.slider_min = 1
         prop.tooltip = (
-            'The amount of wavelengths that get traced through the lens system in a range of 390nm - 700nm. '
+            'The amount of wavelengths that get traced through the lens system in a '
+            'range of 390nm - 700nm. '
             'Final quality can often be achieved with a value of 5.'
         )
         rays_group.add_parameter(prop)
@@ -111,9 +118,9 @@ class RenderEditor(ParameterEditor):
         prop.line_min = 1
         prop.slider_min = 1
         prop.tooltip = (
-            'The amount of sub steps that get rendered between each ray-traced wavelength. '
-            'This happens during the rendering stage and interpolates between '
-            'the ray-traced wavelengths to generate a smoother transition.'
+            'The amount of sub steps that get rendered between each ray-traced '
+            'wavelength. This happens during the rendering stage and interpolates '
+            'between the ray-traced wavelengths to generate a smoother transition.'
         )
         rays_group.add_parameter(prop)
 
@@ -122,7 +129,8 @@ class RenderEditor(ParameterEditor):
         prop.tooltip = (
             'The subdivisions of the grid that gets traced through the lens system. '
             'The more distortion the lens produces, the more subdivisions are needed. '
-            'Good results can be achieved at a range of 64-128 rarely needing values up to 200.'
+            'Good results can be achieved at a range of 64-128 rarely needing values up '
+            'to 200.'
         )
         rays_group.add_parameter(prop)
 

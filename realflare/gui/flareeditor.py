@@ -53,7 +53,10 @@ class FlareEditor(ParameterEditor):
 
         prop = FloatParameter(name='light_intensity')
         prop.label = 'Intensity'
-        prop.tooltip = 'A multiplier on the overall brightness of the lens flare. Currently not used.'
+        prop.tooltip = (
+            'A multiplier on the overall brightness of the lens flare. '
+            'Currently not used.'
+        )
         prop.setEnabled(False)
         light_group.add_parameter(prop)
 
@@ -111,15 +114,18 @@ class FlareEditor(ParameterEditor):
 
         prop = SizeParameter(name='sensor_size')
         prop.ratio_visible = False
-        prop.tooltip = 'The sensor size of the camera. A larger sensor size will show more of the flare.'
+        prop.tooltip = (
+            'The sensor size of the camera. A larger sensor size will show '
+            'more of the flare.'
+        )
         lens_group.add_parameter(prop)
 
         prop = StringParameter(name='prescription_path')
         prop.label = 'Lens Model'
         prop.menu = self.settings.load_lens_models()
         prop.tooltip = (
-            "The path to the lens model file ('*.json'). Variables such as $MODEL can be used. "
-            "For more information see documentation. (To come...)"
+            'The path to the lens model file (\'*.json\'). Variables such as $MODEL '
+            'can be used. For more information see documentation. (To come...)'
         )
         lens_group.add_parameter(prop)
 
@@ -130,9 +136,10 @@ class FlareEditor(ParameterEditor):
             'A path to a folder with glass files (\'.yml\'). '
             'The make of the glasses used for lens element lookup. '
             'Each lens element has a refractive index and abbe number that is used to '
-            'look up the closest glass in the database. The glass provides a Sellmeier equation '
-            'that maps wavelengths to refractive index. The quality of the glass is responsible '
-            'for the amount of dispersion. Variables such as $GLASS can be used. '
+            'look up the closest glass in the database. The glass provides a Sellmeier '
+            'equation that maps wavelengths to refractive index. The quality of the '
+            'glass is responsible for the amount of dispersion. Variables such as $GLASS '
+            'can be used. '
         )
         lens_group.add_parameter(prop)
 
@@ -140,8 +147,8 @@ class FlareEditor(ParameterEditor):
         prop.slider_min = -20
         prop.slider_max = 20
         prop.tooltip = (
-            'An offset for the abbe number values of the lens elements in the lens model. '
-            'This is a experimental way to play around with the quality of the glass.'
+            'An offset for the abbe number values of the lens elements in the lens model.'
+            ' This is a experimental way to play around with the quality of the glass.'
         )
         lens_group.add_parameter(prop)
 
@@ -149,10 +156,11 @@ class FlareEditor(ParameterEditor):
         prop.line_min = 0
         prop.slider_max = 1
         prop.tooltip = (
-            'The minimum area of each primitive. The area of the deformed primitives on the sensor is used '
-            'to calculate the intensity of the primitive. Along the edges of fresnel refraction the primitives '
-            'get very small which leads to over bright results. This parameter can be used to creatively lessen '
-            'some of the artefacts.'
+            'The minimum area of each primitive. The area of the deformed primitives on '
+            'the sensor is used to calculate the intensity of the primitive. '
+            'Along the edges of fresnel refraction the primitives get very small which '
+            'leads to over bright results. '
+            'This parameter can be used to creatively lessen some of the artefacts.'
         )
         lens_group.add_parameter(prop)
 
@@ -168,11 +176,12 @@ class FlareEditor(ParameterEditor):
         prop.types = [int, float]
         prop.decimals = 2
         prop.tooltip = (
-            'Lens Coating for each lens element. A lens coating consists of two parameters, '
-            'a wavelength in nm that the coating is optimized for (thickness = lambda / 4) and the '
-            'material of the coating (refractive index). The optimal refractive index is n ≈ 1.23. '
-            'However materials with such low refractive indices are hard to find or expensive. '
-            'A common material is MgF2 with n = 1.38.'
+            'Lens Coating for each lens element. A lens coating consists of two '
+            'parameters, a wavelength in nm that the coating is optimized for '
+            '(thickness = lambda / 4) and the material of the coating (refractive '
+            'index). The optimal refractive index is n ≈ 1.23. '
+            'However materials with such low refractive indices are hard to find '
+            'or expensive. A common material is MgF2 with n = 1.38.'
         )
         coating_group.add_parameter(prop)
         self._coating_tab_data = prop
@@ -312,7 +321,8 @@ class FlareEditor(ParameterEditor):
         prop.slider_max = 4
         prop.tooltip = (
             'The weighting for the rotation. '
-            'Equal weighted = 1, weighted towards the inside = 0, weighted towards outside = 2.'
+            'Equal weighted = 1, weighted towards the inside = 0, weighted towards '
+            'outside = 2.'
         )
         starburst_group.add_parameter(prop)
 
@@ -389,7 +399,10 @@ class FlareEditor(ParameterEditor):
         prop = FloatParameter(name='fstop')
         prop.slider_min = 0
         prop.slider_max = 32
-        prop.tooltip = 'F-Stop that controls the strength of the ringing pattern visible on ghosts.'
+        prop.tooltip = (
+            'F-Stop that controls the strength of the ringing pattern visible '
+            'on ghosts.'
+        )
         ghost_group.add_parameter(prop)
 
         # init defaults
