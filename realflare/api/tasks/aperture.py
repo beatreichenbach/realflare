@@ -9,7 +9,7 @@ from PySide2 import QtCore
 from realflare.api.data import Render, Aperture
 from realflare.api.path import File
 from realflare.api.tasks.opencl import OpenCL, Image
-from realflare.gui.settings import Settings
+from realflare.utils.settings import Settings
 from realflare.utils.timing import timer
 
 

@@ -1,9 +1,9 @@
 import logging
 import sys
+
 from PySide2 import QtWidgets
 
-from realflare.gui.presetbrowser import PresetBrowser
-from realflare.utils.settings import Settings
+from realflare.gui.settings import SettingsDialog
 from qt_extensions import theme
 
 
@@ -13,10 +13,8 @@ def main():
     app = QtWidgets.QApplication(sys.argv)
     theme.apply_theme(theme.monokai)
 
-    path = Settings().decode_path('$PRESET')
-    logging.debug(path)
-    widget = PresetBrowser(path)
-    widget.show()
+    dialog = SettingsDialog()
+    dialog.show()
 
     sys.exit(app.exec_())
 

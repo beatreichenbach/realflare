@@ -10,7 +10,7 @@ from typing import Any
 from PySide2 import QtWidgets, QtCore, QtGui
 
 from realflare.api.data import Flare, Render
-from realflare.gui.settings import Settings
+from realflare.utils.settings import Settings
 from qt_extensions.elementbrowser import Field, ElementProxyModel
 from qt_extensions.filebrowser import FileBrowser, FileElement
 from qt_extensions.flexview import FlexView

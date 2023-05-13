@@ -1,156 +1,155 @@
-import dataclasses
-import os
-import logging
-import json
-import shutil
-from importlib.resources import files
-from typing import Any
+from PySide2 import QtWidgets, QtGui
 
-import typing
-from PySide2 import QtWidgets, QtCore, QtGui
-import realflare
-from realflare.api.data import Project, Prescription
-from qt_extensions.mainwindow import DockWidgetState, SplitterState
-from qt_extensions.typeutils import cast, cast_basic
+from qt_extensions.button import Button
+from qt_extensions.messagebox import MessageBox
+from qt_extensions.parameters import (
+    PathParameter,
+    ParameterEditor,
+    BoolParameter,
+)
+from qt_extensions.box import CollapsibleBox
+from qt_extensions.typeutils import cast_basic, cast
+from realflare.utils.settings import Settings, SettingsConfig
 
 
-@dataclasses.dataclass()
-class SettingsConfig:
-    window_geometry: QtCore.QRect = QtCore.QRect(200, 200, 1280, 720)
-    window_states: list[DockWidgetState | SplitterState | None] = dataclasses.field(
-        default_factory=list
-    )
-    widget_states: dict[str, dict] = dataclasses.field(default_factory=dict)
-    recent_paths: list[str] = dataclasses.field(default_factory=list)
-    sentry: bool | None = None
-
-
-class Singleton(type):
-    _instances = {}
-
-    def __call__(cls, *args, **kwargs):
-        if cls not in cls._instances:
-            cls._instances[cls] = super(Singleton, cls).__call__(*args, **kwargs)
-        return cls._instances[cls]
-
-
-class Settings(QtCore.QObject):
-    __metaclass__ = Singleton
-
-    def __init__(self, parent: QtCore.QObject | None = None):
+class SettingsEditor(ParameterEditor):
+    def __init__(self, parent: QtWidgets.QWidget | None = None) -> None:
         super().__init__(parent)
-        self.path = os.getenv('REALFLARE_PATH')
-        if self.path is None:
-            self.path = os.path.join(os.path.expanduser('~'), f'.{realflare.__name__}')
 
-        self.var_paths = {
-            '$RES': os.path.join(self.path, 'resources'),
-            '$MODEL': os.path.join(self.path, 'resources', 'model'),
-            '$GLASS': os.path.join(self.path, 'resources', 'glass'),
-            '$APT': os.path.join(self.path, 'resources', 'aperture'),
-            '$PRESET': os.path.join(self.path, 'resources', 'preset'),
-        }
+        self._init_editor()
 
-        self._config_path = os.path.join(self.path, 'settings.json')
+    def _init_editor(self) -> None:
+        # color
+        color_group = self.add_group(
+            'Color', collapsible=True, style=CollapsibleBox.Style.BUTTON
+        )
+        color_group.create_hierarchy = False
 
-        self.config: SettingsConfig | None = None
+        prop = PathParameter('ocio')
+        prop.label = 'OCIO Config'
+        prop.method = PathParameter.Method.SAVE_FILE
+        prop.tooltip = (
+            'Path to the config.ocio file. '
+            'Currently a ACES config is required. '
+            'If no path is set here, the system will fall back to '
+            'the environment variable \'OCIO\''
+        )
+        color_group.add_parameter(prop)
 
-        self._init_resources()
+        # crash reporting
+        crash_group = self.add_group(
+            'Crash Reporting', collapsible=True, style=CollapsibleBox.Style.BUTTON
+        )
+        crash_group.create_hierarchy = False
 
-    def _init_resources(self):
-        path = self.var_paths['$RES']
-        if os.path.exists(path):
-            return
+        prop = BoolParameter('sentry')
+        prop.label = 'Automated Crash Reporting'
+        prop.tooltip = (
+            'Automatically upload crash reports using Sentry.io. '
+            'Crash reports don\'t include any personal information.'
+        )
+        crash_group.add_parameter(prop)
 
-        package_library_path = str(files('realflare').joinpath('resources'))
-        shutil.copytree(package_library_path, path)
+    def config(self) -> SettingsConfig:
+        values = self.values()
+        config = cast(SettingsConfig, values)
+        return config
 
-    def load(self):
-        data = self.load_data(self._config_path)
-        self.config = cast(SettingsConfig, data)
+    def set_config(self, config: SettingsConfig) -> None:
+        self.blockSignals(True)
+        self.set_values(cast_basic(config))
+        self.blockSignals(False)
 
-    def save(self):
-        data = cast_basic(self.config)
-        self.save_data(data, self._config_path)
 
-    def load_data(self, path: str) -> dict:
-        path = self.decode_path(path)
-        if os.path.isfile(path):
-            try:
-                with open(path, 'r') as f:
-                    return json.load(f)
-            except json.JSONDecodeError as e:
-                pass
-                # logging.exception(e)
-        return dict()
+class SettingsDialog(QtWidgets.QWidget):
+    def __init__(self, parent: QtWidgets.QWidget | None = None):
+        super().__init__(parent)
 
-    def save_data(self, data: Any, path: str) -> bool:
-        path = self.decode_path(path)
-        try:
-            if not os.path.exists(os.path.dirname(path)):
-                os.makedirs(os.path.dirname(path))
-            with open(path, 'w') as file:
-                json.dump(data, file, indent=2)
+        self.settings = Settings()
+        self.settings.load()
+
+        self.cached_config = self.settings.config
+
+        self._init_ui()
+        self.setWindowTitle('Settings')
+
+    def _init_ui(self):
+        self.setLayout(QtWidgets.QVBoxLayout())
+
+        # editor
+        self.editor = SettingsEditor()
+        self.editor.set_values(cast_basic(self.cached_config), attr='default')
+        self.editor.parameter_changed.connect(self._settings_change)
+
+        self.layout().addWidget(self.editor)
+
+        self.button_box = QtWidgets.QDialogButtonBox()
+        size_policy = self.button_box.sizePolicy()
+        size_policy.setRetainSizeWhenHidden(True)
+        self.button_box.setSizePolicy(size_policy)
+        self.layout().addWidget(self.button_box)
+
+        save_button = Button('Save', color='primary')
+        save_button.pressed.connect(self.save)
+        self.button_box.addButton(save_button, QtWidgets.QDialogButtonBox.ApplyRole)
+
+        cancel_button = Button('Cancel')
+        cancel_button.pressed.connect(self.cancel)
+        self.button_box.addButton(cancel_button, QtWidgets.QDialogButtonBox.RejectRole)
+
+        self.button_box.hide()
+
+    def closeEvent(self, event: QtGui.QCloseEvent) -> None:
+        if self.check_save():
+            super().closeEvent(event)
+
+    def cancel(self) -> None:
+        if self.cached_config:
+            self.editor.set_config(self.cached_config)
+        self.button_box.hide()
+
+    def check_save(self) -> bool:
+        # returns true if program can continue, false if action should be cancelled
+
+        if not self.cached_config:
             return True
-        except FileNotFoundError as exception:
-            logging.exception(exception)
-        return False
 
-    def encode_path(self, path: str) -> str:
-        path = os.path.normpath(path)
-        for var, var_path in self.var_paths.items():
-            path = path.replace(var_path, var)
-        path = path.replace('\\', '/')
-        return path
+        config = self.editor.config()
+        if self.cached_config == config:
+            return True
 
-    def decode_path(self, path: str) -> str:
-        path = os.path.normpath(path)
-        for var, var_path in self.var_paths.items():
-            path = path.replace(var, var_path)
-        path = path.replace('\\', '/')
-        return path
+        buttons = (
+            QtWidgets.QMessageBox.StandardButton.Save
+            | QtWidgets.QMessageBox.StandardButton.Cancel
+            | QtWidgets.QMessageBox.StandardButton.Discard
+        )
 
-    def load_glass_makes(self):
-        glasses_path = self.var_paths['$GLASS']
-        glass_makes = {}
+        result = MessageBox.message(
+            parent=self,
+            title='Unsaved Changes',
+            text='You have unsaved changes that will be lost. Do you want to save them?',
+            buttons=buttons,
+        )
 
-        for item in os.listdir(glasses_path):
-            item_path = os.path.join(glasses_path, item)
-            if os.path.isdir(item_path):
-                glass_makes[item] = self.encode_path(item_path)
-        return glass_makes
-
-    def load_lens_models(self, path: str = '') -> dict | None:
-        models_path = self.var_paths['$MODEL']
-        if not path:
-            path = models_path
-
-        if os.path.isfile(path):
-            return
-
-        lens_models = {}
-        for item in os.listdir(path):
-            item_path = os.path.join(path, item)
-            if os.path.isfile(item_path):
-                if not item.endswith('.json'):
-                    continue
-                json_data = Settings().load_data(item_path)
-                if not json_data:
-                    continue
-                prescription = cast(Prescription, json_data)
-                lens_models[prescription.name] = self.encode_path(item_path)
-            elif os.path.isdir(item_path):
-                children = self.load_lens_models(item_path)
-                if children:
-                    lens_models[item] = children
-        return lens_models
-
-    def update_recent_paths(self, path: str) -> None:
-        if path in self.config.recent_paths:
-            self.config.recent_paths.remove(path)
-            self.config.recent_paths.insert(0, path)
+        if result == QtWidgets.QMessageBox.StandardButton.Save:
+            return self.save()
+        elif result == QtWidgets.QMessageBox.StandardButton.Cancel:
+            return False
         else:
-            self.config.recent_paths.insert(0, path)
+            return True
 
-        if len(self.config.recent_paths) > 10:
-            self.config.recent_paths = self.config.recent_paths[:10]
+    def save(self) -> bool:
+        self.settings.config = self.editor.config()
+        result = self.settings.save()
+        if result:
+            self.button_box.hide()
+        return result
+
+    def _settings_change(self) -> None:
+        # TODO: current self.editor.config() does not represent the whole config,
+        #  but only the settings editable in gui
+        config = self.editor.config()
+        if self.cached_config and self.cached_config != config:
+            self.button_box.show()
+        else:
+            self.button_box.hide()

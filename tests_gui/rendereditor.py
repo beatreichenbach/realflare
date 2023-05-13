@@ -23,7 +23,7 @@ def main():
     config_string = json.dumps(config_dict, indent=4)
     config = cast(data.Render, json.loads(config_string))
     editor.update_editor(config)
-    editor.property_changed.connect(lambda p: logging.debug(p.value))
+    editor.parameter_changed.connect(lambda p: logging.debug(p.value))
 
     editor.show()
 

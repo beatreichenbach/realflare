@@ -10,7 +10,7 @@ from PySide2 import QtCore
 
 from realflare.api.data import Project, RenderElement
 from realflare.api.engine import Engine
-from realflare.gui.settings import Settings
+from realflare.utils.settings import Settings
 from qt_extensions.typeutils import cast
 
 
@@ -85,8 +85,10 @@ def exec_(parser: ArgumentParser):
 
     kwargs = parse_project_args(args)
 
-    # start engine
+    # start application
     QtCore.QCoreApplication()
+
+    # start engine
     device = project.render.system.device
     engine = Engine(device)
 

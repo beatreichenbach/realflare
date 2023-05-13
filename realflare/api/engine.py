@@ -1,6 +1,7 @@
 import logging
 import os
 import re
+import warnings
 from collections import OrderedDict
 
 import cv2
@@ -21,22 +22,18 @@ from realflare.api.tasks.raytracing import RaytracingTask
 from realflare.api.tasks.rasterizing import RasterizingTask
 from realflare.api.tasks.compositing import CompositingTask
 
-from realflare.api.data import Project, RenderElement, Aperture
+from realflare.api.data import Project, RenderElement
 from realflare.api.tasks.opencl import Image, ImageArray
 from realflare.utils.timing import timer
 
 
 # TODO: check speed for sending large amounts of data through signal
-# TODO: figure out a way to only pass arguments that matter so that more things
-#       can get cached and tasks don't get run if there won't be a change
-# TODO: can update_element be called inside the run task so that it can only be called when there's an update?
+# TODO: can update_element be called inside the task so that it can only be
+#  called when there's an update? Right now every result (even if cached) will
+#  trigger a signal
 
 
-# def load_devices():
-#     devices = []
-#     for platform in cl.get_platforms():
-#         devices.extend(platform.get_devices())
-#     return devices
+logger = logging.getLogger(__name__)
 
 
 class Engine(QtCore.QObject):
@@ -48,14 +45,15 @@ class Engine(QtCore.QObject):
         super().__init__(parent)
 
         self.project: Project | None = None
+        self.elements = list[RenderElement.Type]
         self.images: dict[RenderElement.Type, Image] = {}
         self.queue = None
 
         try:
             self.queue = opencl.queue(device)
-            logging.debug(f'Engine initialized on: {self.queue.device.name}')
+            logger.debug(f'Engine initialized on: {self.queue.device.name}')
         except (cl.Error, ValueError) as e:
-            logging.error(e)
+            logger.error(e)
             return
         self._init_tasks()
         self._init_renderers()
@@ -211,11 +209,15 @@ class Engine(QtCore.QObject):
     @timer
     def render(self, project: data.Project) -> bool:
         # returns True on success
-        # TODO: give feedback with different messages, render_finished when success, different statuses etc, render_failed if error etc.
+        # TODO: give feedback with different messages, render_finished when success,
+        #  different statuses etc, render_failed if error etc.
+        #  this can actually be accomplished with logging messages now.
+        #  any output should just be logger.info so it shows up in the logbar
+
         self.project = project
 
         # build task queue, a list of all required tasks for the requested outputs
-        queue = set(project.elements)
+        queue = set(self.elements)
         if RenderElement.Type.FLARE in queue:
             queue.update((RenderElement.Type.GHOST, RenderElement.Type.STARBURST))
         if RenderElement.Type.STARBURST in queue:
@@ -227,18 +229,21 @@ class Engine(QtCore.QObject):
             for element_type, render_func in self.renderers.items():
                 if element_type in queue:
                     render_func(project)
-                    if self.thread().isInterruptionRequested():
-                        raise InterruptedError
         except InterruptedError:
-            logging.debug('render interrupted by user')
+            logger.warning('render interrupted by user')
             return False
         except Exception as e:
-            logging.exception(e)
+            logger.exception(e)
             return False
+        except UserWarning as e:
+            logger.warning(e)
         finally:
             self.project = None
             self.render_finished.emit()
         return True
+
+    def set_elements(self, elements: list[RenderElement]) -> None:
+        self.elements = elements
 
     def write_image(
         self,
@@ -248,7 +253,7 @@ class Engine(QtCore.QObject):
         colorspace: str = 'ACES - ACEScg',
     ) -> None:
         if not output_path:
-            logging.warning('no output path specified')
+            logger.warning('no output path specified')
             return
 
         # TODO: clean up, image/array etc
@@ -257,7 +262,7 @@ class Engine(QtCore.QObject):
                 try:
                     image = self.images[RenderElement.Type.FLARE]
                 except KeyError:
-                    logging.warning('RenderElement \'FLARE\' has not been rendered yet')
+                    logger.warning('RenderElement \'FLARE\' has not been rendered yet')
                     return
             array = image.array
 
@@ -269,7 +274,7 @@ class Engine(QtCore.QObject):
 
         img_output = cv2.cvtColor(array, cv2.COLOR_RGBA2BGR)
         cv2.imwrite(output_path, img_output)
-        logging.info('Output written: {}'.format(output_path))
+        logger.info('Output written: {}'.format(output_path))
 
     @staticmethod
     def parse_output_path(path: str, frame: int) -> str:
@@ -281,11 +286,11 @@ class Engine(QtCore.QObject):
         path = os.path.abspath(path)
         return path
 
-    @staticmethod
-    def clear_cache():
-        cl.tools.clear_first_arg_caches()
-
     def _update_element(self, element: RenderElement) -> None:
         self.images[element.type] = element.image
-        if element.type in self.project.elements:
+        if element.type in self.elements:
             self.element_changed.emit(element)
+
+
+def clear_cache():
+    cl.tools.clear_first_arg_caches()

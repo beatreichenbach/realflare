@@ -28,8 +28,8 @@ def main():
     config = cast(data.Flare, json.loads(config_string))
     editor.update_editor(config)
 
-    # editor.property_changed.connect(logging.debug)
-    editor.property_changed.connect(lambda: logging.debug(editor.flare_config()))
+    # editor.parameter_changed.connect(logging.debug)
+    editor.parameter_changed.connect(lambda: logging.debug(editor.flare_config()))
 
     editor.show()
 

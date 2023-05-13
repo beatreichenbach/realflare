@@ -10,18 +10,18 @@ from qt_extensions.button import Button
 from qt_extensions.filebrowser import FileBrowser, FileElement
 
 from realflare.api.data import Prescription
-from realflare.gui.settings import Settings
+from realflare.utils.settings import Settings
 from qt_extensions.box import CollapsibleBox
 from qt_extensions.elementbrowser import Field
 from qt_extensions.helper import unique_path
 from qt_extensions.icons import MaterialIcon
 from qt_extensions.messagebox import MessageBox
-from qt_extensions.properties import (
-    TabDataProperty,
-    IntProperty,
-    FloatProperty,
-    StringProperty,
-    PropertyEditor,
+from qt_extensions.parameters import (
+    TabDataParameter,
+    IntParameter,
+    FloatParameter,
+    StringParameter,
+    ParameterEditor,
 )
 from qt_extensions.typeutils import cast, cast_basic
 
@@ -62,29 +62,29 @@ class ContentWidget(QtWidgets.QWidget):
         return size
 
 
-class GroupEditor(PropertyEditor):
+class GroupEditor(ParameterEditor):
     def __init__(self, parent: QtWidgets.QWidget | None = None) -> None:
         super().__init__(parent)
 
         group = self.add_group('Group', style=CollapsibleBox.Style.SIMPLE)
         group.create_hierarchy = False
-        prop = StringProperty('name')
+        prop = StringParameter('name')
 
         regex = QtCore.QRegularExpression(r'[\w\d\.-]+')
         prop.text.setValidator(QtGui.QRegularExpressionValidator(regex, prop))
 
-        group.add_property(prop)
+        group.add_parameter(prop)
 
     def update_editor(self, name: str) -> None:
         self.form.blockSignals(True)
-        self.update_widget_values({'name': name})
+        self.set_values({'name': name})
         self.form.blockSignals(False)
 
     def name(self) -> str:
         return self.values().get('name', '')
 
 
-class LensModelEditor(PropertyEditor):
+class LensModelEditor(ParameterEditor):
     def __init__(self, parent: QtWidgets.QWidget | None = None) -> None:
         super().__init__(parent)
 
@@ -96,27 +96,27 @@ class LensModelEditor(PropertyEditor):
         model_group.create_hierarchy = False
 
         # model
-        prop = StringProperty('name')
+        prop = StringParameter('name')
         prop.tooltip = 'The name of the lens. Only for reference.'
-        self.name_property = model_group.add_property(prop)
+        self.name_parameter = model_group.add_parameter(prop)
 
-        prop = IntProperty('year')
+        prop = IntParameter('year')
         prop.slider_visible = False
         prop.line_min = 0
         prop.line_max = 9999
         prop.tooltip = 'The year of the lens / patent. Only for reference.'
-        model_group.add_property(prop)
+        model_group.add_parameter(prop)
 
-        prop = StringProperty('patent_number')
+        prop = StringParameter('patent_number')
         prop.tooltip = (
             'Patent number if the lens is based on a patent. Only for reference.'
         )
-        model_group.add_property(prop)
+        model_group.add_parameter(prop)
 
-        prop = StringProperty('notes')
+        prop = StringParameter('notes')
         prop.tooltip = 'Additional information for the lens. Only for reference.'
         prop.area = True
-        model_group.add_property(prop)
+        model_group.add_parameter(prop)
 
         # specs
         specs_group = self.add_group(
@@ -129,22 +129,22 @@ class LensModelEditor(PropertyEditor):
             for box in group.keys():
                 box.collapsed = False
 
-        prop = FloatProperty('focal_length')
+        prop = FloatParameter('focal_length')
         prop.slider_min = 10
         prop.slider_max = 100
         prop.slider_visible = False
         prop.tooltip = 'Focal Length in mm of the lens. Used for mapping the light source to the ray direction.'
-        specs_group.add_property(prop)
+        specs_group.add_parameter(prop)
 
-        prop = FloatProperty('fstop')
+        prop = FloatParameter('fstop')
         prop.label = 'Minimum F-Stop'
         prop.slider_min = 1
         prop.slider_max = 32
         prop.slider_visible = False
         prop.tooltip = 'Minimum possible F-Stop of the lens. Not currently used.'
-        specs_group.add_property(prop)
+        specs_group.add_parameter(prop)
 
-        prop = IntProperty('aperture_index')
+        prop = IntParameter('aperture_index')
         prop.line_min = 0
         prop.slider_visible = False
         prop.tooltip = (
@@ -152,9 +152,9 @@ class LensModelEditor(PropertyEditor):
             'Make sure to include a lens element with radius 0, refractive index 1 and correct '
             'height for the aperture. The height is currently not automatically calculated.'
         )
-        specs_group.add_property(prop)
+        specs_group.add_parameter(prop)
 
-        prop = TabDataProperty('lens_elements')
+        prop = TabDataParameter('lens_elements')
         fields = dataclasses.fields(Prescription.LensElement)
         prop.headers = [field.name for field in fields]
         prop.types = [field.type for field in fields]
@@ -163,7 +163,7 @@ class LensModelEditor(PropertyEditor):
             "labels are: radius 'r', distance 'd', refractive index 'n', abbe number 'v'. "
             "The height is rarely given and can be dialed in by comparing the diagram with the render."
         )
-        specs_group.add_property(prop)
+        specs_group.add_parameter(prop)
 
         # optimization
         # optimization_group = prescription_group.add_group(
@@ -171,14 +171,14 @@ class LensModelEditor(PropertyEditor):
         # )
         # optimization_group.create_hierarchy = False
         #
-        # prop = StringProperty('cull_ghosts')
-        # optimization_group.add_property(prop)
+        # prop = StringParameter('cull_ghosts')
+        # optimization_group.add_parameter(prop)
 
         # init defaults
         default_config = Prescription()
         values = dataclasses.asdict(default_config)
         # values['cull_ghosts'] = ', '.join(values['cull_ghosts'])
-        self.update_widget_values(values, attr='default')
+        self.set_values(values, attr='default')
 
     def prescription_config(self) -> Prescription:
         values = self.values()
@@ -199,7 +199,7 @@ class LensModelEditor(PropertyEditor):
         # values['cull_ghosts'] = ', '.join(values['cull_ghosts'])
 
         self.form.blockSignals(True)
-        self.update_widget_values(values)
+        self.set_values(values)
         self.form.blockSignals(False)
 
 
@@ -261,9 +261,9 @@ class LensModelDialog(QtWidgets.QWidget):
 
         # editor
         self.lens_editor = LensModelEditor()
-        self.lens_editor.property_changed.connect(self._prescription_change)
+        self.lens_editor.parameter_changed.connect(self._prescription_change)
         self.group_editor = GroupEditor()
-        self.group_editor.property_changed.connect(self._group_change)
+        self.group_editor.parameter_changed.connect(self._group_change)
         self.content_widget = ContentWidget()
         self.content_widget.add_widget(self.lens_editor)
         self.content_widget.add_widget(self.group_editor)
@@ -276,7 +276,7 @@ class LensModelDialog(QtWidgets.QWidget):
         self.button_box.setSizePolicy(size_policy)
         self.layout().addWidget(self.button_box)
 
-        save_button = Button('Save', style=Button.Style.PRIMARY)
+        save_button = Button('Save', color='primary')
         save_button.pressed.connect(self.save)
         self.button_box.addButton(save_button, QtWidgets.QDialogButtonBox.ApplyRole)
 

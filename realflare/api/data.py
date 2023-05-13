@@ -6,7 +6,7 @@ from PySide2 import QtGui, QtCore
 import logging
 
 from realflare.api.tasks.opencl import Image
-from qt_extensions.typeutils import hash_dataclass
+from qt_extensions.typeutils import hashable_dataclass, deep_field
 
 
 # TODO: defaults such as QColor, QSize etc are mutable
@@ -30,7 +30,7 @@ class AntiAliasing(enum.Enum):
             return '8x'
 
 
-@hash_dataclass
+@hashable_dataclass
 class Glass:
     name: str
     manufacturer: str
@@ -39,9 +39,9 @@ class Glass:
     coefficients: list[float] = field(repr=False)
 
 
-@hash_dataclass
+@hashable_dataclass
 class Prescription:
-    @hash_dataclass
+    @hashable_dataclass
     class LensElement:
         radius: float = 0
         distance: float = 0
@@ -61,11 +61,8 @@ class Prescription:
     aperture_index: int = 0
     lens_elements: list[LensElement] = field(default_factory=list)
 
-    # # optimization
-    # cull_ghosts: list[int] = field(default_factory=list)
 
-
-@hash_dataclass
+@hashable_dataclass
 class Aperture:
     fstop: float = 8
     file: str = ''
@@ -73,19 +70,19 @@ class Aperture:
     softness: float = 0
 
 
-@hash_dataclass
+@hashable_dataclass
 class Flare:
-    @hash_dataclass
+    @hashable_dataclass
     class Lens:
         # lens
-        sensor_size: QtCore.QSize = QtCore.QSize(36, 24)
+        sensor_size: QtCore.QSize = deep_field(QtCore.QSize(36, 24))
         prescription_path: str = ''
         glasses_path: str = ''
         abbe_nr_adjustment: float = 0
         min_area: float = 0.01
         coating_lens_elements: list[tuple[int, float]] = field(default_factory=list)
 
-    @hash_dataclass
+    @hashable_dataclass
     class Starburst:
         # aperture
         aperture: Aperture = field(default_factory=Aperture)
@@ -98,10 +95,10 @@ class Flare:
         rotation_weighting: float = 1
 
         # comp
-        fadeout: QtCore.QPointF = QtCore.QPointF(0.75, 1)
-        scale: QtCore.QSizeF = QtCore.QSizeF(1, 1)
+        fadeout: QtCore.QPointF = deep_field(QtCore.QPointF(0.75, 1))
+        scale: QtCore.QSizeF = deep_field(QtCore.QSizeF(1, 1))
 
-    @hash_dataclass
+    @hashable_dataclass
     class Ghost:
         # aperture
         aperture: Aperture = field(default_factory=Aperture)
@@ -111,8 +108,8 @@ class Flare:
 
     # light
     light_intensity: float = 1
-    light_color: QtGui.QColor = QtGui.QColor(1, 1, 1)
-    light_position: QtCore.QPointF = QtCore.QPointF(0, 0)
+    light_color: QtGui.QColor = deep_field(QtGui.QColor(1, 1, 1))
+    light_position: QtCore.QPointF = deep_field(QtCore.QPointF(0, 0))
 
     # image
     image_file: str = ''
@@ -130,21 +127,21 @@ class Flare:
     ghost: Ghost = field(default_factory=Ghost)
 
 
-@hash_dataclass
+@hashable_dataclass
 class Render:
-    @hash_dataclass
+    @hashable_dataclass
     class Quality:
-        @hash_dataclass
+        @hashable_dataclass
         class Starburst:
-            resolution: QtCore.QSize = QtCore.QSize(256, 256)
+            resolution: QtCore.QSize = deep_field(QtCore.QSize(256, 256))
             samples: int = 100
 
-        @hash_dataclass
+        @hashable_dataclass
         class Ghost:
-            resolution: QtCore.QSize = QtCore.QSize(256, 256)
+            resolution: QtCore.QSize = deep_field(QtCore.QSize(256, 256))
 
         # renderer
-        resolution: QtCore.QSize = QtCore.QSize(512, 512)
+        resolution: QtCore.QSize = deep_field(QtCore.QSize(512, 512))
         bin_size: int = 64
         anti_aliasing: int = 1
 
@@ -161,10 +158,10 @@ class Render:
         # ghost
         ghost: Ghost = field(default_factory=Ghost)
 
-    @hash_dataclass
+    @hashable_dataclass
     class Diagram:
         # renderer
-        resolution: QtCore.QSize = QtCore.QSize(2048, 1024)
+        resolution: QtCore.QSize = deep_field(QtCore.QSize(2048, 1024))
 
         # rays
         debug_ghost: int = 0
@@ -173,7 +170,7 @@ class Render:
         grid_length: float = 50
         column_offset: int = 0
 
-    @hash_dataclass
+    @hashable_dataclass
     class System:
         device: str = ''
 
@@ -197,7 +194,7 @@ class Render:
     diagram: Diagram = field(default_factory=Diagram)
 
 
-@hash_dataclass
+@hashable_dataclass
 class RenderElement:
     @enum.unique
     class Type(enum.Enum):
@@ -212,8 +209,7 @@ class RenderElement:
     image: Image
 
 
-@hash_dataclass
+@hashable_dataclass
 class Project:
     flare: Flare = field(default_factory=Flare)
     render: Render = field(default_factory=Render)
-    elements: list[RenderElement.Type] | None = None

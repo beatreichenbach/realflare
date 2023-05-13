@@ -16,7 +16,7 @@ from realflare.api.tasks.opencl import (
     intersection_dtype,
 )
 from realflare.api.tasks.raytracing import RaytracingTask
-from realflare.gui.settings import Settings
+from realflare.utils.settings import Settings
 from realflare.utils.timing import timer
 
 

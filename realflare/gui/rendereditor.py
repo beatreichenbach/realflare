@@ -4,28 +4,28 @@ import logging
 import os
 from functools import partial
 
-from PySide2 import QtWidgets, QtCore
+from PySide2 import QtWidgets
 
-from realflare.api import data, engine
+from realflare.api import data
 from realflare.api.data import Render, AntiAliasing
 from realflare.api.tasks import opencl
-from realflare.gui.settings import Settings
-from qt_extensions.properties import (
-    IntProperty,
-    FloatProperty,
-    StringProperty,
-    PathProperty,
-    PropertyEditor,
-    SizeProperty,
-    BoolProperty,
-    EnumProperty,
-    PropertyWidget,
+from realflare.utils.settings import Settings
+from qt_extensions.parameters import (
+    IntParameter,
+    FloatParameter,
+    StringParameter,
+    PathParameter,
+    ParameterEditor,
+    SizeParameter,
+    BoolParameter,
+    EnumParameter,
+    ParameterWidget,
 )
 from qt_extensions.box import CollapsibleBox
 from qt_extensions.typeutils import cast, cast_basic
 
 
-class RenderEditor(PropertyEditor):
+class RenderEditor(ParameterEditor):
     def __init__(self, parent: QtWidgets.QWidget | None = None) -> None:
         super().__init__(parent)
 
@@ -41,14 +41,14 @@ class RenderEditor(PropertyEditor):
         )
         output_group.create_hierarchy = False
 
-        prop = PathProperty('output_path')
-        prop.method = PathProperty.Method.SAVE_FILE
+        prop = PathParameter('output_path')
+        prop.method = PathParameter.Method.SAVE_FILE
         prop.tooltip = 'Output image path. Use $F4 to replace frame numbers. For example: render.$F4.exr'
-        output_group.add_property(prop)
+        output_group.add_parameter(prop)
 
-        prop = StringProperty('colorspace')
+        prop = StringParameter('colorspace')
         prop.tooltip = 'Colorspace of the OCIO config. For example: \'ACES - ACEScg\''
-        output_group.add_property(prop)
+        output_group.add_parameter(prop)
 
         layout = output_group.layout()
         row = layout.rowCount()
@@ -72,23 +72,23 @@ class RenderEditor(PropertyEditor):
             'renderer', collapsible=True, style=CollapsibleBox.Style.SIMPLE
         )
         renderer_group.create_hierarchy = False
-        prop = SizeProperty('resolution')
+        prop = SizeParameter('resolution')
         prop.slider_visible = False
         prop.ratio_visible = False
         prop.tooltip = 'Resolution of the flare image.'
-        renderer_group.add_property(prop)
+        renderer_group.add_parameter(prop)
 
-        prop = IntProperty('bin_size')
+        prop = IntParameter('bin_size')
         prop.slider_visible = False
         prop.tooltip = 'Bin size of the renderer. Larger values will require less memory but increase render time.'
-        renderer_group.add_property(prop)
+        renderer_group.add_parameter(prop)
 
-        prop = EnumProperty('anti_aliasing')
+        prop = EnumParameter('anti_aliasing')
         prop.label = 'Anti Aliasing'
         prop.enum = AntiAliasing
         prop.formatter = AntiAliasing.format
         prop.tooltip = 'Super sampling multiplier for anti-aliasing.'
-        renderer_group.add_property(prop)
+        renderer_group.add_parameter(prop)
 
         # rays
         rays_group = quality_group.add_group(
@@ -96,7 +96,7 @@ class RenderEditor(PropertyEditor):
         )
         rays_group.create_hierarchy = False
 
-        prop = IntProperty('wavelength_count')
+        prop = IntParameter('wavelength_count')
         prop.label = 'Wavelengths'
         prop.line_min = 1
         prop.slider_min = 1
@@ -104,9 +104,9 @@ class RenderEditor(PropertyEditor):
             'The amount of wavelengths that get traced through the lens system in a range of 390nm - 700nm. '
             'Final quality can often be achieved with a value of 5.'
         )
-        rays_group.add_property(prop)
+        rays_group.add_parameter(prop)
 
-        prop = IntProperty('wavelength_sub_count')
+        prop = IntParameter('wavelength_sub_count')
         prop.label = 'Wavelength Substeps'
         prop.line_min = 1
         prop.slider_min = 1
@@ -115,18 +115,18 @@ class RenderEditor(PropertyEditor):
             'This happens during the rendering stage and interpolates between '
             'the ray-traced wavelengths to generate a smoother transition.'
         )
-        rays_group.add_property(prop)
+        rays_group.add_parameter(prop)
 
-        prop = IntProperty('grid_subdivisions')
+        prop = IntParameter('grid_subdivisions')
         prop.slider_max = 256
         prop.tooltip = (
             'The subdivisions of the grid that gets traced through the lens system. '
             'The more distortion the lens produces, the more subdivisions are needed. '
             'Good results can be achieved at a range of 64-128 rarely needing values up to 200.'
         )
-        rays_group.add_property(prop)
+        rays_group.add_parameter(prop)
 
-        prop = FloatProperty('grid_length')
+        prop = FloatParameter('grid_length')
         prop.slider_max = 100
         prop.tooltip = (
             'Length in mm of the grid that gets traced through the lens system. '
@@ -134,9 +134,9 @@ class RenderEditor(PropertyEditor):
             'It\'s best to keep this value as small as possible. Values too small will '
             'lead to cut off shapes in the render.'
         )
-        rays_group.add_property(prop)
+        rays_group.add_parameter(prop)
 
-        prop = FloatProperty('cull_percentage')
+        prop = FloatParameter('cull_percentage')
         prop.slider_max = 1
         prop.line_min = 0
         prop.line_max = 1
@@ -144,45 +144,45 @@ class RenderEditor(PropertyEditor):
             'A percentage for how many of the darkest ghosts to cull. '
             '0.2 means 20% of the darkest ghosts are culled which speeds up performance.'
         )
-        rays_group.add_property(prop)
+        rays_group.add_parameter(prop)
 
         # starburst
         starburst_group = quality_group.add_group(
             'starburst', collapsible=True, style=CollapsibleBox.Style.SIMPLE
         )
 
-        prop = SizeProperty('resolution')
+        prop = SizeParameter('resolution')
         prop.slider_visible = False
         prop.ratio_visible = False
         prop.tooltip = 'Resolution of the starburst pattern.'
-        starburst_group.add_property(prop)
+        starburst_group.add_parameter(prop)
 
-        prop = IntProperty('samples')
+        prop = IntParameter('samples')
         prop.slider_visible = False
         prop.tooltip = (
             'Number of samples. High quality renders might need up to 2048 samples.'
         )
-        starburst_group.add_property(prop)
+        starburst_group.add_parameter(prop)
 
         # ghost
         ghost_group = quality_group.add_group(
             'ghost', collapsible=True, style=CollapsibleBox.Style.SIMPLE
         )
 
-        prop = SizeProperty('resolution')
+        prop = SizeParameter('resolution')
         prop.slider_visible = False
         prop.ratio_visible = False
         prop.tooltip = 'Resolution of the ghost.'
-        ghost_group.add_property(prop)
+        ghost_group.add_parameter(prop)
 
         # system
         system_group = self.add_group(
             'system', collapsible=True, style=CollapsibleBox.Style.BUTTON
         )
 
-        prop = StringProperty('device')
+        prop = StringParameter('device')
         prop.menu = opencl.devices()
-        system_group.add_property(prop)
+        system_group.add_parameter(prop)
 
         # debug
         debug_group = self.add_group(
@@ -190,18 +190,18 @@ class RenderEditor(PropertyEditor):
         )
         debug_group.create_hierarchy = False
 
-        prop = BoolProperty('disable_starburst')
-        debug_group.add_property(prop)
+        prop = BoolParameter('disable_starburst')
+        debug_group.add_parameter(prop)
 
-        prop = BoolProperty('disable_ghosts')
-        debug_group.add_property(prop)
+        prop = BoolParameter('disable_ghosts')
+        debug_group.add_parameter(prop)
 
-        prop = BoolProperty('debug_ghosts')
-        debug_group.add_property(prop)
+        prop = BoolParameter('debug_ghosts')
+        debug_group.add_parameter(prop)
 
-        prop = IntProperty('debug_ghost')
+        prop = IntParameter('debug_ghost')
         prop.slider_max = 100
-        debug_group.add_property(prop)
+        debug_group.add_parameter(prop)
 
         # diagram
         diagram_group = self.add_group(
@@ -213,41 +213,41 @@ class RenderEditor(PropertyEditor):
         )
         diagram_renderer_group.create_hierarchy = False
 
-        prop = SizeProperty('resolution')
+        prop = SizeParameter('resolution')
         prop.slider_visible = False
         prop.ratio_visible = False
-        diagram_renderer_group.add_property(prop)
+        diagram_renderer_group.add_parameter(prop)
 
         diagram_rays_group = diagram_group.add_group(
             'rays', collapsible=True, style=CollapsibleBox.Style.SIMPLE
         )
         diagram_rays_group.create_hierarchy = False
 
-        prop = IntProperty('debug_ghost')
+        prop = IntParameter('debug_ghost')
         prop.slider_max = 100
-        diagram_rays_group.add_property(prop)
+        diagram_rays_group.add_parameter(prop)
 
-        prop = FloatProperty('light_position')
+        prop = FloatParameter('light_position')
         prop.slider_min = -1
         prop.slider_max = 1
-        diagram_rays_group.add_property(prop)
+        diagram_rays_group.add_parameter(prop)
 
-        prop = IntProperty('grid_subdivisions')
+        prop = IntParameter('grid_subdivisions')
         prop.slider_max = 256
-        diagram_rays_group.add_property(prop)
+        diagram_rays_group.add_parameter(prop)
 
-        prop = FloatProperty('grid_length')
+        prop = FloatParameter('grid_length')
         prop.slider_max = 100
-        diagram_rays_group.add_property(prop)
+        diagram_rays_group.add_parameter(prop)
 
-        prop = IntProperty('column_offset')
+        prop = IntParameter('column_offset')
         prop.slider_min = -20
         prop.slider_max = 20
-        diagram_rays_group.add_property(prop)
+        diagram_rays_group.add_parameter(prop)
 
         # init defaults
         default_config = data.Render()
-        self.update_widget_values(dataclasses.asdict(default_config), attr='default')
+        self.set_values(dataclasses.asdict(default_config), attr='default')
 
     def _init_actions(self) -> None:
         for name in ('quality',):
@@ -296,9 +296,9 @@ class RenderEditor(PropertyEditor):
         values['diagram']['grid_subdivisions'] = values['diagram']['grid_count'] - 1
 
         self.form.blockSignals(True)
-        self.update_widget_values(values)
+        self.set_values(values)
         self.form.blockSignals(False)
-        self.property_changed.emit(PropertyWidget())
+        self.parameter_changed.emit(ParameterWidget())
 
     def save_to_disk(self):
         pass

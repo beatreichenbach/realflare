@@ -18,7 +18,7 @@ from realflare.api.tasks.opencl import (
     LAMBDA_MAX,
     Buffer,
 )
-from realflare.gui.settings import Settings
+from realflare.utils.settings import Settings
 from realflare.utils.timing import timer
 from qt_extensions.typeutils import cast
 
@@ -216,7 +216,7 @@ class RaytracingTask(OpenCL):
         grid_length: int,
         resolution: QtCore.QSize,
         wavelength_count: int,
-        store_intersections: bool,  # for cache
+        store_intersections: bool,  # for log_cache
         path_indexes: tuple[int] | None = None,
     ) -> Buffer | None:
 
