@@ -82,7 +82,7 @@ class StarburstTask(OpenCL):
     def starburst(
         self,
         config: Flare.Starburst,
-        quality: Render.Quality.Starburst,
+        quality: Render.Starburst,
         aperture: Image,
     ) -> Image:
         # rebuild kernel

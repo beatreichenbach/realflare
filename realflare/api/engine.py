@@ -22,7 +22,7 @@ from realflare.api.tasks.raytracing import RaytracingTask
 from realflare.api.tasks.rasterizing import RasterizingTask
 from realflare.api.tasks.compositing import CompositingTask
 
-from realflare.api.data import Project, RenderElement
+from realflare.api.data import Project, RenderElement, RenderImage
 from realflare.api.tasks.opencl import Image, ImageArray
 from realflare.utils.timing import timer
 
@@ -38,15 +38,15 @@ logger = logging.getLogger(__name__)
 
 class Engine(QtCore.QObject):
     task_started: QtCore.Signal = QtCore.Signal()
-    element_changed: QtCore.Signal = QtCore.Signal(RenderElement)
+    image_changed: QtCore.Signal = QtCore.Signal(RenderImage)
     render_finished: QtCore.Signal = QtCore.Signal()
 
     def __init__(self, device: str = '', parent: QtCore.QObject | None = None) -> None:
         super().__init__(parent)
 
         self.project: Project | None = None
-        self.elements = list[RenderElement.Type]
-        self.images: dict[RenderElement.Type, Image] = {}
+        self.elements = list[RenderElement]
+        self.images: dict[RenderElement, Image] = {}
         self.queue = None
 
         try:
@@ -72,25 +72,25 @@ class Engine(QtCore.QObject):
 
     def _init_renderers(self):
         self.renderers = OrderedDict()
-        self.renderers[RenderElement.Type.STARBURST_APERTURE] = self.starburst_aperture
-        self.renderers[RenderElement.Type.STARBURST] = self.starburst
-        self.renderers[RenderElement.Type.GHOST_APERTURE] = self.ghost_aperture
-        self.renderers[RenderElement.Type.GHOST] = self.ghost
-        self.renderers[RenderElement.Type.FLARE] = self.flare
-        self.renderers[RenderElement.Type.DIAGRAM] = self.diagram
+        self.renderers[RenderElement.STARBURST_APERTURE] = self.starburst_aperture
+        self.renderers[RenderElement.STARBURST] = self.starburst
+        self.renderers[RenderElement.GHOST_APERTURE] = self.ghost_aperture
+        self.renderers[RenderElement.GHOST] = self.ghost
+        self.renderers[RenderElement.FLARE] = self.flare
+        self.renderers[RenderElement.DIAGRAM] = self.diagram
 
     def starburst_aperture(self, project: Project) -> None:
         aperture_config = project.flare.starburst.aperture
         quality_config = project.render.quality.starburst
 
         image = self.aperture_task.run(aperture_config, quality_config)
-        element = RenderElement(RenderElement.Type.STARBURST_APERTURE, image)
+        element = RenderImage(RenderElement.STARBURST_APERTURE, image)
         self._update_element(element)
 
     def starburst(self, project: Project) -> None:
-        aperture = self.images[RenderElement.Type.STARBURST_APERTURE]
+        aperture = self.images[RenderElement.STARBURST_APERTURE]
         image = self.starburst_task.run(project.flare, project.render, aperture)
-        element = RenderElement(RenderElement.Type.STARBURST, image)
+        element = RenderImage(RenderElement.STARBURST, image)
         self._update_element(element)
 
     def ghost_aperture(self, project: Project) -> None:
@@ -98,13 +98,13 @@ class Engine(QtCore.QObject):
         quality_config = project.render.quality.ghost
 
         image = self.aperture_task.run(aperture_config, quality_config)
-        element = RenderElement(RenderElement.Type.GHOST_APERTURE, image)
+        element = RenderImage(RenderElement.GHOST_APERTURE, image)
         self._update_element(element)
 
     def ghost(self, project: Project) -> None:
-        aperture = self.image(RenderElement.Type.GHOST_APERTURE)
+        aperture = self.image(RenderElement.GHOST_APERTURE)
         image = self.ghost_task.run(project.flare, project.render, aperture)
-        element = RenderElement(RenderElement.Type.GHOST, image)
+        element = RenderImage(RenderElement.GHOST, image)
         self._update_element(element)
 
     def flare(self, project: Project) -> None:
@@ -113,14 +113,14 @@ class Engine(QtCore.QObject):
         else:
             path_indexes = self.preprocess_task.run(project.flare, project.render)
 
-        ghost = self.image(RenderElement.Type.GHOST)
+        ghost = self.image(RenderElement.GHOST)
 
         if project.flare.image_file:
             sample_data = self.image_sampling_task.run(project.flare, project.render)
 
             if project.flare.image_show_sample:
                 image = Image(self.queue.context, array=sample_data)
-                element = RenderElement(RenderElement.Type.FLARE, image)
+                element = RenderImage(RenderElement.FLARE, image)
                 self._update_element(element)
                 return
 
@@ -181,7 +181,7 @@ class Engine(QtCore.QObject):
             # image, image_cl = self.compositing_task.run(
             #     flare_cl, self.starburst_cl, flare_config, render_config
             # )
-        element = RenderElement(RenderElement.Type.FLARE, image)
+        element = RenderImage(RenderElement.FLARE, image)
         self._update_element(element)
 
     def diagram(self, project: Project) -> None:
@@ -197,10 +197,10 @@ class Engine(QtCore.QObject):
             project.flare, project.render, path_indexes
         )
         image = self.diagram_task.run(project.flare.lens, project.render, intersections)
-        element = RenderElement(RenderElement.Type.DIAGRAM, image)
+        element = RenderImage(RenderElement.DIAGRAM, image)
         self._update_element(element)
 
-    def image(self, element_type: RenderElement.Type) -> Image | ImageArray:
+    def image(self, element_type: RenderElement) -> Image | ImageArray:
         try:
             return self.images[element_type]
         except KeyError:
@@ -218,12 +218,12 @@ class Engine(QtCore.QObject):
 
         # build task queue, a list of all required tasks for the requested outputs
         queue = set(self.elements)
-        if RenderElement.Type.FLARE in queue:
-            queue.update((RenderElement.Type.GHOST, RenderElement.Type.STARBURST))
-        if RenderElement.Type.STARBURST in queue:
-            queue.add(RenderElement.Type.STARBURST_APERTURE)
-        if RenderElement.Type.GHOST in queue:
-            queue.add(RenderElement.Type.GHOST_APERTURE)
+        if RenderElement.FLARE in queue:
+            queue.update((RenderElement.GHOST, RenderElement.STARBURST))
+        if RenderElement.STARBURST in queue:
+            queue.add(RenderElement.STARBURST_APERTURE)
+        if RenderElement.GHOST in queue:
+            queue.add(RenderElement.GHOST_APERTURE)
 
         try:
             for element_type, render_func in self.renderers.items():
@@ -242,7 +242,7 @@ class Engine(QtCore.QObject):
             self.render_finished.emit()
         return True
 
-    def set_elements(self, elements: list[RenderElement]) -> None:
+    def set_elements(self, elements: list[RenderImage]) -> None:
         self.elements = elements
 
     def write_image(
@@ -260,7 +260,7 @@ class Engine(QtCore.QObject):
         if array is None:
             if image is None:
                 try:
-                    image = self.images[RenderElement.Type.FLARE]
+                    image = self.images[RenderElement.FLARE]
                 except KeyError:
                     logger.warning('RenderElement \'FLARE\' has not been rendered yet')
                     return
@@ -286,10 +286,10 @@ class Engine(QtCore.QObject):
         path = os.path.abspath(path)
         return path
 
-    def _update_element(self, element: RenderElement) -> None:
+    def _update_element(self, element: RenderImage) -> None:
         self.images[element.type] = element.image
         if element.type in self.elements:
-            self.element_changed.emit(element)
+            self.image_changed.emit(element)
 
 
 def clear_cache():

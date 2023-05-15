@@ -295,7 +295,7 @@ class RasterizingTask(OpenCL):
     @timer
     def rasterize(
         self,
-        quality: Render.Quality,
+        quality: Render,
         rays: Buffer,
         ghost: ImageArray,
         sensor_size: QtCore.QSizeF,

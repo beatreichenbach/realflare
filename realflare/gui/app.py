@@ -13,8 +13,9 @@ from PySide2 import QtCore, QtGui, QtWidgets
 from qt_extensions.icons import MaterialIcon
 from qt_extensions.logger import LogCache, LogBar, LogViewer
 from realflare.gui.lensmodeleditor import LensModelDialog
+from realflare.gui.parameters import ProjectEditor
 from realflare.update import UpdateDialog
-from realflare.api.data import Project, RenderElement, Flare, Render
+from realflare.api.data import Project, RenderElement, Flare, Render, RenderImage
 from realflare.api.engine import Engine, clear_cache
 from realflare.gui.viewer import ElementViewer
 from realflare.utils.settings import Settings
@@ -28,6 +29,9 @@ from qt_extensions import theme
 from qt_extensions.messagebox import MessageBox
 from qt_extensions.typeutils import cast, cast_basic
 from realflare.utils.timing import timer
+
+
+# TODO: send project to engine, make sure only new results get stored in ram cache
 
 
 class MainWindow(DockWindow):
@@ -79,14 +83,14 @@ class MainWindow(DockWindow):
             QtGui.QColor('white'),
         )
         self.api_thread = QtCore.QThread()
-        device = self.project.render.system.device
+        device = self.project.render.device
         self.engine = Engine(device)
         if self.engine.queue is None:
             return
         self.engine.moveToThread(self.api_thread)
         self.api_thread.start()
 
-        self.engine.element_changed.connect(self._render_element_change)
+        self.engine.image_changed.connect(self._render_element_change)
         self.engine.render_finished.connect(self._render_finish)
         self.elements_changed.connect(self.engine.set_elements)
         self.render_requested.connect(self.engine.render)
@@ -98,8 +102,8 @@ class MainWindow(DockWindow):
             QtGui.QColor('white'),
         )
         self.register_widget(ElementViewer, 'Viewer', unique=False)
-        self.register_widget(FlareEditor)
-        self.register_widget(RenderEditor)
+        self.register_widget(ProjectEditor, 'Parameters')
+        # self.register_widget(RenderEditor)
         self.register_widget(LogViewer, 'Log')
         self.register_widget(PresetBrowser)
         self.register_widget(LensModelDialog, 'Lens Model Editor')
@@ -162,12 +166,7 @@ class MainWindow(DockWindow):
         view_menu.addAction(action)
         action = QtWidgets.QAction('Show Parameters', self)
         action.setIcon(MaterialIcon('tune'))
-        view_menu.addAction(action)
-        action = QtWidgets.QAction('Show Flare Editor', self)
-        action.triggered.connect(partial(self.show_widget, FlareEditor))
-        view_menu.addAction(action)
-        action = QtWidgets.QAction('Show Render Editor', self)
-        action.triggered.connect(partial(self.show_widget, RenderEditor))
+        action.triggered.connect(partial(self.show_widget, ProjectEditor))
         view_menu.addAction(action)
         action = QtWidgets.QAction('Show Preset Browser', self)
         action.setIcon(MaterialIcon('perm_media'))
@@ -449,7 +448,7 @@ class MainWindow(DockWindow):
             self._project_queue = None
             self.rendering = True
             self.log_cache.clear()
-            self.render_requested.emit(self._project_queue)
+            # self.render_requested.emit(self._project_queue)
 
     def _load_preset(self, config: Any):
         if isinstance(config, (Flare, Flare.Ghost, Flare.Starburst)):
@@ -463,7 +462,7 @@ class MainWindow(DockWindow):
             if isinstance(widget, cls):
                 widget.load_preset(config=config)
 
-    def _render_element_change(self, element: RenderElement) -> None:
+    def _render_element_change(self, element: RenderImage) -> None:
         for widget in self._widgets.values():
             if isinstance(widget, ElementViewer) and widget.element == element.type:
                 widget.update_image(element.image.array)
@@ -531,7 +530,7 @@ class MainWindow(DockWindow):
     def _update_position(self, viewer: ElementViewer, position: QtCore.QPoint) -> None:
         # set the position of the light when clicking on a viewer
 
-        if viewer.element != RenderElement.Type.FLARE:
+        if viewer.element != RenderElement.FLARE:
             return
 
         # update project
@@ -606,6 +605,7 @@ def exec_():
     window.show()
     splash_screen.finish(window)
     window.refresh()
+    logging.warning('hello')
 
     return app.exec_()
 

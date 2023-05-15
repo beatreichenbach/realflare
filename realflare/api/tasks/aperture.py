@@ -89,7 +89,7 @@ class ApertureTask(OpenCL):
     def run(
         self,
         aperture_config: Aperture,
-        quality_config: Render.Quality.Starburst | Render.Quality.Ghost,
+        quality_config: Render.Starburst | Render.Ghost,
     ) -> Image:
         if aperture_config.file:
             file_path = self.settings.decode_path(aperture_config.file)

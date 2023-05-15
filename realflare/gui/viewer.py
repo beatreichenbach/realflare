@@ -1,4 +1,3 @@
-import dataclasses
 import logging
 
 import numpy as np
@@ -7,22 +6,20 @@ import PyOpenColorIO as OCIO
 
 from realflare.api.data import RenderElement
 
-from realflare.utils.timing import timer
 from qt_extensions.parameters import EnumParameter
-from qt_extensions.typeutils import cast
 from qt_extensions.viewer import Viewer
 
 
 class ElementViewer(Viewer):
-    element_changed: QtCore.Signal = QtCore.Signal(RenderElement.Type)
+    element_changed: QtCore.Signal = QtCore.Signal(RenderElement)
 
     def __init__(self, parent: QtWidgets.QWidget | None = None) -> None:
         super().__init__(parent)
 
-        self._element = RenderElement.Type.STARBURST_APERTURE
+        self._element = RenderElement.FLARE
 
-        self.element_property = EnumParameter()
-        self.element_property.enum = RenderElement.Type
+        self.element_property = EnumParameter('element')
+        self.element_property.enum = RenderElement
         self.element_property.default = self._element
         self.element_property.value_changed.connect(self._change_element)
 
@@ -48,11 +45,11 @@ class ElementViewer(Viewer):
         self.item.post_processes.append(self._apply_colorspace)
 
     @property
-    def element(self) -> RenderElement.Type:
+    def element(self) -> RenderElement:
         return self._element
 
     @element.setter
-    def element(self, value: RenderElement.Type) -> None:
+    def element(self, value: RenderElement) -> None:
         self.element_property.value = value
 
     def state(self) -> dict:
@@ -61,13 +58,13 @@ class ElementViewer(Viewer):
         return state
 
     def set_state(self, state: dict) -> None:
-        values = {'element': RenderElement.Type.FLARE}
+        values = {'element': RenderElement.FLARE}
         values.update(state)
         super().set_state(values)
         self.element = values['element']
 
-    def _change_element(self, value: str) -> None:
-        self._element = RenderElement.Type(value)
+    def _change_element(self, value) -> None:
+        self._element = value
         self.element_changed.emit(self._element)
 
     def _apply_colorspace(self, array: np.ndarray) -> np.ndarray:

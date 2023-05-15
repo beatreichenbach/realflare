@@ -38,7 +38,7 @@ class StarburstFileElement(FileElement):
 
 @dataclasses.dataclass
 class QualityFileElement(FileElement):
-    config: Render.Quality | None = None
+    config: Render | None = None
 
 
 class ThumbnailDelegate(QtWidgets.QStyledItemDelegate):
