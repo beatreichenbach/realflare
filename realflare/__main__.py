@@ -5,7 +5,7 @@ import sys
 
 from realflare.cli import app as cli_app
 from realflare.gui import app as gui_app
-from realflare.utils.settings import Settings
+from realflare.utils.storage import Storage
 
 os.environ["OPENCV_IO_ENABLE_OPENEXR"] = "1"
 
@@ -62,15 +62,15 @@ def argument_parser():
 
 
 def sentry():
-    settings = Settings()
-    settings.load()
+    storage = Storage()
+    storage.load_settings()
 
-    if settings.config.sentry is None:
+    if storage.settings.sentry is None:
         from realflare.gui import sentry
 
         sentry.request_permission()
 
-    if settings.config.sentry:
+    if storage.settings.sentry:
         import sentry_sdk
 
         environment = 'production'

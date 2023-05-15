@@ -10,12 +10,12 @@ from typing import Any
 from PySide2 import QtWidgets, QtCore, QtGui
 
 from realflare.api.data import Flare, Render
-from realflare.utils.settings import Settings
 from qt_extensions.elementbrowser import Field, ElementProxyModel
 from qt_extensions.filebrowser import FileBrowser, FileElement
 from qt_extensions.flexview import FlexView
 from qt_extensions.icons import MaterialIcon
 from qt_extensions.typeutils import cast
+from realflare.utils.storage import Storage
 
 
 @dataclasses.dataclass
@@ -73,13 +73,17 @@ class PresetBrowser(FileBrowser):
 
     def __init__(
         self,
-        path: str = Settings().decode_path('$PRESET'),
+        path: str = '',
         fields: list[Field] | None = None,
         parent: QtWidgets.QWidget | None = None,
     ) -> None:
+        self.storage = Storage()
+        if not path:
+            path = self.storage.decode_path('$PRESET')
+
         self.root_dirs = {}
         for dir_name in ('flare', 'quality', 'ghost', 'starburst'):
-            root_path = Settings().decode_path(os.path.join('$PRESET', dir_name))
+            root_path = self.storage.decode_path(os.path.join('$PRESET', dir_name))
             root_path = os.path.normpath(root_path)
             self.root_dirs[dir_name] = root_path
 
@@ -147,10 +151,9 @@ class PresetBrowser(FileBrowser):
         return index
 
     def _element(self, path: str) -> FileElement:
-        settings = Settings()
         name = os.path.basename(path)
 
-        json_data = settings.load_data(path) if os.path.isfile(path) else None
+        json_data = self.storage.load_data(path) if os.path.isfile(path) else None
 
         if path.startswith(self.root_dirs['flare']):
             config = cast(Flare, json_data) if json_data is not None else None

@@ -10,7 +10,7 @@ from qt_extensions.button import Button
 from qt_extensions.filebrowser import FileBrowser, FileElement
 
 from realflare.api.data import Prescription
-from realflare.utils.settings import Settings
+from realflare.utils.storage import Storage
 from qt_extensions.box import CollapsibleBox
 from qt_extensions.elementbrowser import Field
 from qt_extensions.helper import unique_path
@@ -227,7 +227,7 @@ class LensModelBrowser(FileBrowser):
         self.model.append_element(element, icon=icon, parent=parent)
 
     def _append_file(self, path: str, parent: QtCore.QModelIndex):
-        data = Settings().load_data(path)
+        data = Storage().load_data(path)
         prescription = cast(Prescription, data)
         name = prescription.name
         element = LensModelFileElement(name=name, path=path, prescription=prescription)
@@ -252,7 +252,7 @@ class LensModelDialog(QtWidgets.QWidget):
         self.layout().addLayout(content_layout)
 
         # browser
-        path = Settings().decode_path('$MODEL')
+        path = Storage().decode_path('$MODEL')
         # fields = [Field('name', editable=True)]
         self.browser = LensModelBrowser(path)
         self.browser.selection_changed.connect(self._selection_change)
@@ -387,7 +387,7 @@ class LensModelDialog(QtWidgets.QWidget):
                 pass
 
         json_data = cast_basic(prescription)
-        Settings().save_data(json_data, path)
+        Storage().save_data(json_data, path)
 
         logging.debug(f'File saved: {path}')
 

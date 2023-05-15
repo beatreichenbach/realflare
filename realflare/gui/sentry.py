@@ -4,15 +4,15 @@ from PySide2 import QtWidgets
 
 from qt_extensions import theme
 from qt_extensions.messagebox import MessageBox
-from realflare.utils.settings import Settings
+from realflare.utils.storage import Storage
 
 
 def request_permission():
     app = QtWidgets.QApplication(sys.argv)
     theme.apply_theme(theme.monokai)
 
-    settings = Settings()
-    settings.load()
+    storage = Storage()
+    storage.load_settings()
 
     result = MessageBox.question(
         None,
@@ -24,8 +24,8 @@ def request_permission():
         'Crash reporting can be disabled at any time under Settings.',
     )
 
-    settings.config.sentry = result == QtWidgets.QMessageBox.StandardButton.Yes
-    settings.save()
+    storage.settings.sentry = result == QtWidgets.QMessageBox.StandardButton.Yes
+    storage.save_settings()
     app.quit()
 
 

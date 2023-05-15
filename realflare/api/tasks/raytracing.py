@@ -18,7 +18,8 @@ from realflare.api.tasks.opencl import (
     LAMBDA_MAX,
     Buffer,
 )
-from realflare.utils.settings import Settings
+
+from realflare.utils.storage import Storage
 from realflare.utils.timing import timer
 from qt_extensions.typeutils import cast
 
@@ -41,7 +42,7 @@ class RaytracingTask(OpenCL):
         self, queue: cl.CommandQueue, store_intersections: bool = False
     ) -> None:
         super().__init__(queue)
-        self.settings = Settings()
+        self.storage = Storage()
         self.kernel = None
         self.store_intersections = store_intersections
         self.build()
@@ -62,7 +63,7 @@ class RaytracingTask(OpenCL):
     @lru_cache(10)
     def update_prescription(self, file: File) -> Prescription:
         file_path = str(file)
-        json_data = self.settings.load_data(file_path)
+        json_data = self.storage.load_data(file_path)
         prescription = cast(Prescription, json_data)
         return prescription
 
@@ -84,7 +85,7 @@ class RaytracingTask(OpenCL):
         lens_elements.append(Prescription.LensElement(height=sensor_length))
 
         # glasses
-        glasses_path = self.settings.decode_path(lens.glasses_path)
+        glasses_path = self.storage.decode_path(lens.glasses_path)
         glasses = glass.glasses_from_path(glasses_path)
 
         # array
@@ -225,7 +226,7 @@ class RaytracingTask(OpenCL):
             self.build()
 
         # lens elements
-        prescription_path = self.settings.decode_path(lens.prescription_path)
+        prescription_path = self.storage.decode_path(lens.prescription_path)
         prescription = self.update_prescription(File(prescription_path))
         # TODO: checking the lru_cache with prescription dataclass is slow because
         #  it's a large dataclass, maybe check with file instead

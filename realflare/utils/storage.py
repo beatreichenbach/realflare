@@ -6,21 +6,9 @@ import shutil
 from importlib.resources import files
 from typing import Any
 
-import typing
-from PySide2 import QtWidgets, QtCore, QtGui
 import realflare
-from realflare.api.data import Project, Prescription
-from qt_extensions.mainwindow import DockWidgetState, SplitterState
+from realflare.api.data import Prescription
 from qt_extensions.typeutils import cast, cast_basic
-
-
-@dataclasses.dataclass()
-class SettingsConfig:
-    window_state: dict = dataclasses.field(default_factory=dict)
-    widget_states: dict[str, dict] = dataclasses.field(default_factory=dict)
-    recent_paths: list[str] = dataclasses.field(default_factory=list)
-    sentry: bool | None = None
-    ocio: str = ''
 
 
 class Singleton(type):
@@ -32,12 +20,29 @@ class Singleton(type):
         return cls._instances[cls]
 
 
-class Settings(QtCore.QObject):
+@dataclasses.dataclass()
+class Settings:
+    recent_paths: list[str] = dataclasses.field(default_factory=list)
+    sentry: bool | None = None
+    ocio: str = ''
+
+
+@dataclasses.dataclass()
+class State:
+    window_state: dict = dataclasses.field(default_factory=dict)
+    widget_states: dict[str, dict] = dataclasses.field(default_factory=dict)
+
+
+# TODO: state should not be in here, app.py should register state and
+#  settings should be set up in __main__ since it's used by both cli and gui
+
+
+class Storage:
     __metaclass__ = Singleton
 
-    def __init__(self, parent: QtCore.QObject | None = None):
-        super().__init__(parent)
+    def __init__(self):
         self.path = os.getenv('REALFLARE_PATH')
+
         if self.path is None:
             self.path = os.path.join(os.path.expanduser('~'), f'.{realflare.__name__}')
 
@@ -49,9 +54,11 @@ class Settings(QtCore.QObject):
             '$PRESET': os.path.join(self.path, 'resources', 'preset'),
         }
 
-        self._config_path = os.path.join(self.path, 'settings.json')
+        self._settings_path = os.path.join(self.path, 'settings.json')
+        self._state_path = os.path.join(self.path, 'state.json')
 
-        self.config: SettingsConfig | None = None
+        self.settings: Settings | None = None
+        self.state: State | None = None
 
         self._init_resources()
 
@@ -63,14 +70,23 @@ class Settings(QtCore.QObject):
         package_library_path = str(files('realflare').joinpath('resources'))
         shutil.copytree(package_library_path, path)
 
-    def load(self, force=False):
-        if self.config is None or force:
-            data = self.load_data(self._config_path)
-            self.config = cast(SettingsConfig, data)
+    def load_settings(self, force=False):
+        if self.settings is None or force:
+            data = self.load_data(self._settings_path)
+            self.settings = cast(Settings, data)
 
-    def save(self) -> bool:
-        data = cast_basic(self.config)
-        return self.save_data(data, self._config_path)
+    def save_settings(self) -> bool:
+        data = cast_basic(self.settings)
+        return self.save_data(data, self._settings_path)
+
+    def load_state(self, force=False):
+        if self.state is None or force:
+            data = self.load_data(self._state_path)
+            self.state = cast(State, data)
+
+    def save_state(self) -> bool:
+        data = cast_basic(self.state)
+        return self.save_data(data, self._state_path)
 
     def load_data(self, path: str) -> dict:
         path = self.decode_path(path)
@@ -81,6 +97,7 @@ class Settings(QtCore.QObject):
             except json.JSONDecodeError as e:
                 pass
                 # logging.exception(e)
+                # TODO: error!
         return dict()
 
     def save_data(self, data: Any, path: str) -> bool:
@@ -93,6 +110,7 @@ class Settings(QtCore.QObject):
             return True
         except FileNotFoundError as exception:
             logging.exception(exception)
+        #     TODO: handle error
         return False
 
     def encode_path(self, path: str) -> str:
@@ -133,7 +151,7 @@ class Settings(QtCore.QObject):
             if os.path.isfile(item_path):
                 if not item.endswith('.json'):
                     continue
-                json_data = Settings().load_data(item_path)
+                json_data = self.load_data(item_path)
                 if not json_data:
                     continue
                 prescription = cast(Prescription, json_data)
@@ -145,11 +163,12 @@ class Settings(QtCore.QObject):
         return lens_models
 
     def update_recent_paths(self, path: str) -> None:
-        if path in self.config.recent_paths:
-            self.config.recent_paths.remove(path)
-            self.config.recent_paths.insert(0, path)
-        else:
-            self.config.recent_paths.insert(0, path)
+        if isinstance(self.settings, Settings):
+            if path in self.settings.recent_paths:
+                self.settings.recent_paths.remove(path)
+                self.settings.recent_paths.insert(0, path)
+            else:
+                self.settings.recent_paths.insert(0, path)
 
-        if len(self.config.recent_paths) > 10:
-            self.config.recent_paths = self.config.recent_paths[:10]
+            if len(self.settings.recent_paths) > 10:
+                self.settings.recent_paths = self.settings.recent_paths[:10]

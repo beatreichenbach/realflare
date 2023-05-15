@@ -6,7 +6,6 @@ from PySide2 import QtWidgets
 
 from realflare.api.data import Prescription, AntiAliasing, RenderElement, Project
 from realflare.api.tasks import opencl
-from realflare.utils.settings import Settings
 from qt_extensions.parameters import (
     ParameterEditor,
     IntParameter,
@@ -25,6 +24,7 @@ from qt_extensions.parameters import (
 )
 from qt_extensions.box import CollapsibleBox
 from qt_extensions.typeutils import cast, cast_basic
+from realflare.utils.storage import Storage
 
 
 class LightSource(enum.Enum):
@@ -36,7 +36,7 @@ class ProjectEditor(ParameterEditor):
     def __init__(self, parent: QtWidgets.QWidget | None = None) -> None:
         super().__init__(parent)
 
-        self.settings = Settings()
+        self.storage = Storage()
         self.groups = {}
 
         self.render_action = None
@@ -93,7 +93,7 @@ class ProjectEditor(ParameterEditor):
     def _init_flare_group(self):
         self.tabs['lens_flare'].create_hierarchy = False
 
-        aperture_dir = self.settings.decode_path('$APT')
+        aperture_dir = self.storage.decode_path('$APT')
 
         # flare
         flare_group = self.tabs['lens_flare'].add_group(
@@ -162,7 +162,7 @@ class ProjectEditor(ParameterEditor):
 
         parm = StringParameter(name='prescription_path')
         parm.label = 'Lens Model'
-        parm.menu = self.settings.load_lens_models()
+        parm.menu = self.storage.load_lens_models()
         parm.tooltip = (
             'The path to the lens model file (\'*.json\'). Variables such as $MODEL '
             'can be used. For more information see documentation. (To come...)'
@@ -171,7 +171,7 @@ class ProjectEditor(ParameterEditor):
 
         parm = StringParameter(name='glasses_path')
         parm.label = 'Glass Make'
-        parm.menu = self.settings.load_glass_makes()
+        parm.menu = self.storage.load_glass_makes()
         parm.tooltip = (
             'A path to a folder with glass files (\'.yml\'). '
             'The make of the glasses used for lens element lookup. '
@@ -627,7 +627,7 @@ class ProjectEditor(ParameterEditor):
             group.addAction(action)
 
     # def save_preset_as(self, name: str) -> None:
-    #     path = self.settings.decode_path(os.path.join('$PRESET', name))
+    #     path = self.storage.decode_path(os.path.join('$PRESET', name))
     #     file_path, filter_string = QtWidgets.QFileDialog.getSaveFileName(
     #         parent=self,
     #         caption='Save Preset As',
@@ -645,7 +645,7 @@ class ProjectEditor(ParameterEditor):
     #         else:
     #             return
     #         json_data = cast_basic(config)
-    #         self.settings.save_data(json_data, file_path)
+    #         self.storage.save_data(json_data, file_path)
     #
     # def load_preset(
     #     self,
@@ -653,7 +653,7 @@ class ProjectEditor(ParameterEditor):
     #     config: Flare | Flare.Ghost | Flare.Starburst | None = None,
     # ) -> None:
     #     if name:
-    #         path = self.settings.decode_path(os.path.join('$PRESET', name))
+    #         path = self.storage.decode_path(os.path.join('$PRESET', name))
     #         file_path, filter_string = QtWidgets.QFileDialog.getOpenFileName(
     #             parent=self,
     #             caption='Load Preset',
@@ -661,7 +661,7 @@ class ProjectEditor(ParameterEditor):
     #             filter='*.json',
     #         )
     #         if file_path:
-    #             json_data = self.settings.load_data(file_path)
+    #             json_data = self.storage.load_data(file_path)
     #             if name == 'flare':
     #                 config = cast(data.Flare, json_data)
     #             elif name == 'starburst':
@@ -694,7 +694,7 @@ class ProjectEditor(ParameterEditor):
     def randomize_coatings(self):
         flare = self.flare_config()
 
-        json_data = Settings().load_data(flare.lens.prescription_path)
+        json_data = self.storage.load_data(flare.lens.prescription_path)
         prescription = cast(Prescription, json_data)
         element_count = len(prescription.lens_elements)
 

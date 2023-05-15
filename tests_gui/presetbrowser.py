@@ -3,7 +3,7 @@ import sys
 from PySide2 import QtWidgets
 
 from realflare.gui.presetbrowser import PresetBrowser
-from realflare.utils.settings import Settings
+from realflare.utils.storage import Storage
 from qt_extensions import theme
 
 
@@ -13,7 +13,7 @@ def main():
     app = QtWidgets.QApplication(sys.argv)
     theme.apply_theme(theme.monokai)
 
-    path = Settings().decode_path('$PRESET')
+    path = Storage().decode_path('$PRESET')
     logging.debug(path)
     widget = PresetBrowser(path)
     widget.show()

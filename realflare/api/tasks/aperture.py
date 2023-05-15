@@ -9,14 +9,14 @@ from PySide2 import QtCore
 from realflare.api.data import Render, Aperture
 from realflare.api.path import File
 from realflare.api.tasks.opencl import OpenCL, Image
-from realflare.utils.settings import Settings
+from realflare.utils.storage import Storage
 from realflare.utils.timing import timer
 
 
 class ApertureTask(OpenCL):
     def __init__(self, queue: cl.CommandQueue) -> None:
         super().__init__(queue)
-        self.settings = Settings()
+        self.storage = Storage()
         self.kernel = None
         self.build()
 
@@ -92,7 +92,7 @@ class ApertureTask(OpenCL):
         quality_config: Render.Starburst | Render.Ghost,
     ) -> Image:
         if aperture_config.file:
-            file_path = self.settings.decode_path(aperture_config.file)
+            file_path = self.storage.decode_path(aperture_config.file)
             image = self.load_file(File(file_path), quality_config.resolution)
         else:
             image = self.aperture(aperture_config, quality_config.resolution)

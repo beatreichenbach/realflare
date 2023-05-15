@@ -9,7 +9,8 @@ from qt_extensions.parameters import (
 )
 from qt_extensions.box import CollapsibleBox
 from qt_extensions.typeutils import cast_basic, cast
-from realflare.utils.settings import Settings, SettingsConfig
+
+from realflare.utils.storage import Storage, Settings
 
 
 class SettingsEditor(ParameterEditor):
@@ -50,12 +51,12 @@ class SettingsEditor(ParameterEditor):
         )
         crash_group.add_parameter(parm)
 
-    def config(self) -> SettingsConfig:
+    def settings(self) -> Settings:
         values = self.values()
-        config = cast(SettingsConfig, values)
-        return config
+        settings = cast(Settings, values)
+        return settings
 
-    def set_config(self, config: SettingsConfig) -> None:
+    def set_settings(self, config: Settings) -> None:
         self.blockSignals(True)
         self.set_values(cast_basic(config))
         self.blockSignals(False)
@@ -65,8 +66,8 @@ class SettingsDialog(QtWidgets.QWidget):
     def __init__(self, parent: QtWidgets.QWidget | None = None):
         super().__init__(parent)
 
-        self.settings = Settings()
-        self.settings.load()
+        self.storage = Storage()
+        self.storage.load_settings()
 
         self.cached_config = self.settings.config
 
@@ -139,8 +140,8 @@ class SettingsDialog(QtWidgets.QWidget):
             return True
 
     def save(self) -> bool:
-        self.settings.config = self.editor.config()
-        result = self.settings.save()
+        self.storage.settings = self.editor.config()
+        result = self.storage.save_settings()
         if result:
             self.button_box.hide()
         return result

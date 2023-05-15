@@ -51,9 +51,13 @@ class Engine(QtCore.QObject):
 
         try:
             self.queue = opencl.queue(device)
-            logger.debug(f'Engine initialized on: {self.queue.device.name}')
+            logger.debug(f'engine initialized on device: {self.queue.device.name}')
         except (cl.Error, ValueError) as e:
             logger.error(e)
+            logger.error(
+                'There was an error launching the realflare engine. '
+                'Select a GPU device with support for OpenCL.'
+            )
             return
         self._init_tasks()
         self._init_renderers()
