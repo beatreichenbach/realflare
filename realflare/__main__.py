@@ -5,7 +5,7 @@ import sys
 
 from realflare.cli import app as cli_app
 from realflare.gui import app as gui_app
-from realflare.utils.storage import Storage
+from realflare.storage import Storage
 
 os.environ["OPENCV_IO_ENABLE_OPENEXR"] = "1"
 
@@ -63,7 +63,6 @@ def argument_parser():
 
 def sentry():
     storage = Storage()
-    storage.load_settings()
 
     if storage.settings.sentry is None:
         from realflare.gui import sentry

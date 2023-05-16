@@ -1,5 +1,4 @@
 from importlib.resources import files
-import logging
 import os
 import typing
 
@@ -118,9 +117,9 @@ class Image(MemoryObject):
             shape = (height, width) if channels == 1 else (height, width, channels)
 
             self._array = np.ascontiguousarray(np.zeros(shape, np.float32))
-            with cl.CommandQueue(self.context) as queue:
+            with cl.CommandQueue(self.context) as command_queue:
                 cl.enqueue_copy(
-                    queue,
+                    command_queue,
                     self._array,
                     self._image,
                     origin=(0, 0),
@@ -170,11 +169,11 @@ class ImageArray(Image):
                 self.context, flags, image_format, shape=shape, is_array=True
             )
 
-            with cl.CommandQueue(self.context) as queue:
+            with cl.CommandQueue(self.context) as command_queue:
                 for i in range(count):
                     array = np.ascontiguousarray(self._array[:, :, i])
                     cl.enqueue_copy(
-                        queue,
+                        command_queue,
                         dest=self._image,
                         src=array,
                         origin=(0, 0, i),

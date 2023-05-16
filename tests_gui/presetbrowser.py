@@ -3,7 +3,7 @@ import sys
 from PySide2 import QtWidgets
 
 from realflare.gui.presetbrowser import PresetBrowser
-from realflare.utils.storage import Storage
+from realflare.storage import Storage
 from qt_extensions import theme
 
 

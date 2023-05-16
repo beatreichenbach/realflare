@@ -15,7 +15,10 @@ from qt_extensions.filebrowser import FileBrowser, FileElement
 from qt_extensions.flexview import FlexView
 from qt_extensions.icons import MaterialIcon
 from qt_extensions.typeutils import cast
-from realflare.utils.storage import Storage
+from realflare.storage import Storage
+
+
+storage = Storage()
 
 
 @dataclasses.dataclass
@@ -77,13 +80,12 @@ class PresetBrowser(FileBrowser):
         fields: list[Field] | None = None,
         parent: QtWidgets.QWidget | None = None,
     ) -> None:
-        self.storage = Storage()
         if not path:
-            path = self.storage.decode_path('$PRESET')
+            path = storage.decode_path('$PRESET')
 
         self.root_dirs = {}
         for dir_name in ('flare', 'quality', 'ghost', 'starburst'):
-            root_path = self.storage.decode_path(os.path.join('$PRESET', dir_name))
+            root_path = storage.decode_path(os.path.join('$PRESET', dir_name))
             root_path = os.path.normpath(root_path)
             self.root_dirs[dir_name] = root_path
 
@@ -153,19 +155,19 @@ class PresetBrowser(FileBrowser):
     def _element(self, path: str) -> FileElement:
         name = os.path.basename(path)
 
-        json_data = self.storage.load_data(path) if os.path.isfile(path) else None
+        data = storage.read_data(path) if os.path.isfile(path) else None
 
         if path.startswith(self.root_dirs['flare']):
-            config = cast(Flare, json_data) if json_data is not None else None
+            config = cast(Flare, data) if data is not None else None
             element = FlareFileElement(name, path, config)
         elif path.startswith(self.root_dirs['ghost']):
-            config = cast(Flare.Ghost, json_data) if json_data is not None else None
+            config = cast(Flare.Ghost, data) if data is not None else None
             element = GhostFileElement(name, path, config)
         elif path.startswith(self.root_dirs['starburst']):
-            config = cast(Flare.Starburst, json_data) if json_data is not None else None
+            config = cast(Flare.Starburst, data) if data is not None else None
             element = StarburstFileElement(name, path, config)
         elif path.startswith(self.root_dirs['quality']):
-            config = cast(Render.Quality, json_data) if json_data is not None else None
+            config = cast(Render.Quality, data) if data is not None else None
             element = QualityFileElement(name, path, config)
         else:
             element = FileElement(name, path)

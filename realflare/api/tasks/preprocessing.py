@@ -1,4 +1,3 @@
-import logging
 from functools import lru_cache
 
 import cv2
@@ -8,11 +7,14 @@ from PySide2 import QtCore
 
 from realflare.api.data import Flare, Render
 from realflare.api.path import File
-from realflare.api.tasks.opencl import OpenCL, Buffer, Image
+from realflare.api.tasks.opencl import OpenCL, Buffer
 from realflare.api.tasks.raytracing import RaytracingTask
 from qt_extensions.typeutils import HashableDict
 
-from realflare.utils.storage import Storage
+from realflare.storage import Storage
+
+
+storage = Storage()
 
 
 def apply_threshold(array: np.ndarray, threshold: float) -> np.ndarray:
@@ -43,7 +45,8 @@ class PreprocessTask(OpenCL):
 
     @lru_cache(10)
     def update_areas(self, rays: Buffer) -> HashableDict[int, float]:
-        # generate a dict of areas where key=path_index and area is the area of the top left quad
+        # generate a dict of areas where key=path_index and area is the area
+        # of the top left quad
         path_count, wavelength_count, ray_count = rays.array.shape
         cl.enqueue_copy(self.queue, rays.array, rays.buffer)
 
@@ -82,7 +85,6 @@ class PreprocessTask(OpenCL):
 class ImageSamplingTask(OpenCL):
     def __init__(self, queue: cl.CommandQueue) -> None:
         super().__init__(queue)
-        self.storage = Storage()
 
     @lru_cache(10)
     def update_sample_data(
@@ -108,7 +110,7 @@ class ImageSamplingTask(OpenCL):
         return sample_data
 
     def run(self, flare: Flare, render: Render) -> np.ndarray:
-        file_path = self.storage.decode_path(flare.image_file)
+        file_path = storage.decode_path(flare.image_file)
 
         # resolution
         width = max(flare.image_samples, 1)

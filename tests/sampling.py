@@ -1,12 +1,8 @@
 import logging
-import sys
 import bisect
 
 import numpy as np
-from PySide2 import QtWidgets
 import matplotlib.pyplot as plt
-
-from qtviewer.viewer import Viewer
 
 
 def lanczos(x, a=2):

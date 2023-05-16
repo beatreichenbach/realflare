@@ -1,12 +1,11 @@
-import logging
 from functools import lru_cache
 
 import numpy as np
 import pyopencl as cl
 
 from realflare.api.data import Flare, Render
-from realflare.utils.ciexyz import CIEXYZ
 from realflare.api.tasks.opencl import OpenCL, LAMBDA_MIN, LAMBDA_MAX, Image
+from realflare.utils.ciexyz import CIEXYZ
 from realflare.utils.timing import timer
 
 LAMBDA_MID = (LAMBDA_MIN + LAMBDA_MAX) / 2

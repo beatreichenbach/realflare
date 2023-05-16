@@ -4,7 +4,7 @@ from PySide2 import QtWidgets
 
 from qt_extensions import theme
 from qt_extensions.messagebox import MessageBox
-from realflare.utils.storage import Storage
+from realflare.storage import Storage
 
 
 def request_permission():
@@ -12,7 +12,6 @@ def request_permission():
     theme.apply_theme(theme.monokai)
 
     storage = Storage()
-    storage.load_settings()
 
     result = MessageBox.question(
         None,

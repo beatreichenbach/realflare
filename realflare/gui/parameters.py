@@ -1,3 +1,4 @@
+import os
 import random
 import enum
 from functools import partial
@@ -24,7 +25,10 @@ from qt_extensions.parameters import (
 )
 from qt_extensions.box import CollapsibleBox
 from qt_extensions.typeutils import cast, cast_basic
-from realflare.utils.storage import Storage
+from realflare.storage import Storage
+
+
+storage = Storage()
 
 
 class LightSource(enum.Enum):
@@ -36,7 +40,6 @@ class ProjectEditor(ParameterEditor):
     def __init__(self, parent: QtWidgets.QWidget | None = None) -> None:
         super().__init__(parent)
 
-        self.storage = Storage()
         self.groups = {}
 
         self.render_action = None
@@ -47,7 +50,7 @@ class ProjectEditor(ParameterEditor):
         self._init_rendering_group()
         self._init_diagram_group()
         self._init_debug_group()
-        self._init_actions()
+        # self._init_actions()
 
         # init defaults
         default_config = Project()
@@ -67,10 +70,11 @@ class ProjectEditor(ParameterEditor):
 
         # actions
         action = QtWidgets.QAction('Render to Disk', self)
-        # action.triggered.connect(self.render_requested.emit)
         button = QtWidgets.QToolButton()
         button.setDefaultAction(action)
         output_group.add_widget(button, column=2)
+        # editor does not allow signals
+        self.render_to_disk = action
 
         # parameters
         parm = EnumParameter('element')
@@ -93,7 +97,7 @@ class ProjectEditor(ParameterEditor):
     def _init_flare_group(self):
         self.tabs['lens_flare'].create_hierarchy = False
 
-        aperture_dir = self.storage.decode_path('$APT')
+        aperture_dir = storage.decode_path('$APT')
 
         # flare
         flare_group = self.tabs['lens_flare'].add_group(
@@ -162,7 +166,7 @@ class ProjectEditor(ParameterEditor):
 
         parm = StringParameter(name='prescription_path')
         parm.label = 'Lens Model'
-        parm.menu = self.storage.load_lens_models()
+        parm.menu = lens_models()
         parm.tooltip = (
             'The path to the lens model file (\'*.json\'). Variables such as $MODEL '
             'can be used. For more information see documentation. (To come...)'
@@ -171,7 +175,7 @@ class ProjectEditor(ParameterEditor):
 
         parm = StringParameter(name='glasses_path')
         parm.label = 'Glass Make'
-        parm.menu = self.storage.load_glass_makes()
+        parm.menu = glass_makes()
         parm.tooltip = (
             'A path to a folder with glass files (\'.yml\'). '
             'The make of the glasses used for lens element lookup. '
@@ -627,7 +631,7 @@ class ProjectEditor(ParameterEditor):
             group.addAction(action)
 
     # def save_preset_as(self, name: str) -> None:
-    #     path = self.storage.decode_path(os.path.join('$PRESET', name))
+    #     path = storage.decode_path(os.path.join('$PRESET', name))
     #     file_path, filter_string = QtWidgets.QFileDialog.getSaveFileName(
     #         parent=self,
     #         caption='Save Preset As',
@@ -645,7 +649,7 @@ class ProjectEditor(ParameterEditor):
     #         else:
     #             return
     #         json_data = cast_basic(config)
-    #         self.storage.save_data(json_data, file_path)
+    #         storage.save_data(json_data, file_path)
     #
     # def load_preset(
     #     self,
@@ -653,7 +657,7 @@ class ProjectEditor(ParameterEditor):
     #     config: Flare | Flare.Ghost | Flare.Starburst | None = None,
     # ) -> None:
     #     if name:
-    #         path = self.storage.decode_path(os.path.join('$PRESET', name))
+    #         path = storage.decode_path(os.path.join('$PRESET', name))
     #         file_path, filter_string = QtWidgets.QFileDialog.getOpenFileName(
     #             parent=self,
     #             caption='Load Preset',
@@ -661,7 +665,7 @@ class ProjectEditor(ParameterEditor):
     #             filter='*.json',
     #         )
     #         if file_path:
-    #             json_data = self.storage.load_data(file_path)
+    #             json_data = storage.read_data(file_path)
     #             if name == 'flare':
     #                 config = cast(data.Flare, json_data)
     #             elif name == 'starburst':
@@ -694,8 +698,10 @@ class ProjectEditor(ParameterEditor):
     def randomize_coatings(self):
         flare = self.flare_config()
 
-        json_data = self.storage.load_data(flare.lens.prescription_path)
-        prescription = cast(Prescription, json_data)
+        data = storage.read_data(flare.lens.prescription_path)
+        if data is None:
+            return
+        prescription = cast(Prescription, data)
         element_count = len(prescription.lens_elements)
 
         wavelength_range = self._coating_wavelength_range.value
@@ -728,3 +734,38 @@ class ProjectEditor(ParameterEditor):
         widgets['flare']['light']['position'].setEnabled(not enabled)
         widgets['flare']['light']['image_sample_resolution'].setEnabled(enabled)
         widgets['flare']['light']['image_samples'].setEnabled(enabled)
+
+
+def glass_makes() -> dict:
+    glasses_path = storage.path_vars['$GLASS']
+    glasses = {}
+    for item in os.listdir(glasses_path):
+        item_path = os.path.join(glasses_path, item)
+        if os.path.isdir(item_path):
+            glasses[item] = storage.encode_path(item_path)
+    return glasses
+
+
+def lens_models(path: str = '') -> dict:
+    if not path:
+        path = storage.path_vars['$MODEL']
+
+    if os.path.isfile(path):
+        return dict()
+
+    models = {}
+    for item in os.listdir(path):
+        item_path = os.path.join(path, item)
+        if os.path.isfile(item_path):
+            if not item.endswith('.json'):
+                continue
+            json_data = storage.read_data(item_path)
+            if not json_data:
+                continue
+            prescription = cast(Prescription, json_data)
+            models[prescription.name] = storage.encode_path(item_path)
+        elif os.path.isdir(item_path):
+            children = lens_models(item_path)
+            if children:
+                models[item] = children
+    return models

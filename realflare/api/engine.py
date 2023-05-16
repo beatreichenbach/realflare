@@ -1,7 +1,6 @@
 import logging
 import os
 import re
-import warnings
 from collections import OrderedDict
 
 import cv2

@@ -11,7 +11,7 @@ from PySide2 import QtCore
 from realflare.api.data import Project, RenderElement
 from realflare.api.engine import Engine
 from qt_extensions.typeutils import cast
-from realflare.utils.storage import Storage
+from realflare.storage import Storage
 
 
 def lerp(
@@ -75,8 +75,10 @@ def exec_(parser: ArgumentParser):
     if not args.project or not os.path.isfile(args.project):
         parser.error(f'project path not valid: {args.project}')
     storage = Storage()
-    project_dict = storage.load_data(args.project)
-    project = cast(Project, project_dict)
+    data = storage.read_data(args.project)
+    if data is None:
+        parser.error(f'project is not valid: {args.project}')
+    project = cast(Project, data)
     project.elements = [RenderElement.Type.FLARE]
 
     if args.output:

@@ -142,8 +142,9 @@ class Flare:
 @hashable_dataclass
 class Output:
     element: RenderElement = RenderElement.FLARE
-    output_path: str = ''
+    path: str = ''
     colorspace: str = 'ACES - ACEScg'
+    write: bool = False
 
 
 @hashable_dataclass

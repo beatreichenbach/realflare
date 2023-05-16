@@ -1,5 +1,4 @@
 # Original code from https://github.com/siddharth-maddali/frft/blob/main/frft.py
-import logging
 from functools import lru_cache
 
 import numpy as np
@@ -8,7 +7,6 @@ from numpy.fft import fftshift, fftn, ifftn
 
 @lru_cache(maxsize=10)
 def chirp(shape: tuple[int, ...]) -> complex:
-    # logging.debug('recalculating chirp')
     indices = tuple(slice(-size // 2, size // 2) for size in shape)
     grid = np.mgrid[indices]
 

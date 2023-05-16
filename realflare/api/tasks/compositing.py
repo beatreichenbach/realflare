@@ -1,8 +1,7 @@
-import logging
-
 import numpy as np
 import pyopencl as cl
 
+from qt_extensions.typeutils import cast_basic
 from realflare.api import data
 from realflare.api.tasks.opencl import OpenCL
 from realflare.utils.timing import timer
@@ -63,8 +62,8 @@ class CompositingTask(OpenCL):
                 self.kernel.set_arg(0, flare_cl)
                 self.kernel.set_arg(1, flare_cl)
                 self.kernel.set_arg(2, starburst_cl)
-                self.kernel.set_arg(3, np.float32(data.to_basic_type(light_position)))
-                self.kernel.set_arg(4, np.float32(data.to_basic_type(scale)))
+                self.kernel.set_arg(3, np.float32(cast_basic(light_position)))
+                self.kernel.set_arg(4, np.float32(cast_basic(scale)))
 
                 self.composite(image, image_cl)
 

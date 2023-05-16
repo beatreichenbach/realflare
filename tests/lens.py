@@ -1,10 +1,5 @@
-from dataclasses import dataclass
-from typing import List, Tuple
-import json
 import numpy as np
 import logging
-
-from realflare.api import glass
 
 
 def sellmeier_equation(wavelength, coefficients):

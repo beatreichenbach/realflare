@@ -1,4 +1,3 @@
-import logging
 from collections.abc import Iterable
 from functools import lru_cache
 
@@ -6,7 +5,6 @@ import numpy as np
 import pyopencl as cl
 from PySide2 import QtCore
 
-from realflare.api import data
 from realflare.api.data import Flare, Render
 from realflare.utils.timing import timer
 from realflare.utils.ciexyz import CIEXYZ

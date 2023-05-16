@@ -10,7 +10,7 @@ from qt_extensions.button import Button
 from qt_extensions.filebrowser import FileBrowser, FileElement
 
 from realflare.api.data import Prescription
-from realflare.utils.storage import Storage
+from realflare.storage import Storage
 from qt_extensions.box import CollapsibleBox
 from qt_extensions.elementbrowser import Field
 from qt_extensions.helper import unique_path
@@ -24,6 +24,9 @@ from qt_extensions.parameters import (
     ParameterEditor,
 )
 from qt_extensions.typeutils import cast, cast_basic
+
+
+storage = Storage()
 
 
 class ContentWidget(QtWidgets.QWidget):
@@ -227,7 +230,7 @@ class LensModelBrowser(FileBrowser):
         self.model.append_element(element, icon=icon, parent=parent)
 
     def _append_file(self, path: str, parent: QtCore.QModelIndex):
-        data = Storage().load_data(path)
+        data = storage.read_data(path) or {}
         prescription = cast(Prescription, data)
         name = prescription.name
         element = LensModelFileElement(name=name, path=path, prescription=prescription)
@@ -386,8 +389,8 @@ class LensModelDialog(QtWidgets.QWidget):
             except OSError:
                 pass
 
-        json_data = cast_basic(prescription)
-        Storage().save_data(json_data, path)
+        data = cast_basic(prescription)
+        storage.write_data(data, path)
 
         logging.debug(f'File saved: {path}')
 

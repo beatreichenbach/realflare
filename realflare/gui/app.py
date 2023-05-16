@@ -6,7 +6,6 @@ import webbrowser
 from functools import partial
 from importlib.metadata import version
 from importlib.resources import files
-from typing import Any
 
 import pyopencl as cl
 from PySide2 import QtCore, QtGui, QtWidgets
@@ -19,13 +18,16 @@ from realflare.update import UpdateDialog
 from realflare.api.data import Project, RenderElement, RenderImage
 from realflare.api.engine import Engine, clear_cache
 from realflare.gui.viewer import ElementViewer
-from realflare.utils.storage import Storage, State
+from realflare.storage import Storage
 
 from realflare.gui.presetbrowser import PresetBrowser
 
-from qt_extensions.mainwindow import DockWindow, DockWidgetState, SplitterState
+from qt_extensions.mainwindow import (
+    DockWindow,
+    DockWidgetState,
+    SplitterState,
+)
 from qt_extensions import theme
-from qt_extensions.messagebox import MessageBox
 from qt_extensions.typeutils import cast, cast_basic
 from realflare.utils.timing import timer
 
@@ -48,18 +50,7 @@ from realflare.utils.timing import timer
 
 
 logger = logging.getLogger(__name__)
-
-
-def set_widget_state(widget: QtWidgets.QWidget, state: dict | None) -> None:
-    if state is None:
-        return
-    if hasattr(widget, 'set_state') and inspect.ismethod(widget.set_state):
-        widget.set_state(state)
-
-
-def widget_state(widget: QtWidgets.QWidget) -> dict | None:
-    if hasattr(widget, 'state') and inspect.ismethod(widget.state):
-        return widget.state()
+storage = Storage()
 
 
 class MainWindow(DockWindow):
@@ -67,7 +58,7 @@ class MainWindow(DockWindow):
     stop_requested: QtCore.Signal = QtCore.Signal()
     elements_changed: QtCore.Signal = QtCore.Signal(list)
 
-    default_state = {
+    default_window_state = {
         'widgets': [
             SplitterState(
                 sizes=[1, 1],
@@ -95,10 +86,7 @@ class MainWindow(DockWindow):
     def __init__(self, parent: QtWidgets.QWidget | None = None) -> None:
         super().__init__(parent)
 
-        self.storage = Storage()
         self.project = Project()
-        self.recent_dir = os.path.expanduser('~')
-        self.elements = []
         self.rendering = False
         self.splash_screen = None
 
@@ -107,6 +95,7 @@ class MainWindow(DockWindow):
         self._project_hash = hash(self.project)
         self._project_changed = False
         self._device = ''
+        self._recent_dir = os.path.expanduser('~')
 
         self.show_splash_message('Loading User Interface...')
         self._init_log()
@@ -116,7 +105,7 @@ class MainWindow(DockWindow):
         self.show_splash_message('Loading Engine...')
         self._init_engine()
         self.show_splash_message('Loading Settings...')
-        self.load_settings()
+        self.load_state()
 
     def _init_log(self):
         # logging
@@ -220,7 +209,7 @@ class MainWindow(DockWindow):
         view_menu.addAction(action)
         view_menu.addSeparator()
         action = QtWidgets.QAction('Reset', self)
-        action.triggered.connect(self.reset_state)
+        action.triggered.connect(self.reset_window_state)
         view_menu.addAction(action)
 
         # engine
@@ -285,7 +274,7 @@ class MainWindow(DockWindow):
             self.api_thread.quit()
 
         # state
-        self.save_settings()
+        self.save_state()
 
         super().closeEvent(event)
 
@@ -296,36 +285,37 @@ class MainWindow(DockWindow):
     def file_open(self, filename: str | None = None) -> None:
         if filename is None:
             filename, filters = QtWidgets.QFileDialog.getOpenFileName(
-                self, 'Open Project', self.recent_dir, '*.json'
+                self, 'Open Project', self._recent_dir, '*.json'
             )
             if os.path.exists(os.path.dirname(filename)):
-                self.recent_dir = os.path.dirname(filename)
+                self._recent_dir = os.path.dirname(filename)
         if os.path.exists(filename):
             self.project_path = filename
-            self.storage.update_recent_paths(filename)
+            storage.add_recent_path(filename)
             self._update_recent_menu()
-            data = self.storage.load_data(filename)
-            project = cast(Project, data)
-            self.set_project(project)
+            data = storage.read_data(filename)
+            if data is not None:
+                project = cast(Project, data)
+                self.set_project(project)
 
     def file_save(self, prompt: bool = False) -> bool:
         if not self.project_path or prompt:
             filename, filters = QtWidgets.QFileDialog.getSaveFileName(
-                self, 'Save Project', self.recent_dir, '*.json'
+                self, 'Save Project', self._recent_dir, '*.json'
             )
             if not filename:
                 return False
             self.project_path = filename
-        self.storage.update_recent_paths(self.project_path)
+        storage.add_recent_path(self.project_path)
         self._update_recent_menu()
 
         data = cast_basic(self.project)
-        result = self.storage.save_data(data, self.project_path)
+        if not storage.write_data(data, self.project_path):
+            return False
 
-        if result:
-            self._project_hash = hash(self.project)
-            self._test_changes(quick=False)
-        return result
+        self._project_hash = hash(self.project)
+        self._test_changes(quick=False)
+        return True
 
     def file_save_as(self) -> None:
         self.file_save(prompt=True)
@@ -371,24 +361,24 @@ class MainWindow(DockWindow):
         dialog = UpdateDialog(self)
         dialog.exec_()
 
-    def load_settings(self):
-        # state
-        self.storage.load_state()
-        if self.storage.state.window_state:
-            self.set_state(self.storage.state.window_state)
+    def load_state(self):
+        # window state
+        if storage.state.window_state:
+            self.set_window_state(storage.state.window_state)
         else:
-            self.reset_state()
+            self.reset_window_state()
 
-        for title, state in self.storage.state.widget_states.items():
+        # widget states
+        for title, state in storage.state.widget_states.items():
             widget = self._widgets.get(title)
             set_widget_state(widget, state)
 
-        # settings
-        self.storage.load_settings()
+        # menu
         self._update_recent_menu()
 
-        if self.storage.settings.recent_paths:
-            self.file_open(self.storage.settings.recent_paths[0])
+        # load file
+        if storage.state.recent_paths:
+            self.file_open(storage.state.recent_paths[0])
         else:
             self.update_window_title()
 
@@ -397,8 +387,8 @@ class MainWindow(DockWindow):
         self._update_elements()
         self.request_render(self.project)
 
-    def reset_state(self) -> None:
-        self.set_state(self.default_state)
+    def reset_window_state(self) -> None:
+        self.set_window_state(self.default_window_state)
 
     def restart(self):
         if self.api_thread is not None:
@@ -407,27 +397,15 @@ class MainWindow(DockWindow):
         self._init_engine()
         self._render_finish()
 
-    def save_settings(self):
-        self.storage.state.window_state = self.state()
+    def save_state(self):
+        storage.state.window_state = self.state()
 
         for title, widget in self._widgets.items():
             state = widget_state(widget)
             if state is not None:
-                self.storage.state.widget_states[title] = state
+                storage.state.widget_states[title] = state
 
-        self.storage.save_state()
-
-    # def save_output(self):
-    #     # TODO: This is just temporary
-    #     output_path = self.project.render.output_path
-    #     colorspace = self.project.render.colorspace
-    #     if not output_path:
-    #         return
-    #     for widget in self._widgets.values():
-    #         if isinstance(widget, ElementViewer):
-    #             array = widget.item.array
-    #             self.engine.write_image(output_path, array=array, colorspace=colorspace)
-    #             return
+        storage.save_state()
 
     def set_project(self, project: Project):
         self.project = project
@@ -435,6 +413,14 @@ class MainWindow(DockWindow):
         for title, widget in self._widgets.items():
             if isinstance(widget, ProjectEditor):
                 widget.set_project(self.project)
+
+    def show_splash_message(self, message: str) -> None:
+        if isinstance(self.splash_screen, QtWidgets.QSplashScreen):
+            self.splash_screen.showMessage(
+                message,
+                QtCore.Qt.AlignBottom | QtCore.Qt.AlignLeft,
+                QtGui.QColor('white'),
+            )
 
     def show_widget(self, cls: type[QtWidgets.QWidget]) -> None:
         try:
@@ -448,20 +434,18 @@ class MainWindow(DockWindow):
                     self.focus_widget(widget)
                     break
 
-    def show_splash_message(self, message: str) -> None:
-        if isinstance(self.splash_screen, QtWidgets.QSplashScreen):
-            self.splash_screen.showMessage(
-                message,
-                QtCore.Qt.AlignBottom | QtCore.Qt.AlignLeft,
-                QtGui.QColor('white'),
-            )
-
     def update_window_title(self):
         filename = os.path.basename(self._project_path)
         title = filename if filename else 'untitled'
         if self._project_changed:
             title = f'{title} *'
         self.setWindowTitle(title)
+
+    def render_to_disk(self):
+        self.elements_changed.emit([self.project.output.element])
+        self.project.output.write = True
+        self.request_render(self.project)
+        self.project.output.write = False
 
     def request_render(
         self,
@@ -527,10 +511,6 @@ class MainWindow(DockWindow):
             if isinstance(widget, ElementViewer) and widget.element == image.type:
                 widget.update_image(image.image.array)
 
-    # def _render_finish(self):
-    #     self.rendering = False
-    #     self.try_render()
-
     def _test_changes(self, quick: bool = True) -> None:
         # checks whether project has changed
 
@@ -546,17 +526,17 @@ class MainWindow(DockWindow):
         self.update_window_title()
 
     def _update_elements(self):
-        self.elements = []
+        elements = []
         for dock_widget in self.dock_widgets():
             widget = dock_widget.currentWidget()
             if isinstance(widget, ElementViewer) and not widget.paused:
-                self.elements.append(widget.element)
-        self.elements_changed.emit(self.elements)
+                elements.append(widget.element)
+        self.elements_changed.emit(elements)
         self.request_render()
 
     def _update_recent_menu(self):
         self.recent_menu.clear()
-        for filename in self.storage.settings.recent_paths:
+        for filename in storage.state.recent_paths:
             action = QtWidgets.QAction(filename, self)
             action.triggered.connect(partial(self.file_open, filename))
             self.recent_menu.addAction(action)
@@ -565,7 +545,7 @@ class MainWindow(DockWindow):
         # restore state
         title = self.widget_title(widget)
         if title is not None:
-            state = self.storage.state.widget_states.get(title)
+            state = storage.state.widget_states.get(title)
             set_widget_state(widget, state)
 
         # reconnect signals
@@ -579,9 +559,9 @@ class MainWindow(DockWindow):
             widget.parameter_changed.connect(
                 lambda: self._project_editor_changed(widget)
             )
-            # widget.save_action.triggered.connect(lambda: self.save_output())
-        elif isinstance(widget, PresetBrowser):
-            widget.load_requested.connect(self._load_preset)
+            widget.render_to_disk.triggered.connect(self.render_to_disk)
+        # elif isinstance(widget, PresetBrowser):
+        # widget.load_requested.connect(self._load_preset)
         elif isinstance(widget, LogViewer):
             widget.set_cache(self.log_cache)
 
@@ -597,6 +577,18 @@ class MainWindow(DockWindow):
     #             if state is not None:
     #                 logging.debug(state)
     #                 self.settings.state.widget_states[title] = state
+
+
+def set_widget_state(widget: QtWidgets.QWidget, state: dict | None) -> None:
+    if state is None:
+        return
+    if hasattr(widget, 'set_state') and inspect.ismethod(widget.set_state):
+        widget.set_state(state)
+
+
+def widget_state(widget: QtWidgets.QWidget) -> dict | None:
+    if hasattr(widget, 'state') and inspect.ismethod(widget.state):
+        return widget.state()
 
 
 def exec_():
