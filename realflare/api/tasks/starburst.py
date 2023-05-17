@@ -3,7 +3,7 @@ from functools import lru_cache
 import numpy as np
 import pyopencl as cl
 
-from realflare.api.data import Flare, Render
+from realflare.api.data import Flare, Render, Project
 from realflare.api.tasks.opencl import OpenCL, LAMBDA_MIN, LAMBDA_MAX, Image
 from realflare.utils.ciexyz import CIEXYZ
 from realflare.utils.timing import timer
@@ -81,15 +81,15 @@ class StarburstTask(OpenCL):
     def starburst(
         self,
         config: Flare.Starburst,
-        quality: Render.Starburst,
+        render: Render.Starburst,
         aperture: Image,
     ) -> Image:
         # rebuild kernel
         self.__init__(self.queue)
 
         # args
-        resolution = quality.resolution
-        samples = quality.samples
+        resolution = render.resolution
+        samples = render.samples
         fadeout = [config.fadeout.x(), config.fadeout.y()]
 
         # clear_image is used to ensure cache from the host is used
@@ -100,7 +100,7 @@ class StarburstTask(OpenCL):
 
         # create output buffer
         starburst = self.update_image(resolution)
-        starburst.args = (config, quality, aperture)
+        starburst.args = (config, render, aperture)
 
         # run program
         self.kernel.set_arg(0, starburst.image)
@@ -118,10 +118,7 @@ class StarburstTask(OpenCL):
         return starburst
 
     @timer
-    def run(
-        self,
-        flare: Flare,
-        render: Render,
-        aperture: Image,
-    ) -> Image:
-        return self.starburst(flare.starburst, render.quality.starburst, aperture)
+    def run(self, project: Project, aperture: Image) -> Image:
+        return self.starburst(
+            project.flare.starburst, project.render.starburst, aperture
+        )

@@ -3,7 +3,7 @@ from functools import lru_cache
 import numpy as np
 from PySide2 import QtCore
 
-from realflare.api.data import Flare, Render
+from realflare.api.data import Project
 from realflare.api.tasks.opencl import OpenCL, Image, ImageArray
 from realflare.api.tasks.raytracing import wavelength_array
 from realflare.utils import frft
@@ -44,14 +44,9 @@ class GhostTask(OpenCL):
         return image
 
     @timer
-    def run(
-        self,
-        flare: Flare,
-        render: Render,
-        aperture: Image,
-    ) -> ImageArray:
-        fstop = flare.ghost.fstop
-        resolution = render.quality.ghost.resolution
-        wavelength_count = render.quality.wavelength_count
+    def run(self, project: Project, aperture: Image) -> ImageArray:
+        fstop = project.flare.ghost.fstop
+        resolution = project.render.ghost.resolution
+        wavelength_count = project.render.wavelength_count
         image = self.ghost(aperture, fstop, resolution, wavelength_count)
         return image

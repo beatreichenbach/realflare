@@ -88,12 +88,12 @@ class ApertureTask(OpenCL):
     @timer
     def run(
         self,
-        aperture_config: Aperture,
-        quality_config: Render.Starburst | Render.Ghost,
+        aperture: Aperture,
+        render: Render.Starburst | Render.Ghost,
     ) -> Image:
-        if aperture_config.file:
-            file_path = storage.decode_path(aperture_config.file)
-            image = self.load_file(File(file_path), quality_config.resolution)
+        if aperture.file:
+            file_path = storage.decode_path(aperture.file)
+            image = self.load_file(File(file_path), render.resolution)
         else:
-            image = self.aperture(aperture_config, quality_config.resolution)
+            image = self.aperture(aperture, render.resolution)
         return image

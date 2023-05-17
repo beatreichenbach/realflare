@@ -1,11 +1,10 @@
-import logging
 from functools import lru_cache
 
 import pyopencl as cl
 import numpy as np
 from PySide2 import QtCore
 
-from realflare.api.data import Flare, Render
+from realflare.api.data import Flare, Project
 from realflare.api.path import File
 from realflare.api.tasks.opencl import (
     OpenCL,
@@ -145,13 +144,16 @@ class DiagramTask(OpenCL):
             region=(w, h),
         )
 
-    def run(self, lens: Flare.Lens, render: Render, intersections: Buffer):
-        resolution = render.diagram.resolution
+    def run(self, project: Project, intersections: Buffer):
+        # lenses
+        resolution = project.render.diagram.resolution
         image = self.update_image(resolution, flags=cl.mem_flags.READ_WRITE)
-
+        lens = project.flare.lens
         self.lenses(image, lens)
 
+        # rays
         if intersections is not None:
-            self.intersections(image, intersections, render.diagram.column_offset)
+            offset = project.render.diagram.column_offset
+            self.intersections(image, intersections, offset)
 
         return image

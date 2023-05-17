@@ -84,7 +84,7 @@ class PresetBrowser(FileBrowser):
             path = storage.decode_path('$PRESET')
 
         self.root_dirs = {}
-        for dir_name in ('flare', 'quality', 'ghost', 'starburst'):
+        for dir_name in ('flare', 'ghost', 'starburst'):
             root_path = storage.decode_path(os.path.join('$PRESET', dir_name))
             root_path = os.path.normpath(root_path)
             self.root_dirs[dir_name] = root_path
@@ -166,9 +166,6 @@ class PresetBrowser(FileBrowser):
         elif path.startswith(self.root_dirs['starburst']):
             config = cast(Flare.Starburst, data) if data is not None else None
             element = StarburstFileElement(name, path, config)
-        elif path.startswith(self.root_dirs['quality']):
-            config = cast(Render.Quality, data) if data is not None else None
-            element = QualityFileElement(name, path, config)
         else:
             element = FileElement(name, path)
 

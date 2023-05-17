@@ -5,7 +5,7 @@ import numpy as np
 import pyopencl as cl
 from PySide2 import QtCore
 
-from realflare.api.data import Flare, Render
+from realflare.api.data import Render, Project
 from realflare.utils.timing import timer
 from realflare.utils.ciexyz import CIEXYZ
 
@@ -293,48 +293,48 @@ class RasterizingTask(OpenCL):
     @timer
     def rasterize(
         self,
-        quality: Render,
+        render: Render,
         rays: Buffer,
         ghost: ImageArray,
         sensor_size: QtCore.QSizeF,
         min_area: float,
     ) -> Image | Buffer:
-        resolution = quality.resolution
+        resolution = render.resolution
 
         # rebuild kernel
-        bin_size_changed = quality.bin_size != self.bin_size
+        bin_size_changed = render.bin_size != self.bin_size
         if bin_size_changed:
-            self.bin_size = quality.bin_size
+            self.bin_size = render.bin_size
         if self.rebuild or bin_size_changed:
             self.build()
 
         # image
         flare_image = self.update_image(resolution)
-        flare_image.args = (rays, ghost, quality)
+        flare_image.args = (rays, ghost, render)
 
         if rays is None:
             return flare_image
 
         # prim shader
         path_count, wavelength_count, ray_count = rays.array.shape
-        # quads = self.update_quads(quality.grid_count)
+        # quads = self.update_quads(render.grid_count)
         # quad_count = quads.array.size
-        quad_count = (quality.grid_count - 1) ** 2
+        quad_count = (render.grid_count - 1) ** 2
         # swapping wavelength and path axis. rasterization requires grouping by wavelength
         areas_shape = (path_count, quad_count, wavelength_count)
         bounds_shape = (path_count, quad_count)
 
         areas = self.update_areas(areas_shape)
-        areas.args = (rays, quality, min_area)
+        areas.args = (rays, render, min_area)
         bounds = self.update_bounds(bounds_shape)
-        bounds.args = (rays, quality)
-        area_orig = self.update_area_orig(quality.grid_count, quality.grid_length)
+        bounds.args = (rays, render)
+        area_orig = self.update_area_orig(render.grid_count, render.grid_length)
         rel_min_area = min_area * area_orig
 
         self.kernels['prim_shader'].set_arg(0, bounds.buffer)
         self.kernels['prim_shader'].set_arg(1, areas.buffer)
         self.kernels['prim_shader'].set_arg(2, rays.buffer)
-        self.kernels['prim_shader'].set_arg(3, np.int32(quality.grid_count))
+        self.kernels['prim_shader'].set_arg(3, np.int32(render.grid_count))
         self.kernels['prim_shader'].set_arg(4, np.int32(ray_count))
         self.kernels['prim_shader'].set_arg(5, np.int32(wavelength_count))
         self.kernels['prim_shader'].set_arg(6, np.float32(rel_min_area))
@@ -348,14 +348,14 @@ class RasterizingTask(OpenCL):
         # vertex shader
         vertex_shape = (path_count, ray_count, wavelength_count)
         vertexes = self.update_vertexes(vertex_shape)
-        vertexes.args = (rays, quality, sensor_size)
+        vertexes.args = (rays, render, sensor_size)
         resolution_buffer = self.update_resolution(resolution)
         screen_transform = self.update_sensor(resolution, sensor_size)
 
         self.kernels['vertex_shader'].set_arg(0, vertexes.buffer)
         self.kernels['vertex_shader'].set_arg(1, areas.buffer)
         self.kernels['vertex_shader'].set_arg(2, rays.buffer)
-        self.kernels['vertex_shader'].set_arg(3, np.int32(quality.grid_count))
+        self.kernels['vertex_shader'].set_arg(3, np.int32(render.grid_count))
         self.kernels['vertex_shader'].set_arg(4, np.float32(area_orig))
         self.kernels['vertex_shader'].set_arg(5, np.float32(screen_transform))
         self.kernels['vertex_shader'].set_arg(6, resolution_buffer)
@@ -370,7 +370,7 @@ class RasterizingTask(OpenCL):
         # logging.debug(f'vertexes.nbytes: {vertexes.nbytes}')
 
         # binner
-        bin_dims = self.update_bin_dims(quality.bin_size, resolution)
+        bin_dims = self.update_bin_dims(render.bin_size, resolution)
         bin_distribution_counter_cl = self.update_counter()
         bin_count = int(bin_dims['x'] * bin_dims['y'])
         # logging.debug(f'bin_dims: {array}')
@@ -381,7 +381,7 @@ class RasterizingTask(OpenCL):
         batch_count = int(np.ceil(primitive_count / BATCH_PRIMITIVE_COUNT))
         # logging.debug(f'batch_count: {batch_count}')
         bin_queues = self.update_bin_queues(bin_count, batch_count)
-        bin_queues.args = (rays, quality)
+        bin_queues.args = (rays, render)
 
         # TODO: check convert int/float, as those conversions can be slow
         self.kernels['binner'].set_arg(0, bin_queues.buffer)
@@ -410,10 +410,10 @@ class RasterizingTask(OpenCL):
 
         # rasterizer
         light_spectrum = self.update_light_spectrum()
-        sub_steps = quality.anti_aliasing
+        sub_steps = render.anti_aliasing
         sub_offsets = self.update_sub_offsets(sub_steps)
         wavelength_sub_count = (
-            quality.wavelength_sub_count if wavelength_count > 1 else 1
+            render.wavelength_sub_count if wavelength_count > 1 else 1
         )
 
         # device = self.queue.get_info(cl.command_queue_info.DEVICE)
@@ -435,7 +435,7 @@ class RasterizingTask(OpenCL):
         self.kernels['rasterizer'].set_arg(6, np.int32(path_count))
         self.kernels['rasterizer'].set_arg(7, np.int32(wavelength_count))
         self.kernels['rasterizer'].set_arg(8, np.int32(wavelength_sub_count))
-        self.kernels['rasterizer'].set_arg(9, np.int32(quality.grid_count))
+        self.kernels['rasterizer'].set_arg(9, np.int32(render.grid_count))
         self.kernels['rasterizer'].set_arg(10, np.int32(sub_steps))
         self.kernels['rasterizer'].set_arg(11, sub_offsets.buffer)
 
@@ -454,16 +454,15 @@ class RasterizingTask(OpenCL):
 
     def run(
         self,
-        flare: Flare,
-        render: Render,
+        project: Project,
         rays: Buffer,
         ghost: ImageArray,
     ) -> Image | Buffer:
         output = self.rasterize(
-            render.quality,
+            project.render,
             rays,
             ghost,
-            flare.lens.sensor_size,
-            flare.lens.min_area,
+            project.flare.lens.sensor_size,
+            project.flare.lens.min_area,
         )
         return output

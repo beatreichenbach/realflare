@@ -117,9 +117,9 @@ class Image(MemoryObject):
             shape = (height, width) if channels == 1 else (height, width, channels)
 
             self._array = np.ascontiguousarray(np.zeros(shape, np.float32))
-            with cl.CommandQueue(self.context) as command_queue:
+            with cl.CommandQueue(self.context) as queue:
                 cl.enqueue_copy(
-                    command_queue,
+                    queue,
                     self._array,
                     self._image,
                     origin=(0, 0),
@@ -169,11 +169,11 @@ class ImageArray(Image):
                 self.context, flags, image_format, shape=shape, is_array=True
             )
 
-            with cl.CommandQueue(self.context) as command_queue:
+            with cl.CommandQueue(self.context) as queue:
                 for i in range(count):
                     array = np.ascontiguousarray(self._array[:, :, i])
                     cl.enqueue_copy(
-                        command_queue,
+                        queue,
                         dest=self._image,
                         src=array,
                         origin=(0, 0, i),
@@ -212,7 +212,7 @@ def devices() -> dict[str, str]:
     return cl_devices
 
 
-def queue(device: str = '') -> cl.CommandQueue | None:
+def command_queue(device: str = '') -> cl.CommandQueue:
     for platform in cl.get_platforms():
         for cl_device in platform.get_devices():
             if device and cl_device.name != device:
@@ -221,8 +221,8 @@ def queue(device: str = '') -> cl.CommandQueue | None:
                 continue
 
             context = cl.Context(devices=[cl_device])
-            command_queue = cl.CommandQueue(context)
-            return command_queue
+            queue = cl.CommandQueue(context)
+            return queue
     if device:
         raise ValueError(f'invalid device: {device}')
     else:
@@ -230,7 +230,7 @@ def queue(device: str = '') -> cl.CommandQueue | None:
 
 
 class OpenCL:
-    def __init__(self, queue):
+    def __init__(self, queue: cl.CommandQueue) -> None:
         self.queue = queue
         self.context = queue.context
         self.dtypes = {}

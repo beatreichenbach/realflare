@@ -1,6 +1,7 @@
 import json
 import logging
 import os
+import re
 import shutil
 from dataclasses import dataclass, field
 from importlib.resources import files
@@ -152,3 +153,13 @@ class Storage(JSONStorage):
     def save_state(self) -> bool:
         data = cast_basic(self.state)
         return self.write_data(data, self._state_path)
+
+    # noinspection PyMethodMayBeStatic
+    def parse_output_path(self, path: str, frame: int) -> str:
+        if not path:
+            # abspath assumes '' as relative path
+            return path
+        path = re.sub(r'\$F(\d)?', r'{:0\g<1>d}', path)
+        path = path.format(frame)
+        path = os.path.abspath(path)
+        return path

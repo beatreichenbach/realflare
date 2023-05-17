@@ -550,6 +550,7 @@ class ProjectEditor(ParameterEditor):
         system_group = self.tabs['render'].add_group(
             'system', collapsible=True, style=CollapsibleBox.Style.BUTTON
         )
+        system_group.create_hierarchy = False
 
         parm = StringParameter('device')
         parm.menu = opencl.devices()

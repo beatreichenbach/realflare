@@ -86,9 +86,10 @@ class MainWindow(DockWindow):
     def __init__(self, parent: QtWidgets.QWidget | None = None) -> None:
         super().__init__(parent)
 
+        self._init_splash_screen()
+
         self.project = Project()
         self.rendering = False
-        self.splash_screen = None
 
         self._project_queue = None
         self._project_path = ''
@@ -104,8 +105,21 @@ class MainWindow(DockWindow):
         self._init_menu()
         self.show_splash_message('Loading Engine...')
         self._init_engine()
-        self.show_splash_message('Loading Settings...')
+        self.show_splash_message('Loading UI...')
         self.load_state()
+        self.show_splash_message('Loading Project...')
+        if storage.state.recent_paths:
+            self.file_open(storage.state.recent_paths[0])
+        else:
+            self.update_window_title()
+
+    def _init_splash_screen(self):
+        filename = files('realflare').joinpath('assets').joinpath('splash.png')
+        pixmap = QtGui.QPixmap(str(filename))
+        size = QtCore.QSize(800, 500)
+        pixmap = pixmap.scaled(size, QtCore.Qt.KeepAspectRatio)
+        self.splash_screen = QtWidgets.QSplashScreen(pixmap)
+        self.splash_screen.show()
 
     def _init_log(self):
         # logging
@@ -122,14 +136,19 @@ class MainWindow(DockWindow):
     def _init_engine(self):
         self.api_thread = QtCore.QThread()
         self.rendering = False
-        self.engine = Engine(self.project.render.device)
-        if self.engine.queue is None:
+
+        try:
+            self.engine = Engine(self.project.render.device)
+        except (cl.Error, ValueError) as e:
+            logger.error(e)
+            logger.error('failed to start the engine')
             return
+
         self.engine.moveToThread(self.api_thread)
         self.api_thread.start()
 
-        self.engine.image_changed.connect(self._render_image_changed)
-        # self.engine.render_finished.connect(self._render_finish)
+        self.engine.image_rendered.connect(self._image_rendered)
+        self.engine.progress_changed.connect(self._progress_changed)
         self.elements_changed.connect(self.engine.set_elements)
         self.render_requested.connect(self.engine.render)
 
@@ -278,6 +297,10 @@ class MainWindow(DockWindow):
 
         super().closeEvent(event)
 
+    def showEvent(self, event: QtGui.QShowEvent) -> None:
+        self.splash_screen.finish(self)
+        super().showEvent(event)
+
     def file_new(self) -> None:
         self.set_project(Project())
         self.project_path = ''
@@ -327,11 +350,11 @@ class MainWindow(DockWindow):
 
         # text
         package_version = version('realflare')
-        platforms = cl.get_platforms()
-        if platforms:
-            cl_version = platforms[0].version
+        if self.engine:
+            cl_version = self.engine.queue.device.platform.version
         else:
-            cl_version = 'No CL Platforms found'
+            cl_version = 'No CL Device'
+
         pyside_version = version('PySide2')
         text = (
             f'Realflare version: {package_version}\n'
@@ -376,12 +399,6 @@ class MainWindow(DockWindow):
         # menu
         self._update_recent_menu()
 
-        # load file
-        if storage.state.recent_paths:
-            self.file_open(storage.state.recent_paths[0])
-        else:
-            self.update_window_title()
-
     @timer
     def refresh(self) -> None:
         self._update_elements()
@@ -395,7 +412,6 @@ class MainWindow(DockWindow):
             self.api_thread.quit()
         clear_cache()
         self._init_engine()
-        self._render_finish()
 
     def save_state(self):
         storage.state.window_state = self.state()
@@ -463,10 +479,9 @@ class MainWindow(DockWindow):
             and self.api_thread is not None
             and self.api_thread.isRunning()
         ):
+            self.render_requested.emit(self._project_queue)
             self._project_queue = None
-            self.rendering = True
             self.log_cache.clear()
-            # self.render_requested.emit(self._project_queue)
 
     # def _load_preset(self, config: Any):
     #     if isinstance(config, (Flare, Flare.Ghost, Flare.Starburst)):
@@ -506,9 +521,12 @@ class MainWindow(DockWindow):
         self._test_changes()
         self.request_render()
 
-    def _render_image_changed(self, image: RenderImage) -> None:
+    def _progress_changed(self, value: float) -> None:
+        self.rendering = 1 <= value
+
+    def _image_rendered(self, image: RenderImage) -> None:
         for widget in self._widgets.values():
-            if isinstance(widget, ElementViewer) and widget.element == image.type:
+            if isinstance(widget, ElementViewer) and widget.element == image.element:
                 widget.update_image(image.image.array)
 
     def _test_changes(self, quick: bool = True) -> None:
@@ -604,19 +622,9 @@ def exec_():
     # theme
     theme.apply_theme(theme.monokai)
 
-    # splash screen
-    splash_path = files('realflare').joinpath('assets').joinpath('splash.png')
-    splash_pixmap = QtGui.QPixmap(str(splash_path))
-    splash_size = QtCore.QSize(800, 500)
-    splash_pixmap = splash_pixmap.scaled(splash_size, QtCore.Qt.KeepAspectRatio)
-    splash_screen = QtWidgets.QSplashScreen(splash_pixmap)
-    splash_screen.show()
-
     # main window
     window = MainWindow()
-    window.splash_screen = splash_screen
     window.show()
-    splash_screen.finish(window)
 
     # render
     window.refresh()
@@ -625,8 +633,4 @@ def exec_():
 
 
 if __name__ == '__main__':
-    logger.setLevel(logging.DEBUG)
-    logging.getLogger().setLevel(logging.DEBUG)
-    logger.debug(__name__)
-    logging.debug('root')
     exec_()

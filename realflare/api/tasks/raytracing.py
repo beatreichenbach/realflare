@@ -5,7 +5,7 @@ import pyopencl as cl
 from PySide2 import QtCore
 
 from realflare.api import glass
-from realflare.api.data import Flare, Render, Prescription
+from realflare.api.data import Flare, Prescription, Project
 from realflare.api.path import File
 from realflare.api.tasks.opencl import (
     OpenCL,
@@ -213,7 +213,7 @@ class RaytracingTask(OpenCL):
         light_position: tuple[float, float],
         lens: Flare.Lens,
         grid_count: int,
-        grid_length: int,
+        grid_length: float,
         resolution: QtCore.QSize,
         wavelength_count: int,
         store_intersections: bool,  # for log_cache
@@ -294,17 +294,20 @@ class RaytracingTask(OpenCL):
 
     @timer
     def run(
-        self, flare: Flare, render: Render, path_indexes: tuple[int] | None = None
+        self, project: Project, path_indexes: tuple[int] | None = None
     ) -> Buffer | None:
         # QPointF and QSizeF are not hashable, convert to tuple
-        light_position = flare.light_position.x(), flare.light_position.y()
+        light_position = (
+            project.flare.light.position.x(),
+            project.flare.light.position.y(),
+        )
         buffer = self.raytrace(
             light_position,
-            flare.lens,
-            render.quality.grid_count,
-            render.quality.grid_length,
-            render.quality.resolution,
-            render.quality.wavelength_count,
+            project.flare.lens,
+            project.render.grid_count,
+            project.render.grid_length,
+            project.render.resolution,
+            project.render.wavelength_count,
             self.store_intersections,
             path_indexes,
         )

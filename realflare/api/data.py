@@ -37,8 +37,8 @@ class RenderElement(enum.Enum):
 
 @hashable_dataclass
 class RenderImage:
-    element: RenderElement
     image: Image
+    element: RenderElement
 
 
 @hashable_dataclass
@@ -145,6 +145,7 @@ class Output:
     path: str = ''
     colorspace: str = 'ACES - ACEScg'
     write: bool = False
+    frame: int = 0
 
 
 @hashable_dataclass

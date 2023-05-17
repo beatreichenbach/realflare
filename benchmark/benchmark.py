@@ -37,7 +37,7 @@ def markdown_table(data: dict, headers: tuple[str, str]) -> str:
 def build_report(args: list, output: str):
 
     # hardware
-    queue = opencl.queue()
+    queue = opencl.command_queue()
     device = queue.device
 
     hardware = {'processor': platform.processor(), 'OpenCL Device': device.name}

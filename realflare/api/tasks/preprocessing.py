@@ -5,7 +5,7 @@ import numpy as np
 import pyopencl as cl
 from PySide2 import QtCore
 
-from realflare.api.data import Flare, Render
+from realflare.api.data import Project
 from realflare.api.path import File
 from realflare.api.tasks.opencl import OpenCL, Buffer
 from realflare.api.tasks.raytracing import RaytracingTask
@@ -66,19 +66,22 @@ class PreprocessTask(OpenCL):
         path_indexes = tuple(int(k) for k, v in sorted_areas[:index_to_keep])
         return path_indexes
 
-    def run(self, flare: Flare, render: Render) -> tuple[int]:
-        grid_length = render.quality.grid_length
+    def run(self, project: Project) -> tuple[int]:
+        grid_length = project.render.grid_length
         rays = self.raytracing_task.raytrace(
             light_position=(0, 0),
-            lens=flare.lens,
+            lens=project.flare.lens,
             grid_count=3,
             grid_length=grid_length * 0.01,
             resolution=QtCore.QSize(100, 100),
             wavelength_count=1,
             store_intersections=False,
         )
+        if rays is None:
+            return tuple()
         areas = self.update_areas(rays)
-        path_indexes = self.update_path_indexes(areas, render.quality.cull_percentage)
+        cull_percentage = project.render.cull_percentage
+        path_indexes = self.update_path_indexes(areas, cull_percentage)
         return path_indexes
 
 
@@ -88,7 +91,7 @@ class ImageSamplingTask(OpenCL):
 
     @lru_cache(10)
     def update_sample_data(
-        self, file: File, resolution: QtCore.QSize, threshold: float
+        self, file: File, resolution: QtCore.QSize, samples: int
     ) -> np.ndarray:
         file_path = str(file)
 
@@ -105,24 +108,28 @@ class ImageSamplingTask(OpenCL):
         array = np.float32(array)
 
         # apply threshold
+        # TODO: don't need threshold anymore
+        threshold = 1 - (samples / resolution.width() * resolution.height())
         sample_data = apply_threshold(array, threshold)
 
         return sample_data
 
-    def run(self, flare: Flare, render: Render) -> np.ndarray:
-        file_path = storage.decode_path(flare.image_file)
+    def run(self, project: Project) -> np.ndarray:
+        file_path = storage.decode_path(project.flare.image_file)
 
         # resolution
-        width = max(flare.image_samples, 1)
+        width = max(project.flare.light.image_sample_resolution, 1)
         if width % 2 != 0:
             width += 1
-        ratio = render.quality.resolution.height() / render.quality.resolution.width()
+
+        resolution = project.render.resolution
+        ratio = resolution.height() / resolution.width()
         height = width * ratio
         if height % 2 != 0:
             height += 1
-        resolution = QtCore.QSize(width, height)
+        sample_resolution = QtCore.QSize(width, height)
 
         sample_data = self.update_sample_data(
-            File(file_path), resolution, flare.image_threshold
+            File(file_path), sample_resolution, project.flare.light.image_samples
         )
         return sample_data

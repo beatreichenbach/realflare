@@ -38,7 +38,7 @@ class CompositingTask(OpenCL):
         flare_config: data.Flare,
         render_config: data.Render,
     ) -> tuple[np.ndarray, cl.Image]:
-        resolution = render_config.quality.resolution
+        resolution = render_config.resolution
         w, h = resolution.width(), resolution.height()
 
         image, image_cl = self.update_image(resolution)
@@ -47,7 +47,7 @@ class CompositingTask(OpenCL):
             return image, image_cl
         else:
             starburst_scale = flare_config.starburst.scale
-            starburst_resolution = render_config.quality.starburst_resolution
+            starburst_resolution = render_config.starburst_resolution
             factor = resolution.width() / starburst_resolution.width()
             scale = starburst_scale * factor
             light_position = flare_config.light_position

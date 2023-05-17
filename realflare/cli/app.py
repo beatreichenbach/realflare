@@ -6,6 +6,7 @@ import sys
 import typing
 from argparse import ArgumentParser, Namespace
 
+import pyopencl as cl
 from PySide2 import QtCore
 
 from realflare.api.data import Project, RenderElement
@@ -93,7 +94,10 @@ def exec_(parser: ArgumentParser):
 
     # start engine
     device = project.render.system.device
-    engine = Engine(device)
+    try:
+        engine = Engine(device)
+    except (cl.Error, ValueError) as e:
+        parser.error(e)
 
     # set values per frame and
     frame_start = args.frame_start
