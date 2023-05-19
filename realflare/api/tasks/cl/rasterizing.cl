@@ -480,14 +480,13 @@ float fragment_shader(
 	Vertex v1,
 	Vertex v2,
 	Vertex v3,
-	__read_only image2d_array_t ghosts,
-	size_t wavelength_id
+	__read_only image2d_t ghost
 	)
 {
 	// ghost texture
 	float2 uv = weights.x * v0.uv + weights.y * v1.uv + weights.z * v2.uv + weights.w * v3.uv;
 	sampler_t sampler_norm = CLK_FILTER_LINEAR | CLK_NORMALIZED_COORDS_TRUE | CLK_ADDRESS_CLAMP_TO_EDGE;
-	float ghost_intensity = read_imagef(ghosts, sampler_norm, (float4) (uv, wavelength_id, 0)).x;
+	float ghost_intensity = read_imagef(ghost, sampler_norm, uv).x;
 
 	// relative distance from lens housing, rrel > 1 = ray left lens housing
 	float rrel = weights.x * v0.rrel + weights.y * v1.rrel + weights.z * v2.rrel + weights.w * v3.rrel;
@@ -528,7 +527,7 @@ Vertex mix_vertex(
 
 __kernel void rasterizer(
 	__write_only image2d_t image,
-	__read_only image2d_array_t ghosts,
+	__read_only image2d_t ghost,
 	__read_only image2d_t light_spectrum,
 	__global Vertex *vertexes,
 	__global long4* bin_queues,
@@ -647,7 +646,7 @@ __kernel void rasterizer(
 					if (hits > 0) {
 						int2 p_center = p + sub_steps / 2;
 						float4 weights = compute_barycentric_quad(p, v_pos[0], v_pos[1], v_pos[2], v_pos[3]);
-						intensity += fragment_shader(weights, v[0], v[1], v[2], v[3], ghosts, wavelength_id) * hits;
+						intensity += fragment_shader(weights, v[0], v[1], v[2], v[3], ghost) * hits;
 					}
 
 					if(wavelength_count != 1) {

@@ -11,6 +11,7 @@ CL_PATH = os.path.abspath(str(files('realflare.api.tasks').joinpath('cl')))
 
 LAMBDA_MIN = 390
 LAMBDA_MAX = 730
+LAMBDA_MID = (LAMBDA_MIN + LAMBDA_MAX) / 2
 
 intersection_dtype = np.dtype(
     [
