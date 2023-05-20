@@ -6,6 +6,7 @@ from typing import Callable
 
 import cv2
 import pyopencl as cl
+import PyOpenColorIO as OCIO
 from PySide2 import QtCore
 
 from realflare.api.tasks import opencl
@@ -48,6 +49,7 @@ class Engine(QtCore.QObject):
         self.queue = opencl.command_queue(device)
         logger.debug(f'engine initialized on device: {self.queue.device.name}')
 
+        self._colorspace_processors = {}
         self.elements = []
         self._init_renderers()
         self._init_tasks()
@@ -160,13 +162,16 @@ class Engine(QtCore.QObject):
         if element != project.output.element and not force:
             return
 
+        processor = self.colorspace_processor(project.output.colorspace)
+
         filename = storage.parse_output_path(project.output.path, project.output.frame)
         try:
             if not os.path.isdir(os.path.dirname(filename)):
                 os.makedirs(os.path.dirname(filename))
 
             array = image.array.copy()
-            array = color.colorspace(array, RENDER_SPACE, project.output.colorspace)
+            if processor:
+                processor.applyRGBA(array)
 
             image_bgr = cv2.cvtColor(array, cv2.COLOR_RGBA2BGR)
             cv2.imwrite(filename, image_bgr)
@@ -175,6 +180,24 @@ class Engine(QtCore.QObject):
             message = f'Error writing file: {filename}'
             raise RealflareError(message) from None
         logger.info('image written: {}'.format(filename))
+
+    def colorspace_processor(self, colorspace: str) -> OCIO.CPUProcessor | None:
+        cpu_processor = self._colorspace_processors.get(colorspace)
+        if cpu_processor is None:
+            try:
+                config = OCIO.GetCurrentConfig()
+                src_colorspace = config.getColorSpace(RENDER_SPACE)
+                dst_colorspace = config.getColorSpace(colorspace)
+                processor = config.getProcessor(src_colorspace, dst_colorspace)
+                cpu_processor = processor.getDefaultCPUProcessor()
+                self._colorspace_processors[colorspace] = cpu_processor
+            except OCIO.Exception as e:
+                logging.debug(e)
+                logging.warning(
+                    'Failed to initialize color conversion processor.'
+                    'The color in the written image will not be accurate.'
+                )
+        return cpu_processor
 
 
 def clear_cache():

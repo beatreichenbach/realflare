@@ -39,10 +39,22 @@ class ElementViewer(Viewer):
                 OCIO.TransformDirection.TRANSFORM_DIR_FORWARD,
             )
             self.colorspace_processor = processor.getDefaultCPUProcessor()
-        except OCIO.Exception as e:
-            logging.error(e)
 
-        self.item.post_processes.append(self._apply_colorspace)
+            # gpu = processor.getDefaultGPUProcessor()
+            # shader_desc = OCIO.GpuShaderDesc.CreateShaderDesc()
+            # shader_desc.setLanguage(OCIO.GPU_LANGUAGE_GLSL_1_3)
+            # shader_desc.setFunctionName("OCIODisplay")
+            # shader_desc.setResourcePrefix("ocio_")
+            #
+            # gpu.extractGpuShaderInfo(shader_desc)
+            # print(shader_desc.getShaderText())
+            self.item.post_processes.append(self._apply_colorspace)
+        except OCIO.Exception as e:
+            logging.debug(e)
+            logging.warning(
+                'Failed to initialize color conversion processor.'
+                'The color in the viewer will not be accurate.'
+            )
 
     @property
     def element(self) -> RenderElement:
