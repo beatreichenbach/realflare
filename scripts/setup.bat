@@ -44,13 +44,22 @@ echo Installing Realflare
 %venv% -m pip install --upgrade realflare@https://github.com/beatreichenbach/realflare/archive/refs/heads/main.zip
 if %errorlevel% neq 0 goto error
 
-@REM create run.bat
-set run=run.bat
+@REM create run_console.bat
+set run=run_console.bat
 if not exist %run% (
-    echo Creating run.bat
+    echo Creating run_console.bat
     echo @echo off >> %run%
     echo %venv% -m realflare --gui >> %run%
     echo if %%errorlevel%% neq 0 pause >> %run%
+)
+
+@REM create run.bat
+set run=run.bat
+if not exist %run% (
+    set venv="%~dp0venv\Scripts\pythonw.exe"
+    echo Creating run.bat
+    echo @echo off >> %run%
+    echo %venv% -m realflare --gui >> %run%
 )
 
 @REM success
