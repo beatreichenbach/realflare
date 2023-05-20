@@ -1,3 +1,4 @@
+import copy
 import inspect
 import logging
 import os
@@ -14,6 +15,7 @@ from qt_extensions.icons import MaterialIcon
 from qt_extensions.logger import LogCache, LogBar, LogViewer
 from realflare.gui.lensmodeleditor import LensModelDialog
 from realflare.gui.parameters import ProjectEditor
+from realflare.gui.settings import SettingsDialog
 from realflare.update import UpdateDialog
 from realflare.api.data import Project, RenderElement, RenderImage
 from realflare.api.engine import Engine, clear_cache
@@ -22,32 +24,18 @@ from realflare.storage import Storage
 
 from realflare.gui.presetbrowser import PresetBrowser
 
-from qt_extensions.mainwindow import (
-    DockWindow,
-    DockWidgetState,
-    SplitterState,
-)
+from qt_extensions.mainwindow import DockWindow, DockWidgetState, SplitterState
 from qt_extensions import theme
 from qt_extensions.typeutils import cast, cast_basic
-from realflare.utils.timing import timer
 
-# TODO: reconsider slot names, would it make more sense to split up functionality?
-#  for example, instead of widget_add it could be store_widget_state.
-#  also consider implementing QEvents to handle things such as widget_added etc.
-
-# TODO: send project to engine, make sure only new results get stored in ram cache
-
-# TODO: A quick tip: If all you want to do every 10ms is to draw a new point on a graph
+# NOTE: A quick tip: If all you want to do every 10ms is to draw a new point on a graph
 #  (or some similar gui display), then draw to a QImage instead.
 #  A QImage is not a gui object, so your worker thread can paint to it.
 #  Then in main thread run a timer that calls update() at the update frequency you want.
 #  A quarter to half second should be fine for most purposes.
 #  In the repaint, just draw the qimage.
 #  Or you could do the same thing with an array of points, etc.
-
-# TODO: At the point destroyed() is emitted, the widget isn't a QWidget anymore,
-#   just a QObject (as destroyed() is emitted from ~QObject)
-
+# TODO: cast can raise TypeError or ValueError
 
 logger = logging.getLogger(__name__)
 storage = Storage()
@@ -113,7 +101,7 @@ class MainWindow(DockWindow):
         else:
             self.update_window_title()
 
-    def _init_splash_screen(self):
+    def _init_splash_screen(self) -> None:
         filename = files('realflare').joinpath('assets').joinpath('splash.png')
         pixmap = QtGui.QPixmap(str(filename))
         size = QtCore.QSize(800, 500)
@@ -121,7 +109,7 @@ class MainWindow(DockWindow):
         self.splash_screen = QtWidgets.QSplashScreen(pixmap)
         self.splash_screen.show()
 
-    def _init_log(self):
+    def _init_log(self) -> None:
         # logging
         self.log_cache = LogCache()
         self.log_cache.connect_logger(logging.getLogger())
@@ -138,7 +126,7 @@ class MainWindow(DockWindow):
         self.progress_bar.setTextVisible(False)
         self.log_bar.add_widget(self.progress_bar)
 
-    def _init_engine(self):
+    def _init_engine(self) -> None:
         self.api_thread = QtCore.QThread()
         self.rendering = False
 
@@ -157,7 +145,7 @@ class MainWindow(DockWindow):
         self.elements_changed.connect(self.engine.set_elements)
         self.render_requested.connect(self.engine.render)
 
-    def _init_widgets(self):
+    def _init_widgets(self) -> None:
         self.register_widget(ElementViewer, 'Viewer', unique=False)
         self.register_widget(ProjectEditor, 'Parameters')
         self.register_widget(LogViewer, 'Log')
@@ -271,7 +259,7 @@ class MainWindow(DockWindow):
         self._project_path = value
         self.update_window_title()
 
-    def closeEvent(self, event):
+    def closeEvent(self, event: QtGui.QCloseEvent) -> None:
         # project
         self._test_changes(quick=False)
         if self._project_changed:
@@ -294,8 +282,7 @@ class MainWindow(DockWindow):
                 return
 
         # engine
-        if self.api_thread is not None:
-            self.api_thread.quit()
+        self.api_thread.quit()
 
         # state
         self.save_state()
@@ -394,10 +381,10 @@ class MainWindow(DockWindow):
         webbrowser.open('https://github.com/beatreichenbach/realflare/issues/new')
 
     def help_update(self) -> None:
-        dialog = UpdateDialog(self)
+        dialog = UpdateDialog(parent=self)
         dialog.exec_()
 
-    def load_state(self):
+    def load_state(self) -> None:
         # window state
         if storage.state.window_state:
             self.set_window_state(storage.state.window_state)
@@ -416,18 +403,18 @@ class MainWindow(DockWindow):
         self._update_elements()
         self.request_render(self.project)
 
-    def render_to_disk(self):
+    def render_to_disk(self) -> None:
         self.elements_changed.emit([self.project.output.element])
         self.project.output.write = True
         self.request_render(self.project)
         self.project.output.write = False
+        self._update_elements()
 
     def reset_window_state(self) -> None:
         self.set_window_state(self.default_window_state)
 
     def restart(self):
-        if self.api_thread is not None:
-            self.api_thread.quit()
+        self.api_thread.quit()
         clear_cache()
         self._init_engine()
 
@@ -438,19 +425,20 @@ class MainWindow(DockWindow):
         # try starting a render, if the engine is rendering,
         # store the project in the queue instead
         if project is not None:
-            self._project_queue = project
+            # NOTE: so far the only reason for deepcopy is render_to_disk.
+            #  If that function wouldn't require setting a temporary setting
+            #  it could stay mutable...
+
+            self._project_queue = copy.deepcopy(project)
 
         if self.rendering:
             self.stop_requested.emit()
-        elif (
-            self._project_queue is not None
-            and self.api_thread is not None
-            and self.api_thread.isRunning()
-        ):
+        elif self._project_queue is not None and self.api_thread.isRunning():
+            self.rendering = True
             self.render_requested.emit(self._project_queue)
             self._project_queue = None
 
-    def save_state(self):
+    def save_state(self) -> None:
         storage.state.window_state = self.state()
 
         for title, widget in self._widgets.items():
@@ -460,12 +448,16 @@ class MainWindow(DockWindow):
 
         storage.save_state()
 
-    def set_project(self, project: Project):
+    def set_project(self, project: Project) -> None:
         self.project = project
         self._project_hash = hash(self.project)
         for title, widget in self._widgets.items():
             if isinstance(widget, ProjectEditor):
                 widget.set_project(self.project)
+
+    def settings_open(self) -> None:
+        dialog = SettingsDialog(parent=self)
+        dialog.exec_()
 
     def show_splash_message(self, message: str) -> None:
         if isinstance(self.splash_screen, QtWidgets.QSplashScreen):
@@ -487,7 +479,7 @@ class MainWindow(DockWindow):
                     self.focus_widget(widget)
                     break
 
-    def update_window_title(self):
+    def update_window_title(self) -> None:
         filename = os.path.basename(self._project_path)
         title = filename if filename else 'untitled'
         if self._project_changed:
@@ -530,11 +522,19 @@ class MainWindow(DockWindow):
     def _project_editor_changed(self, editor: ProjectEditor) -> None:
         self.project = editor.project()
         self._test_changes()
+
+        # device
+        if self.project.render.device != self._device:
+            self._device = self.project.render.device
+            self.restart()
+
+        # render
         self.request_render(self.project)
 
     def _progress_changed(self, value: float) -> None:
         if value == 0:
-            self.log_cache.clear()
+            if storage.settings.clear_log_on_render:
+                self.log_cache.clear()
             self.progress_bar.setMaximum(0)
         if value >= 1:
             self.rendering = False
@@ -548,11 +548,6 @@ class MainWindow(DockWindow):
 
     def _test_changes(self, quick: bool = True) -> None:
         # checks whether project has changed
-
-        if self.project.render.device != self._device:
-            self._device = self.project.render.device
-            self.restart()
-
         if quick and self._project_changed:
             # don't perform hash comparisons for performance
             return
@@ -560,21 +555,24 @@ class MainWindow(DockWindow):
         self._project_changed = hash(self.project) != self._project_hash
         self.update_window_title()
 
-    def _update_elements(self):
+    def _update_elements(self) -> None:
         elements = []
         for dock_widget in self.dock_widgets():
             widget = dock_widget.currentWidget()
             if isinstance(widget, ElementViewer) and not widget.paused:
                 elements.append(widget.element)
         self.elements_changed.emit(elements)
-        self.request_render(self.project)
 
-    def _update_recent_menu(self):
+    def _update_recent_menu(self) -> None:
         self.recent_menu.clear()
         for filename in storage.state.recent_paths:
             action = QtWidgets.QAction(filename, self)
             action.triggered.connect(partial(self.file_open, filename))
             self.recent_menu.addAction(action)
+
+    def _viewer_changed(self) -> None:
+        self._update_elements()
+        self.request_render(self.project)
 
     def _widget_added(self, widget: QtWidgets.QWidget) -> None:
         # restore state
@@ -586,8 +584,8 @@ class MainWindow(DockWindow):
         # reconnect signals
         if isinstance(widget, ElementViewer):
             widget.position_changed.connect(partial(self._position_changed, widget))
-            widget.element_changed.connect(lambda: self._update_elements())
-            widget.pause_changed.connect(lambda: self._update_elements())
+            widget.element_changed.connect(lambda: self._viewer_changed())
+            widget.pause_changed.connect(lambda: self._viewer_changed())
             widget.refreshed.connect(self.refresh)
         elif isinstance(widget, ProjectEditor):
             widget.set_project(self.project)

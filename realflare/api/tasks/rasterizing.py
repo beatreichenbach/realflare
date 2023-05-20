@@ -289,7 +289,6 @@ class RasterizingTask(OpenCL):
         )
         return event
 
-    @timer
     def rasterize(
         self,
         render: Render,

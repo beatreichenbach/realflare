@@ -91,8 +91,8 @@ class Flare:
     @hashable_dataclass
     class Light:
         # light
-        intensity: float = 1
-        color: QtGui.QColor = deep_field(QtGui.QColor(1, 1, 1))
+        # intensity: float = 1
+        # color: QtGui.QColor = deep_field(QtGui.QColor(1, 1, 1))
         position: QtCore.QPointF = deep_field(QtCore.QPointF(0, 0))
 
         # image

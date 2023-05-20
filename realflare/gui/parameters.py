@@ -31,11 +31,6 @@ from realflare.storage import Storage
 storage = Storage()
 
 
-class LightSource(enum.Enum):
-    POSITION = enum.auto()
-    IMAGE = enum.auto()
-
-
 class ProjectEditor(ParameterEditor):
     def __init__(self, parent: QtWidgets.QWidget | None = None) -> None:
         super().__init__(parent)
@@ -82,7 +77,7 @@ class ProjectEditor(ParameterEditor):
         parm.tooltip = 'Output element'
         output_group.add_parameter(parm)
 
-        parm = PathParameter('output_path')
+        parm = PathParameter('path')
         parm.method = PathParameter.Method.SAVE_FILE
         parm.tooltip = (
             'Output image path. Use $F4 to replace frame numbers.\n'
@@ -720,9 +715,9 @@ class ProjectEditor(ParameterEditor):
         values['render']['grid_subdivisions'] = values['render']['grid_count'] - 1
         values['diagram']['grid_subdivisions'] = values['diagram']['grid_count'] - 1
 
-        self.form.blockSignals(True)
+        self.blockSignals(True)
         self.set_values(values)
-        self.form.blockSignals(False)
+        self.blockSignals(False)
         self.parameter_changed.emit(ParameterWidget())
 
     def _light_image_enabled(self, enabled: bool) -> None:

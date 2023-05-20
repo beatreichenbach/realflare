@@ -1,4 +1,6 @@
-from PySide2 import QtWidgets, QtGui
+import logging
+
+from PySide2 import QtWidgets, QtGui, QtCore
 
 from qt_extensions.button import Button
 from qt_extensions.messagebox import MessageBox
@@ -13,6 +15,7 @@ from qt_extensions.typeutils import cast_basic, cast
 from realflare.storage import Storage, Settings
 
 
+logger = logging.getLogger(__name__)
 storage = Storage()
 
 
@@ -40,6 +43,16 @@ class SettingsEditor(ParameterEditor):
         )
         color_group.add_parameter(parm)
 
+        # logging
+        logging_group = self.add_group(
+            'Logging', collapsible=True, style=CollapsibleBox.Style.BUTTON
+        )
+        logging_group.create_hierarchy = False
+
+        parm = BoolParameter('clear_log_on_render')
+        parm.tooltip = 'Clear the log on every render.'
+        logging_group.add_parameter(parm)
+
         # crash reporting
         crash_group = self.add_group(
             'Crash Reporting', collapsible=True, style=CollapsibleBox.Style.BUTTON
@@ -59,29 +72,30 @@ class SettingsEditor(ParameterEditor):
         settings = cast(Settings, values)
         return settings
 
-    def set_settings(self, config: Settings) -> None:
+    def set_settings(self, settings: Settings, attr: str = 'value') -> None:
+        settings_dict = cast_basic(settings)
+        if settings_dict['sentry'] is None:
+            settings_dict['sentry'] = True
         self.blockSignals(True)
-        self.set_values(cast_basic(config))
+        self.set_values(settings_dict, attr=attr)
         self.blockSignals(False)
 
 
-class SettingsDialog(QtWidgets.QWidget):
+class SettingsDialog(QtWidgets.QDialog):
     def __init__(self, parent: QtWidgets.QWidget | None = None):
         super().__init__(parent)
 
-        # TODO: this is mutable so not really necessary?
-        self.cached_config = storage.settings
-
         self._init_ui()
         self.setWindowTitle('Settings')
+        self.resize(QtCore.QSize(800, 600))
 
     def _init_ui(self):
         self.setLayout(QtWidgets.QVBoxLayout())
 
         # editor
         self.editor = SettingsEditor()
-        self.editor.set_values(cast_basic(self.cached_config), attr='default')
-        self.editor.parameter_changed.connect(self._settings_change)
+        self.editor.set_settings(storage.settings, attr='default')
+        self.editor.parameter_changed.connect(self._settings_changed)
 
         self.layout().addWidget(self.editor)
 
@@ -104,20 +118,18 @@ class SettingsDialog(QtWidgets.QWidget):
     def closeEvent(self, event: QtGui.QCloseEvent) -> None:
         if self.check_save():
             super().closeEvent(event)
+        else:
+            event.ignore()
 
     def cancel(self) -> None:
-        if self.cached_config:
-            self.editor.set_config(self.cached_config)
+        self.editor.set_settings(storage.settings)
         self.button_box.hide()
 
     def check_save(self) -> bool:
         # returns true if program can continue, false if action should be cancelled
 
-        if not self.cached_config:
-            return True
-
-        config = self.editor.config()
-        if self.cached_config == config:
+        settings = self.editor.settings()
+        if storage.settings == settings:
             return True
 
         buttons = (
@@ -141,17 +153,15 @@ class SettingsDialog(QtWidgets.QWidget):
             return True
 
     def save(self) -> bool:
-        storage.settings = self.editor.config()
+        storage.settings = self.editor.settings()
         result = storage.save_settings()
         if result:
             self.button_box.hide()
         return result
 
-    def _settings_change(self) -> None:
-        # TODO: current self.editor.config() does not represent the whole config,
-        #  but only the settings editable in gui
-        config = self.editor.config()
-        if self.cached_config and self.cached_config != config:
+    def _settings_changed(self) -> None:
+        settings = self.editor.settings()
+        if storage.settings != settings:
             self.button_box.show()
         else:
             self.button_box.hide()

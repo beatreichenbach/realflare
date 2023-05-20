@@ -73,7 +73,6 @@ class RaytracingTask(OpenCL):
             raise RealflareError(message) from None
         return lens_model
 
-    @timer
     @lru_cache(10)
     def update_lens_elements(
         self,
@@ -385,3 +384,20 @@ class IntersectionsTask(RaytracingTask):
             (1, wavelength_count, grid_count, grid_count, -1),
         )
         return intersections
+
+    @timer
+    def run(
+        self, project: Project, path_indexes: tuple[int] | None = None
+    ) -> Buffer | None:
+        # make light_position hashable
+        light_position = (0, project.render.diagram.light_position.y())
+        buffer = self.raytrace(
+            light_position,
+            project.flare.lens,
+            project.render.diagram.grid_count,
+            project.render.diagram.grid_length,
+            project.render.diagram.resolution,
+            1,
+            path_indexes,
+        )
+        return buffer

@@ -80,9 +80,9 @@ class GroupEditor(ParameterEditor):
         group.add_parameter(parm)
 
     def update_editor(self, name: str) -> None:
-        self.form.blockSignals(True)
+        self.blockSignals(True)
         self.set_values({'name': name})
-        self.form.blockSignals(False)
+        self.blockSignals(False)
 
     def name(self) -> str:
         return self.values().get('name', '')
@@ -137,7 +137,10 @@ class LensModelEditor(ParameterEditor):
         parm.slider_min = 10
         parm.slider_max = 100
         parm.slider_visible = False
-        parm.tooltip = 'Focal Length in mm of the lens. Used for mapping the light source to the ray direction.'
+        parm.tooltip = (
+            'Focal Length in mm of the lens. Used for mapping the light source '
+            'to the ray direction.'
+        )
         specs_group.add_parameter(parm)
 
         parm = FloatParameter('fstop')
@@ -153,8 +156,9 @@ class LensModelEditor(ParameterEditor):
         parm.slider_visible = False
         parm.tooltip = (
             'The number of the entry in the lens elements that is the aperture. '
-            'Make sure to include a lens element with radius 0, refractive index 1 and correct '
-            'height for the aperture. The height is currently not automatically calculated.'
+            'Make sure to include a lens element with radius 0, refractive index 1 '
+            'and correct height for the aperture. The height is currently not '
+            'automatically calculated.'
         )
         specs_group.add_parameter(parm)
 
@@ -163,9 +167,10 @@ class LensModelEditor(ParameterEditor):
         parm.headers = [field.name for field in fields]
         parm.types = [field.type for field in fields]
         parm.tooltip = (
-            "A list of all the lens elements including the aperture. In patents the usual "
-            "labels are: radius 'r', distance 'd', refractive index 'n', abbe number 'v'. "
-            "The height is rarely given and can be dialed in by comparing the diagram with the render."
+            'A list of all the lens elements including the aperture. '
+            'In patents the usual labels are: radius \'r\', distance \'d\', '
+            'refractive index \'n\', abbe number \'v\'. The height is rarely given '
+            'and can be dialed in by comparing the diagram with the render.'
         )
         specs_group.add_parameter(parm)
 
@@ -179,14 +184,11 @@ class LensModelEditor(ParameterEditor):
         return config
 
     def update_editor(self, config: LensModel) -> None:
-        values = dataclasses.asdict(config)
+        values = cast_basic(config)
 
-        # # match editor configuration
-        # values['cull_ghosts'] = ', '.join(values['cull_ghosts'])
-
-        self.form.blockSignals(True)
+        self.blockSignals(True)
         self.set_values(values)
-        self.form.blockSignals(False)
+        self.blockSignals(False)
 
 
 @dataclasses.dataclass

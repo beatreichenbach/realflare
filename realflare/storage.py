@@ -45,6 +45,7 @@ class JSONStorage(metaclass=Singleton):
 class Settings:
     sentry: bool | None = None
     ocio: str = ''
+    clear_log_on_render: bool = True
 
 
 @dataclass()

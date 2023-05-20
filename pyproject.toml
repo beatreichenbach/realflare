@@ -3,7 +3,7 @@ name = "realflare"
 description = "Physically-Based Lens Flare Tool"
 version = "0.3.2"
 authors = [
-    {name = "Beat Reichenbach", email = "info@artofbeat.com"}
+    {name = "Beat Reichenbach"}
 ]
 dependencies = [
     "qt-extensions @ https://github.com/beatreichenbach/qt-extensions/archive/refs/heads/main.zip",
@@ -19,10 +19,6 @@ dependencies = [
 requires-python = ">=3.10"
 license = {text = "MIT"}
 readme = "README.md"
-classifiers = [
-"Development Status :: 2 - Pre-Alpha",
-"Programming Language :: Python :: 3.10"
-]
 
 [project.optional-dependencies]
 dev = [
@@ -48,8 +44,8 @@ log_cli_level = "DEBUG"
 [tool.semantic_release]
 version_variable = "realflare/__init__.py:__version__"
 branch = "main"
-build_command = "python -m build --sdist --wheel"
 upload_to_pypi = false
 upload_to_repository = false
 upload_to_release = false
 version_toml = "pyproject.toml:project.version"
+#build_command = "python -m build --sdist --wheel"

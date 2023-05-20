@@ -24,6 +24,7 @@ def main():
     editor.set_project(project)
 
     editor.parameter_changed.connect(lambda: logging.debug(editor.project()))
+    logging.debug(editor.state())
 
     editor.show()
 
