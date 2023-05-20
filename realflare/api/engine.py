@@ -14,7 +14,6 @@ from realflare.api.tasks import opencl
 from realflare.api.tasks.diagram import DiagramTask
 from realflare.api.tasks.preprocessing import PreprocessTask, ImageSamplingTask
 from realflare.storage import Storage
-from realflare.utils import color
 
 from realflare.api.tasks.aperture import ApertureTask
 from realflare.api.tasks.ghost import GhostTask
