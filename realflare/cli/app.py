@@ -75,9 +75,12 @@ def update_project(project: Project, kwargs: dict, frame_time: float):
 def exec_(parser: ArgumentParser):
     args = parser.parse_args(sys.argv[1:])
 
+    logging.basicConfig(level=args.log)
+
     # set up project
     if not args.project or not os.path.isfile(args.project):
         parser.error(f'project path not valid: {args.project}')
+        return
     storage = Storage()
     try:
         data = storage.read_data(args.project)
@@ -86,12 +89,12 @@ def exec_(parser: ArgumentParser):
         parser.error(f'project is not valid: {args.project}')
         return
     project = cast(Project, data)
-    project.elements = [RenderElement.Type.FLARE]
 
+    project.output.write = True
     if args.output:
-        project.render.output_path = args.output
+        project.output.path = args.output
     if args.colorspace:
-        project.render.colorspace = args.colorspace
+        project.output.colorspace = args.colorspace
 
     kwargs = parse_project_args(args)
 
@@ -99,23 +102,20 @@ def exec_(parser: ArgumentParser):
     QtCore.QCoreApplication()
 
     # start engine
-    device = project.render.system.device
+    device = project.render.device
     try:
         engine = Engine(device)
     except (cl.Error, ValueError) as e:
         parser.error(e)
+        return
+
+    engine.set_elements([RenderElement.FLARE])
 
     # set values per frame and
     frame_start = args.frame_start
     frame_end = args.frame_end + 1
 
-    try:
-        for frame in range(frame_start, frame_end):
-            frame_time = (frame - frame_start) / max(frame_end - 1 - frame_start, 1)
-            update_project(project, kwargs, frame_time)
-            if not engine.render(project):
-                continue
-            output_path = engine.parse_output_path(project.render.output_path, frame)
-            engine.write_image(output_path, colorspace=project.render.colorspace)
-    except KeyboardInterrupt:
-        parser.error('render interrupted by the user')
+    for frame in range(frame_start, frame_end):
+        frame_time = (frame - frame_start) / max(frame_end - 1 - frame_start, 1)
+        update_project(project, kwargs, frame_time)
+        engine.render(project)

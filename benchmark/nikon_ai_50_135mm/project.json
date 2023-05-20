@@ -1,16 +1,22 @@
 {
+  "output": {
+    "element": "FLARE",
+    "path": "",
+    "colorspace": "ACES - ACEScg",
+    "write": false,
+    "frame": 0
+  },
   "flare": {
-    "light_intensity": 0.0,
-    "light_color": [
-      0.0,
-      0.0,
-      0.0,
-      1.0
-    ],
-    "light_position": [
-      0.5,
-      0.5
-    ],
+    "light": {
+      "position": [
+        0.5,
+        0.5
+      ],
+      "image_file_enabled": false,
+      "image_file": "",
+      "image_sample_resolution": 256,
+      "image_samples": 8
+    },
     "lens": {
       "sensor_size": [
         36,
@@ -141,12 +147,21 @@
           526,
           1.316133708286473
         ]
+      ],
+      "random_wavelength_range": [
+        390,
+        700
+      ],
+      "random_refractive_index_range": [
+        1.21,
+        1.38
       ]
     },
     "starburst": {
       "aperture": {
-        "fstop": 8.0,
+        "file_enabled": false,
         "file": "",
+        "fstop": 8.0,
         "blades": 64,
         "softness": 0.0
       },
@@ -166,8 +181,9 @@
     },
     "ghost": {
       "aperture": {
-        "fstop": 2.0,
+        "file_enabled": false,
         "file": "",
+        "fstop": 2.0,
         "blades": 64,
         "softness": 0.01
       },
@@ -175,51 +191,48 @@
     }
   },
   "render": {
-    "output_path": "",
-    "colorspace": "ACES - ACEScg",
-    "quality": {
+    "resolution": [
+      1920,
+      1080
+    ],
+    "bin_size": 64,
+    "anti_aliasing": 4,
+    "wavelength_count": 5,
+    "wavelength_sub_count": 8,
+    "grid_count": 129,
+    "grid_length": 60.0,
+    "cull_percentage": 0.0,
+    "starburst": {
       "resolution": [
-        1920,
-        1080
+        256,
+        256
       ],
-      "bin_size": 64,
-      "anti_aliasing": 4,
-      "wavelength_count": 5,
-      "wavelength_sub_count": 8,
-      "grid_count": 129,
-      "grid_length": 60.0,
-      "cull_percentage": 0.0,
-      "starburst": {
-        "resolution": [
-          256,
-          256
-        ],
-        "samples": 200
-      },
-      "ghost": {
-        "resolution": [
-          512,
-          512
-        ]
-      }
+      "samples": 100
     },
+    "ghost": {
+      "resolution": [
+        512,
+        512
+      ]
+    },
+    "device": ""
+  },
+  "diagram": {
+    "resolution": [
+      2048,
+      1024
+    ],
+    "debug_ghost": 0,
+    "light_position": 0.0,
+    "grid_count": 8,
+    "grid_length": 50.0,
+    "column_offset": 0
+  },
+  "debug": {
+    "show_image": false,
     "disable_starburst": false,
     "disable_ghosts": false,
-    "debug_ghosts": false,
-    "debug_ghost": 3,
-    "diagram": {
-      "resolution": [
-        2048,
-        1024
-      ],
-      "debug_ghost": 10,
-      "light_position": 0.0,
-      "grid_count": 9,
-      "grid_length": 20.0,
-      "column_offset": 0
-    }
-  },
-  "elements": [
-    "FLARE"
-  ]
+    "debug_ghost_enabled": false,
+    "debug_ghost": 0
+  }
 }

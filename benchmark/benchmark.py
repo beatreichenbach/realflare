@@ -34,7 +34,7 @@ def markdown_table(data: dict, headers: tuple[str, str]) -> str:
     return table
 
 
-def build_report(args: list, output: str):
+def build_report(project_path: str, args: list, output: str):
 
     # hardware
     queue = opencl.command_queue()
@@ -72,11 +72,13 @@ def build_report(args: list, output: str):
     software_table = markdown_table(software, ('Name', 'Version'))
 
     # realflare
-    project_path = args[-1]
     package_path = os.path.dirname(os.path.dirname(__file__))
-    args[0] = os.path.relpath(args[0], package_path)
-    args[-1] = os.path.relpath(args[-1], package_path)
-    command = '`' + ' '.join(args) + '`'
+    relative_sys_path = os.path.relpath(sys.executable, package_path)
+    relative_project_path = os.path.relpath(project_path, package_path)
+    command = ' '.join(args)
+    command = command.replace(sys.executable, relative_sys_path)
+    command = command.replace(project_path, relative_project_path)
+    command = f'`{command}`'
 
     # score
     score = {}
@@ -118,7 +120,7 @@ def build_report(args: list, output: str):
         f.write(report)
 
 
-def run(name: str = 'nikon_ai_50_135mm'):
+def run(name: str = 'nikon_ai_50_135mm') -> None:
 
     # set environment variables
     env = os.environ.copy()
@@ -129,23 +131,20 @@ def run(name: str = 'nikon_ai_50_135mm'):
 
     project_path = os.path.join(os.path.dirname(__file__), name, 'project.json')
 
-    command = [sys.executable, '-m', 'realflare', '--project', project_path]
+    command = [
+        sys.executable,
+        '-m',
+        'realflare',
+        '--project',
+        project_path,
+        '--log',
+        str(logging.INFO),
+    ]
 
     output = subprocess.check_output(command, env=env, stderr=subprocess.STDOUT)
-    # process = processing.popen(command, env=env)
-    # output = []
-    # while process.poll() is None:
-    #     output.append(process.stdout.readline())
-    # process.stdout.close()
-    #
-    # return_code = process.returncode
-    # if return_code:
-    #     logging.error(subprocess.CalledProcessError(return_code, command))
 
-    build_report(command, output.decode('utf-8'))
-    # return return_code
+    build_report(project_path, command, output.decode('utf-8'))
 
 
 if __name__ == '__main__':
-    logging.getLogger().setLevel(logging.DEBUG)
     run()

@@ -37,7 +37,6 @@ def argument_parser():
         default='ACES - ACEScg',
         help='output colorspace',
     )
-
     parser.add_argument(
         '--arg',
         type=str,
@@ -45,7 +44,6 @@ def argument_parser():
         action='append',
         help='argument being interpolated from frame-start to frame-end',
     )
-
     parser.add_argument(
         '--frame-start',
         type=int,
@@ -57,6 +55,12 @@ def argument_parser():
         type=int,
         default=1,
         help='end frame number',
+    )
+    parser.add_argument(
+        '--log',
+        type=int,
+        default=logging.WARNING,
+        help='logging level',
     )
     return parser
 
@@ -72,15 +76,9 @@ def sentry():
     if storage.settings.sentry:
         import sentry_sdk
 
-        environment = 'production'
-        if os.getenv('REALFLARE_DEV'):
-            environment = 'development'
-            logging.getLogger().setLevel(logging.DEBUG)
-
         sentry_sdk.init(
             dsn='https://ca69319449554a2885eb98218ede9110@o4504738332016640.ingest.sentry.io/4504738333655040',
             traces_sample_rate=1.0,
-            environment=environment,
         )
 
 
