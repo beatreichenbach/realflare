@@ -24,9 +24,7 @@ class Singleton(type):
         return cls._instances[cls]
 
 
-class JSONStorage:
-    __metaclass__ = Singleton
-
+class JSONStorage(metaclass=Singleton):
     # noinspection PyMethodMayBeStatic
     def read_data(self, path: str) -> dict:
         try:
@@ -56,7 +54,7 @@ class State:
     recent_paths: list[str] = field(default_factory=list)
 
 
-class Storage(JSONStorage):
+class Storage(JSONStorage, metaclass=Singleton):
     def __init__(self) -> None:
         super().__init__()
 
