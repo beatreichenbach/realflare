@@ -1,4 +1,3 @@
-import hashlib
 import os
 
 
@@ -8,10 +7,7 @@ class File:
 
     def __init__(self, path: str):
         self.path = path
-        self.mtime = os.path.getmtime(path)
-        hasher = hashlib.sha256()
-        hasher.update((str(self.mtime) + path).encode('utf-8'))
-        self._hash = int.from_bytes(hasher.digest(), 'big')
+        self._hash = hash((path, os.path.getmtime(path)))
 
     def __add__(self, other):
         self.path += other

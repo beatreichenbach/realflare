@@ -9,7 +9,7 @@ from slugify import slugify
 from qt_extensions.button import Button
 from qt_extensions.filebrowser import FileBrowser, FileElement
 
-from realflare.api.data import Prescription
+from realflare.api.data import LensModel
 from realflare.storage import Storage
 from qt_extensions.box import CollapsibleBox
 from qt_extensions.elementbrowser import Field
@@ -26,6 +26,7 @@ from qt_extensions.parameters import (
 from qt_extensions.typeutils import cast, cast_basic
 
 
+logger = logging.getLogger(__name__)
 storage = Storage()
 
 
@@ -94,7 +95,7 @@ class LensModelEditor(ParameterEditor):
         self._init_editor()
 
     def _init_editor(self):
-        # prescription
+        # lens model
         model_group = self.add_group('model', style=CollapsibleBox.Style.SIMPLE)
         model_group.create_hierarchy = False
 
@@ -158,7 +159,7 @@ class LensModelEditor(ParameterEditor):
         specs_group.add_parameter(parm)
 
         parm = TabDataParameter('lens_elements')
-        fields = dataclasses.fields(Prescription.LensElement)
+        fields = dataclasses.fields(LensModel.LensElement)
         parm.headers = [field.name for field in fields]
         parm.types = [field.type for field in fields]
         parm.tooltip = (
@@ -168,34 +169,16 @@ class LensModelEditor(ParameterEditor):
         )
         specs_group.add_parameter(parm)
 
-        # optimization
-        # optimization_group = prescription_group.add_group(
-        #     'optimization', collapsible=True, style=CollapsibleBox.Style.BUTTON
-        # )
-        # optimization_group.create_hierarchy = False
-        #
-        # parm = StringParameter('cull_ghosts')
-        # optimization_group.add_parameter(parm)
-
         # init defaults
-        default_config = Prescription()
-        values = dataclasses.asdict(default_config)
-        # values['cull_ghosts'] = ', '.join(values['cull_ghosts'])
+        values = cast_basic(LensModel())
         self.set_values(values, attr='default')
 
-    def prescription_config(self) -> Prescription:
+    def lens_model_config(self) -> LensModel:
         values = self.values()
-
-        # # match dataclass configuration
-        # cull_ghosts = [
-        #     int(c) for c in values['cull_ghosts'].split(',') if c.strip().isdigit()
-        # ]
-        # values['cull_ghosts'] = cull_ghosts
-
-        config = cast(Prescription, values)
+        config = cast(LensModel, values)
         return config
 
-    def update_editor(self, config: Prescription) -> None:
+    def update_editor(self, config: LensModel) -> None:
         values = dataclasses.asdict(config)
 
         # # match editor configuration
@@ -208,7 +191,7 @@ class LensModelEditor(ParameterEditor):
 
 @dataclasses.dataclass
 class LensModelFileElement(FileElement):
-    prescription: Prescription | None = None
+    lens_model: LensModel | None = None
 
 
 class LensModelBrowser(FileBrowser):
@@ -230,10 +213,13 @@ class LensModelBrowser(FileBrowser):
         self.model.append_element(element, icon=icon, parent=parent)
 
     def _append_file(self, path: str, parent: QtCore.QModelIndex):
-        data = storage.read_data(path) or {}
-        prescription = cast(Prescription, data)
-        name = prescription.name
-        element = LensModelFileElement(name=name, path=path, prescription=prescription)
+        try:
+            data = storage.read_data(path)
+        except ValueError:
+            return
+        lens_model = cast(LensModel, data)
+        name = lens_model.name
+        element = LensModelFileElement(name=name, path=path, lens_model=lens_model)
         self.model.append_element(element, no_children=True, parent=parent)
 
 
@@ -264,7 +250,7 @@ class LensModelDialog(QtWidgets.QWidget):
 
         # editor
         self.lens_editor = LensModelEditor()
-        self.lens_editor.parameter_changed.connect(self._prescription_change)
+        self.lens_editor.parameter_changed.connect(self._lens_model_change)
         self.group_editor = GroupEditor()
         self.group_editor.parameter_changed.connect(self._group_change)
         self.content_widget = ContentWidget()
@@ -297,16 +283,16 @@ class LensModelDialog(QtWidgets.QWidget):
         if self.current_element:
             if self.current_element.name:
                 self.group_editor.update_editor(self.current_element.name)
-            if self.current_element.prescription:
-                self.lens_editor.update_editor(self.current_element.prescription)
+            if self.current_element.lens_model:
+                self.lens_editor.update_editor(self.current_element.lens_model)
 
         self.button_box.hide()
 
     def change_content(self) -> None:
         widget = None
         if self.current_element:
-            if self.current_element.prescription:
-                self.lens_editor.update_editor(self.current_element.prescription)
+            if self.current_element.lens_model:
+                self.lens_editor.update_editor(self.current_element.lens_model)
                 widget = self.lens_editor
             else:
                 self.group_editor.update_editor(self.current_element.name)
@@ -319,10 +305,10 @@ class LensModelDialog(QtWidgets.QWidget):
         if not self.current_element:
             return True
 
-        if self.current_element.prescription:
+        if self.current_element.lens_model:
             # lens model
-            prescription = self.lens_editor.prescription_config()
-            if self.current_element.prescription == prescription:
+            lens_model = self.lens_editor.lens_model_config()
+            if self.current_element.lens_model == lens_model:
                 return True
         else:
             # group
@@ -352,8 +338,8 @@ class LensModelDialog(QtWidgets.QWidget):
     def save(self) -> bool:
         if not self.current_element:
             return True
-        if self.current_element.prescription:
-            result = self.save_prescription()
+        if self.current_element.lens_model:
+            result = self.save_lens_model()
         else:
             result = self.save_group()
         if result:
@@ -370,17 +356,18 @@ class LensModelDialog(QtWidgets.QWidget):
             self.current_element.name = os.path.basename(destination_path)
             self.current_element.path = destination_path
         except OSError as e:
-            logging.exception(e)
+            logger.debug(e)
+            logger.error(f'Could not save group: {name}')
 
         self.browser.refresh()
         return True
 
-    def save_prescription(self) -> bool:
+    def save_lens_model(self) -> bool:
         indexes = self.browser.model.find_indexes(self.current_element)
 
         name, ext = os.path.splitext(os.path.basename(self.current_element.path))
-        prescription = self.lens_editor.prescription_config()
-        filename = slugify(prescription.name, separator='_') + ext
+        lens_model = self.lens_editor.lens_model_config()
+        filename = slugify(lens_model.name, separator='_') + ext
         path = os.path.join(os.path.dirname(self.current_element.path), filename)
         if self.current_element.path != path:
             path = unique_path(path)
@@ -389,13 +376,18 @@ class LensModelDialog(QtWidgets.QWidget):
             except OSError:
                 pass
 
-        data = cast_basic(prescription)
-        storage.write_data(data, path)
+        data = cast_basic(lens_model)
+        try:
+            storage.write_data(data, path)
+        except ValueError:
+            message = f'Could not save project file: {self.project_path}'
+            logger.error(message)
+            return False
 
-        logging.debug(f'File saved: {path}')
+        logger.info(f'Lens Model saved: {path}')
 
-        self.current_element.prescription = prescription
-        self.current_element.name = prescription.name
+        self.current_element.lens_model = lens_model
+        self.current_element.name = lens_model.name
         self.current_element.path = path
 
         for index in indexes:
@@ -409,9 +401,9 @@ class LensModelDialog(QtWidgets.QWidget):
         else:
             self.button_box.hide()
 
-    def _prescription_change(self) -> None:
-        prescription = self.lens_editor.prescription_config()
-        if self.current_element and self.current_element.prescription != prescription:
+    def _lens_model_change(self) -> None:
+        lens_model = self.lens_editor.lens_model_config()
+        if self.current_element and self.current_element.lens_model != lens_model:
             self.button_box.show()
         else:
             self.button_box.hide()

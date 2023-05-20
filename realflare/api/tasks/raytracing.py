@@ -1,3 +1,4 @@
+import logging
 from functools import lru_cache
 
 import numpy as np
@@ -5,7 +6,7 @@ import pyopencl as cl
 from PySide2 import QtCore
 
 from realflare.api import glass
-from realflare.api.data import Flare, Prescription, Project
+from realflare.api.data import Flare, LensModel, Project, RealflareError
 from realflare.api.path import File
 from realflare.api.tasks.opencl import (
     OpenCL,
@@ -18,9 +19,10 @@ from realflare.api.tasks.opencl import (
 )
 from realflare.storage import Storage
 from realflare.utils.timing import timer
-from qt_extensions.typeutils import cast
+from qt_extensions.typeutils import cast, cast_basic
 
 
+logger = logging.getLogger(__name__)
 storage = Storage()
 
 
@@ -33,17 +35,10 @@ def wavelength_array(wavelength_count: int) -> list[int]:
     return array
 
 
-# TODO: lru_cache is global, so using it with unique task such as store_intersections=True
-#  will cause two different classes to return same cache
-
-
 class RaytracingTask(OpenCL):
-    def __init__(
-        self, queue: cl.CommandQueue, store_intersections: bool = False
-    ) -> None:
+    def __init__(self, queue: cl.CommandQueue) -> None:
         super().__init__(queue)
         self.kernel = None
-        self.store_intersections = store_intersections
         self.build()
 
     def build(self, *args, **kwargs):
@@ -51,8 +46,6 @@ class RaytracingTask(OpenCL):
         self.register_dtype('Ray', ray_dtype)
         self.register_dtype('LensElement', lens_element_dtype)
         self.register_dtype('Intersection', intersection_dtype)
-        if self.store_intersections:
-            self.source += '#define STORE_INTERSECTIONS\n'
         self.source += f'__constant int LAMBDA_MIN = {LAMBDA_MIN};\n'
         self.source += f'__constant int LAMBDA_MAX = {LAMBDA_MAX};\n'
         self.source += self.read_source_file('raytracing.cl')
@@ -60,28 +53,43 @@ class RaytracingTask(OpenCL):
         self.kernel = cl.Kernel(self.program, 'raytrace')
 
     @lru_cache(10)
-    def update_prescription(self, file: File) -> Prescription:
+    def build_lens_model(self, file: File) -> LensModel:
         file_path = str(file)
-        data = storage.read_data(file_path) or {}
-        prescription = cast(Prescription, data)
-        return prescription
+        data = storage.read_data(file_path)
+        lens_model = cast(LensModel, data)
+        return lens_model
 
+    def update_lens_model(self, lens_model_path: str) -> LensModel:
+        if not lens_model_path:
+            raise RealflareError('No Lens Model')
+
+        filename = storage.decode_path(lens_model_path)
+        try:
+            lens_model_file = File(filename)
+            lens_model = self.build_lens_model(lens_model_file)
+        except (OSError, ValueError) as e:
+            logger.debug(e)
+            message = f'Invalid Lens Model: {filename}'
+            raise RealflareError(message) from None
+        return lens_model
+
+    @timer
     @lru_cache(10)
     def update_lens_elements(
         self,
-        prescription: Prescription,
+        lens_model: LensModel,
         lens: Flare.Lens,
     ) -> Buffer:
         # lens elements
         # make copy of mutable attribute
-        lens_elements = list(prescription.lens_elements)
+        lens_elements = list(lens_model.lens_elements)
         # if not lens_elements:
         #     raise ValueError('lens model has no elements')
 
         # append sensor as element
         sensor_size = lens.sensor_size
         sensor_length = np.linalg.norm((sensor_size.width(), sensor_size.height())) / 2
-        lens_elements.append(Prescription.LensElement(height=sensor_length))
+        lens_elements.append(LensModel.LensElement(height=sensor_length))
 
         # glasses
         glasses_path = storage.decode_path(lens.glasses_path)
@@ -100,7 +108,7 @@ class RaytracingTask(OpenCL):
             array[i]['center'] = offset + lens_element.radius
 
             # TODO: get rid of is_apt and use aperture_index
-            array[i]['is_apt'] = i == prescription.aperture_index
+            array[i]['is_apt'] = i == lens_model.aperture_index
 
             # TODO: temp, coefficients not set = random memory
             if i < len(lens.coating_lens_elements):
@@ -123,13 +131,13 @@ class RaytracingTask(OpenCL):
             offset += lens_element.distance
 
         # return buffer
-        buffer = Buffer(self.context, array=array, args=(prescription, lens))
+        buffer = Buffer(self.context, array=array, args=(lens_model, lens))
         return buffer
 
     @lru_cache(10)
     def update_paths(
         self,
-        prescription: Prescription,
+        lens_model: LensModel,
         path_indexes: tuple[int] | None,
     ) -> Buffer:
         # create paths that describe possible paths the rays can travel
@@ -137,10 +145,10 @@ class RaytracingTask(OpenCL):
         # the ray can only bounce either before or after the aperture
         # the last lens is the sensor. max: lens_elements_count - 1
         paths = []
-        lens_elements_count = len(prescription.lens_elements)
+        lens_elements_count = len(lens_model.lens_elements)
         index_min = 0
         for bounce1 in range(1, lens_elements_count - 1):
-            if bounce1 == prescription.aperture_index:
+            if bounce1 == lens_model.aperture_index:
                 index_min = bounce1 + 1
             for bounce2 in range(index_min, bounce1):
                 paths.append((bounce1, bounce2))
@@ -152,7 +160,7 @@ class RaytracingTask(OpenCL):
         array = np.array(paths, cl.cltypes.int2)
 
         # return buffer
-        buffer = Buffer(self.context, array=array, args=(prescription, path_indexes))
+        buffer = Buffer(self.context, array=array, args=(lens_model, path_indexes))
         return buffer
 
     @lru_cache(10)
@@ -216,7 +224,6 @@ class RaytracingTask(OpenCL):
         grid_length: float,
         resolution: QtCore.QSize,
         wavelength_count: int,
-        store_intersections: bool,  # for log_cache
         path_indexes: tuple[int] | None = None,
     ) -> Buffer | None:
 
@@ -225,14 +232,11 @@ class RaytracingTask(OpenCL):
             self.build()
 
         # lens elements
-        prescription_path = storage.decode_path(lens.prescription_path)
-        prescription = self.update_prescription(File(prescription_path))
-        # TODO: checking the lru_cache with prescription dataclass is slow because
-        #  it's a large dataclass, maybe check with file instead
-        lens_elements = self.update_lens_elements(prescription, lens)
+        lens_model = self.update_lens_model(lens.lens_model_path)
+        lens_elements = self.update_lens_elements(lens_model, lens)
         lens_elements.clear_buffer()
         lens_elements_count = len(lens_elements.array)
-        paths = self.update_paths(prescription, path_indexes)
+        paths = self.update_paths(lens_model, path_indexes)
         paths.clear_buffer()
         # TODO: cl implementation could be better?
         disperse = bool(lens.glasses_path)
@@ -251,7 +255,7 @@ class RaytracingTask(OpenCL):
 
         # direction
         sensor_size = lens.sensor_size.width(), lens.sensor_size.height()
-        focal_length = prescription.focal_length
+        focal_length = lens_model.focal_length
         direction = self.update_direction(
             light_position, resolution, sensor_size, focal_length
         )
@@ -266,14 +270,6 @@ class RaytracingTask(OpenCL):
         self.kernel.set_arg(7, cl.cltypes.int(disperse))
         self.kernel.set_arg(8, wavelengths.buffer)
 
-        intersections = None
-        if store_intersections:
-            intersections_count = lens_elements.shape[0] * 3 - 1
-            intersections_shape = (*rays.shape, intersections_count)
-            intersections = self.update_intersections(intersections_shape)
-            self.kernel.set_arg(9, intersections.buffer)
-            self.kernel.set_arg(10, np.int32(intersections_count))
-
         self.trace(rays)
 
         # copy device buffer to host
@@ -282,25 +278,14 @@ class RaytracingTask(OpenCL):
         # for ray in rays[0, 0]:
         #     logging.debug(ray)
 
-        if store_intersections:
-            cl.enqueue_copy(self.queue, intersections.array, intersections.buffer)
-            intersections._array = np.reshape(
-                intersections.array,
-                (1, wavelength_count, grid_count, grid_count, -1),
-            )
-            return intersections
-
         return rays
 
     @timer
     def run(
         self, project: Project, path_indexes: tuple[int] | None = None
     ) -> Buffer | None:
-        # QPointF and QSizeF are not hashable, convert to tuple
-        light_position = (
-            project.flare.light.position.x(),
-            project.flare.light.position.y(),
-        )
+        # make light_position hashable
+        light_position = tuple(cast_basic(project.flare.light.position))
         buffer = self.raytrace(
             light_position,
             project.flare.lens,
@@ -308,7 +293,95 @@ class RaytracingTask(OpenCL):
             project.render.grid_length,
             project.render.resolution,
             project.render.wavelength_count,
-            self.store_intersections,
             path_indexes,
         )
         return buffer
+
+
+class IntersectionsTask(RaytracingTask):
+    def __init__(self, queue: cl.CommandQueue) -> None:
+        super().__init__(queue)
+        self.kernel = None
+        self.build()
+
+    def build(self, *args, **kwargs):
+        self.source = ''
+        self.register_dtype('Ray', ray_dtype)
+        self.register_dtype('LensElement', lens_element_dtype)
+        self.register_dtype('Intersection', intersection_dtype)
+        self.source += '#define STORE_INTERSECTIONS\n'
+        self.source += f'__constant int LAMBDA_MIN = {LAMBDA_MIN};\n'
+        self.source += f'__constant int LAMBDA_MAX = {LAMBDA_MAX};\n'
+        self.source += self.read_source_file('raytracing.cl')
+        super().build()
+        self.kernel = cl.Kernel(self.program, 'raytrace')
+
+    @lru_cache(10)
+    def raytrace(
+        self,
+        light_position: tuple[float, float],
+        lens: Flare.Lens,
+        grid_count: int,
+        grid_length: float,
+        resolution: QtCore.QSize,
+        wavelength_count: int,
+        path_indexes: tuple[int] | None = None,
+    ) -> Buffer | None:
+
+        # rebuild kernel
+        if self.rebuild:
+            self.build()
+
+        # lens elements
+        lens_model = self.update_lens_model(lens.lens_model_path)
+        lens_elements = self.update_lens_elements(lens_model, lens)
+        lens_elements.clear_buffer()
+        lens_elements_count = len(lens_elements.array)
+        paths = self.update_paths(lens_model, path_indexes)
+        paths.clear_buffer()
+        # TODO: cl implementation could be better?
+        disperse = bool(lens.glasses_path)
+
+        if lens_elements_count <= 1:
+            # no lens elements
+            return
+
+        # rays
+        path_count = int(paths.array.size)
+        ray_count = int(grid_count**2)
+        rays_shape = (path_count, wavelength_count, ray_count)
+        rays = self.update_rays(rays_shape)
+        # rays.args = args
+        wavelengths = self.update_wavelengths(wavelength_count)
+
+        # direction
+        sensor_size = lens.sensor_size.width(), lens.sensor_size.height()
+        focal_length = lens_model.focal_length
+        direction = self.update_direction(
+            light_position, resolution, sensor_size, focal_length
+        )
+
+        self.kernel.set_arg(0, rays.buffer)
+        self.kernel.set_arg(1, lens_elements.buffer)
+        self.kernel.set_arg(2, np.int32(lens_elements_count))
+        self.kernel.set_arg(3, paths.buffer)
+        self.kernel.set_arg(4, np.int32(grid_count))
+        self.kernel.set_arg(5, np.float32(grid_length))
+        self.kernel.set_arg(6, direction)
+        self.kernel.set_arg(7, cl.cltypes.int(disperse))
+        self.kernel.set_arg(8, wavelengths.buffer)
+
+        intersections_count = lens_elements.shape[0] * 3 - 1
+        intersections_shape = (*rays.shape, intersections_count)
+        intersections = self.update_intersections(intersections_shape)
+        self.kernel.set_arg(9, intersections.buffer)
+        self.kernel.set_arg(10, np.int32(intersections_count))
+
+        self.trace(rays)
+
+        cl.enqueue_copy(self.queue, intersections.array, intersections.buffer)
+        intersections._array = np.reshape(
+            intersections.array,
+            (1, wavelength_count, grid_count, grid_count, -1),
+        )
+        return intersections

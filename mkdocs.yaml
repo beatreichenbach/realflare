@@ -4,7 +4,7 @@ site_name: Realflare
 site_url: https://beatreichenbach.github.io/realflare/
 site_author: Beat Reichenbach
 site_description: >-
-  Render complex lens flares from real and accurate lens prescriptions using a ray tracing algorithm that simulates light passing through a camera lens.
+  Render complex lens flares from real and accurate lens models using a ray tracing algorithm that simulates light passing through a camera lens.
 
 # Repository
 repo_name: beatreichenbach/realflare
@@ -63,12 +63,12 @@ nav:
   - Getting started:
     - Installation: installation.md
     - Guides:
-      - Creating a flare: guides/creating-a-flare.md
-      - Creating a prescription: guides/creating-a-prescription.md
+      - Creating a Flare: guides/creating-a-flare.md
+      - Creating a Lens Model: guides/creating-a-lens-model.md
   - Reference:
       - Flare: reference/flare.md
       - Render: reference/render.md
-      - Prescription: reference/prescription.md
+      - Lens Model: reference/lens-model.md
       - Presets: reference/presets.md
       - Command Line: reference/command_line.md
   - Knowledge Base:

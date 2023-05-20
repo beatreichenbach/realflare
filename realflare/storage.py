@@ -28,26 +28,19 @@ class JSONStorage:
     __metaclass__ = Singleton
 
     # noinspection PyMethodMayBeStatic
-    def read_data(self, path: str) -> dict | None:
+    def read_data(self, path: str) -> dict:
         try:
             with open(path, 'r') as f:
                 return json.load(f)
-        except (OSError, json.JSONDecodeError) as e:
-            logger.debug(e)
-            logger.error(f'could not read file: {path}')
+        except OSError as e:
+            raise ValueError from e
 
     # noinspection PyMethodMayBeStatic
-    def write_data(self, data: Any, path: str) -> bool:
-        try:
-            if not os.path.exists(os.path.dirname(path)):
-                os.makedirs(os.path.dirname(path))
-            with open(path, 'w') as file:
-                json.dump(data, file, indent=2)
-            return True
-        except OSError as e:
-            logger.debug(e)
-            logger.error(f'could not write file: {path}')
-            return False
+    def write_data(self, data: Any, path: str) -> None:
+        if not os.path.exists(os.path.dirname(path)):
+            os.makedirs(os.path.dirname(path))
+        with open(path, 'w') as file:
+            json.dump(data, file, indent=2)
 
 
 @dataclass()
@@ -95,7 +88,10 @@ class Storage(JSONStorage):
     @property
     def settings(self) -> Settings:
         if self._settings is None:
-            data = self.read_data(self._settings_path) or {}
+            try:
+                data = self.read_data(self._settings_path)
+            except ValueError:
+                data = {}
             self._settings = cast(Settings, data)
         return self._settings
 
@@ -106,7 +102,10 @@ class Storage(JSONStorage):
     @property
     def state(self) -> State:
         if self._state is None:
-            data = self.read_data(self._state_path) or {}
+            try:
+                data = self.read_data(self._state_path)
+            except ValueError:
+                data = {}
             self._state = cast(State, data)
         return self._state
 
@@ -148,11 +147,19 @@ class Storage(JSONStorage):
 
     def save_settings(self) -> bool:
         data = cast_basic(self.settings)
-        return self.write_data(data, self._settings_path)
+        try:
+            self.write_data(data, self._settings_path)
+        except ValueError:
+            return False
+        return True
 
     def save_state(self) -> bool:
         data = cast_basic(self.state)
-        return self.write_data(data, self._state_path)
+        try:
+            self.write_data(data, self._state_path)
+        except ValueError:
+            return False
+        return True
 
     # noinspection PyMethodMayBeStatic
     def parse_output_path(self, path: str, frame: int) -> str:

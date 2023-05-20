@@ -1,5 +1,5 @@
 # Realflare
-Render complex lens flares from real and accurate lens prescriptions using a ray tracing algorithm that simulates light passing through a camera lens.
+Render complex lens flares from real and accurate lens models using a ray tracing algorithm that simulates light passing through a camera lens.
 
 ## Installation
 

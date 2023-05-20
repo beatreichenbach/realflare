@@ -17,7 +17,6 @@ from realflare.api.tasks.opencl import (
     LAMBDA_MAX,
     Buffer,
     Image,
-    ImageArray,
 )
 
 BATCH_PRIMITIVE_COUNT = 255
@@ -295,7 +294,7 @@ class RasterizingTask(OpenCL):
         self,
         render: Render,
         rays: Buffer,
-        ghost: ImageArray,
+        ghost: Image,
         sensor_size: QtCore.QSizeF,
         min_area: float,
     ) -> Image | Buffer:
@@ -456,7 +455,7 @@ class RasterizingTask(OpenCL):
         self,
         project: Project,
         rays: Buffer,
-        ghost: ImageArray,
+        ghost: Image,
     ) -> Image | Buffer:
         output = self.rasterize(
             project.render,

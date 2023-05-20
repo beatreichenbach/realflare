@@ -5,7 +5,7 @@ from functools import partial
 
 from PySide2 import QtWidgets
 
-from realflare.api.data import Prescription, AntiAliasing, RenderElement, Project
+from realflare.api.data import LensModel, AntiAliasing, RenderElement, Project
 from realflare.api.tasks import opencl
 from qt_extensions.parameters import (
     ParameterEditor,
@@ -97,6 +97,7 @@ class ProjectEditor(ParameterEditor):
     def _init_flare_group(self):
         self.tabs['lens_flare'].create_hierarchy = False
 
+        resource_dir = storage.decode_path('$RES')
         aperture_dir = storage.decode_path('$APT')
 
         # flare
@@ -130,14 +131,14 @@ class ProjectEditor(ParameterEditor):
 
         parm = PathParameter(name='image_file')
         parm.method = PathParameter.Method.OPEN_FILE
-        parm.dir_fallback = aperture_dir
+        parm.dir_fallback = resource_dir
         parm.tooltip = (
             "The path to the image file. Variables such as $RES can be used. "
             "For more information see documentation. (To come...)"
         )
         light_group.add_parameter(parm, checkable=True)
         # partial is needed because of __getattr__ on the editor
-        parm.enabled_changed.connect(partial(self._light_image_enable))
+        parm.enabled_changed.connect(partial(self._light_image_enabled))
 
         parm = IntParameter(name='image_sample_resolution')
         parm.line_min = 1
@@ -164,7 +165,7 @@ class ProjectEditor(ParameterEditor):
         )
         lens_group.add_parameter(parm)
 
-        parm = StringParameter(name='prescription_path')
+        parm = StringParameter(name='lens_model_path')
         parm.label = 'Lens Model'
         parm.menu = lens_models()
         parm.tooltip = (
@@ -265,21 +266,22 @@ class ProjectEditor(ParameterEditor):
             'aperture', collapsible=True, style=CollapsibleBox.Style.SIMPLE
         )
 
-        parm = FloatParameter(name='fstop')
-        parm.label = 'F-Stop'
-        parm.slider_min = 0
-        parm.slider_max = 32
-        parm.tooltip = (
-            'The F-Stop of the aperture. This controls the size of the aperture.'
-        )
-        starburst_aperture_group.add_parameter(parm)
-
         parm = PathParameter(name='file')
         parm.method = PathParameter.Method.OPEN_FILE
         parm.dir_fallback = aperture_dir
         parm.tooltip = (
             "The path to the image file. Variables such as $APT can be used. "
             "For more information see documentation. (To come...)"
+        )
+        starburst_aperture_group.add_parameter(parm, checkable=True)
+        parm.enabled_changed.connect(partial(self._starburst_aperture_file_enabled))
+
+        parm = FloatParameter(name='fstop')
+        parm.label = 'F-Stop'
+        parm.slider_min = 0
+        parm.slider_max = 32
+        parm.tooltip = (
+            'The F-Stop of the aperture. This controls the size of the aperture.'
         )
         starburst_aperture_group.add_parameter(parm)
 
@@ -380,15 +382,16 @@ class ProjectEditor(ParameterEditor):
             'aperture', collapsible=True, style=CollapsibleBox.Style.SIMPLE
         )
 
+        parm = PathParameter(name='file')
+        parm.method = PathParameter.Method.OPEN_FILE
+        parm.dir_fallback = aperture_dir
+        ghost_aperture_group.add_parameter(parm, checkable=True)
+        parm.enabled_changed.connect(partial(self._ghost_aperture_file_enabled))
+
         parm = FloatParameter(name='fstop')
         parm.label = 'F-Stop'
         parm.slider_min = 0
         parm.slider_max = 32
-        ghost_aperture_group.add_parameter(parm)
-
-        parm = PathParameter(name='file')
-        parm.method = PathParameter.Method.OPEN_FILE
-        parm.dir_fallback = aperture_dir
         ghost_aperture_group.add_parameter(parm)
 
         parm = IntParameter(name='blades')
@@ -609,17 +612,9 @@ class ProjectEditor(ParameterEditor):
         parm = BoolParameter('disable_ghosts')
         flare_group.add_parameter(parm)
 
-        debug_ghosts_parm = BoolParameter('debug_ghosts')
-        debug_ghosts_parm.label = ''
-        debug_ghosts_parm.setVisible(False)
-        flare_group.add_parameter(debug_ghosts_parm)
-
         parm = IntParameter('debug_ghost')
         parm.slider_max = 100
         flare_group.add_parameter(parm, checkable=True)
-        parm.enabled_changed.connect(
-            lambda enabled: setattr(debug_ghosts_parm, 'value', enabled)
-        )
 
     def _init_actions(self) -> None:
         for name in ('flare', 'starburst', 'ghost'):
@@ -699,11 +694,12 @@ class ProjectEditor(ParameterEditor):
     def randomize_coatings(self):
         flare = self.flare_config()
 
-        data = storage.read_data(flare.lens.prescription_path)
-        if data is None:
+        try:
+            data = storage.read_data(flare.lens.lens_model_path)
+        except ValueError:
             return
-        prescription = cast(Prescription, data)
-        element_count = len(prescription.lens_elements)
+        lens_model = cast(LensModel, data)
+        element_count = len(lens_model.lens_elements)
 
         wavelength_range = self._coating_wavelength_range.value
         refractive_range = self._coating_refractive_index_range.value
@@ -729,12 +725,26 @@ class ProjectEditor(ParameterEditor):
         self.form.blockSignals(False)
         self.parameter_changed.emit(ParameterWidget())
 
-    def _light_image_enable(self, enabled: bool) -> None:
+    def _light_image_enabled(self, enabled: bool) -> None:
         widgets = self.widgets()
 
         widgets['flare']['light']['position'].setEnabled(not enabled)
         widgets['flare']['light']['image_sample_resolution'].setEnabled(enabled)
         widgets['flare']['light']['image_samples'].setEnabled(enabled)
+
+    def _starburst_aperture_file_enabled(self, enabled: bool) -> None:
+        widgets = self.widgets()
+
+        for name in ('fstop', 'blades', 'softness'):
+            widget = widgets['flare']['starburst']['aperture'].get(name)
+            widget.setEnabled(not enabled)
+
+    def _ghost_aperture_file_enabled(self, enabled: bool) -> None:
+        widgets = self.widgets()
+
+        for name in ('fstop', 'blades', 'softness'):
+            widget = widgets['flare']['ghost']['aperture'].get(name)
+            widget.setEnabled(not enabled)
 
 
 def glass_makes() -> dict:
@@ -760,11 +770,12 @@ def lens_models(path: str = '') -> dict:
         if os.path.isfile(item_path):
             if not item.endswith('.json'):
                 continue
-            json_data = storage.read_data(item_path)
-            if not json_data:
+            try:
+                data = storage.read_data(item_path)
+            except ValueError:
                 continue
-            prescription = cast(Prescription, json_data)
-            models[prescription.name] = storage.encode_path(item_path)
+            lens_model = cast(LensModel, data)
+            models[lens_model.name] = storage.encode_path(item_path)
         elif os.path.isdir(item_path):
             children = lens_models(item_path)
             if children:

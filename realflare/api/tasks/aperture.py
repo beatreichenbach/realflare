@@ -1,3 +1,4 @@
+import logging
 from functools import lru_cache
 
 import cv2
@@ -5,12 +6,14 @@ import numpy as np
 import pyopencl as cl
 from PySide2 import QtCore
 
-from realflare.api.data import Render, Aperture
+from realflare.api.data import Render, Aperture, RealflareError
 from realflare.api.path import File
 from realflare.api.tasks.opencl import OpenCL, Image
 from realflare.storage import Storage
 from realflare.utils.timing import timer
 
+
+logger = logging.getLogger(__name__)
 storage = Storage()
 
 
@@ -91,9 +94,18 @@ class ApertureTask(OpenCL):
         aperture: Aperture,
         render: Render.Starburst | Render.Ghost,
     ) -> Image:
-        if aperture.file:
-            file_path = storage.decode_path(aperture.file)
-            image = self.load_file(File(file_path), render.resolution)
+        if aperture.file_enabled:
+            if not aperture.file:
+                raise RealflareError('No Aperture File')
+            filename = storage.decode_path(aperture.file)
+            try:
+                aperture_file = File(filename)
+                image = self.load_file(aperture_file, render.resolution)
+            except (OSError, ValueError) as e:
+                logger.debug(e)
+                message = f'Invalid Aperture path: {filename}'
+                raise RealflareError(message) from None
+
         else:
             image = self.aperture(aperture, render.resolution)
         return image

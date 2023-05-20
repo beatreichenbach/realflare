@@ -7,6 +7,10 @@ from realflare.api.tasks.opencl import Image
 from qt_extensions.typeutils import hashable_dataclass, deep_field
 
 
+class RealflareError(ValueError):
+    pass
+
+
 class AntiAliasing(enum.Enum):
     ONE = 1
     TWO = 2
@@ -51,7 +55,7 @@ class Glass:
 
 
 @hashable_dataclass
-class Prescription:
+class LensModel:
     @hashable_dataclass
     class LensElement:
         radius: float = 0
@@ -75,8 +79,9 @@ class Prescription:
 
 @hashable_dataclass
 class Aperture:
-    fstop: float = 8
+    file_enabled: bool = False
     file: str = ''
+    fstop: float = 8
     blades: int = 64
     softness: float = 0
 
@@ -91,6 +96,7 @@ class Flare:
         position: QtCore.QPointF = deep_field(QtCore.QPointF(0, 0))
 
         # image
+        image_file_enabled: bool = False
         image_file: str = ''
         image_sample_resolution: int = 256
         image_samples: int = 8
@@ -99,7 +105,7 @@ class Flare:
     class Lens:
         # lens
         sensor_size: QtCore.QSize = deep_field(QtCore.QSize(36, 24))
-        prescription_path: str = ''
+        lens_model_path: str = ''
         glasses_path: str = ''
         abbe_nr_adjustment: float = 0
         min_area: float = 0.01
@@ -131,7 +137,7 @@ class Flare:
         aperture: Aperture = field(default_factory=Aperture)
 
         # technical
-        fstop: float = 8
+        fstop: float = 0
 
     light: Light = field(default_factory=Light)
     lens: Lens = field(default_factory=Lens)
@@ -166,7 +172,7 @@ class Debug:
     show_image: bool = False
     disable_starburst: bool = False
     disable_ghosts: bool = False
-    debug_ghosts: bool = False
+    debug_ghost_enabled: bool = False
     debug_ghost: int = 0
 
 

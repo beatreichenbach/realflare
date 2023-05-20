@@ -18,7 +18,7 @@ def main():
     editor = ProjectEditor()
 
     project = editor.project()
-    project.flare.lens.prescription_path = r'$RES/model/Leica/35mm_1_4.json'
+    project.flare.lens.lens_model_path = r'$RES/model/Leica/35mm_1_4.json'
     project_string = json.dumps(cast_basic(project), indent=4)
     project = cast(data.Project, json.loads(project_string))
     editor.set_project(project)

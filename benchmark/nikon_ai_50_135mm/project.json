@@ -16,7 +16,7 @@
         36,
         24
       ],
-      "prescription_path": "$RES/model/Nikon/ai_50_135mm.json",
+      "lens_model_path": "$RES/model/Nikon/ai_50_135mm.json",
       "glasses_path": "$RES/glass/schott",
       "abbe_nr_adjustment": 0.0,
       "min_area": 0.1,

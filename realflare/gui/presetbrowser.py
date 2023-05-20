@@ -134,8 +134,8 @@ class PresetBrowser(FileBrowser):
         return index
 
     def _append_file(self, path: str, parent: QtCore.QModelIndex) -> QtCore.QModelIndex:
-        # prescription = cast(Prescription, data)
-        # name = prescription.name
+        # lens_model = cast(LensModel, data)
+        # name = lens_model.name
         # image_path = str(files('realflare').joinpath('../docs/assets/images/flare.png'))
         # thumbnail = QtGui.QPixmap(image_path).scaledToWidth(
         #     200, QtCore.Qt.SmoothTransformation
@@ -155,7 +155,10 @@ class PresetBrowser(FileBrowser):
     def _element(self, path: str) -> FileElement:
         name = os.path.basename(path)
 
-        data = storage.read_data(path) if os.path.isfile(path) else None
+        try:
+            data = storage.read_data(path) if os.path.isfile(path) else None
+        except ValueError:
+            data = None
 
         if path.startswith(self.root_dirs['flare']):
             config = cast(Flare, data) if data is not None else None

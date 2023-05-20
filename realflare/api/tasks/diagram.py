@@ -5,7 +5,6 @@ import numpy as np
 from PySide2 import QtCore
 
 from realflare.api.data import Flare, Project
-from realflare.api.path import File
 from realflare.api.tasks.opencl import (
     OpenCL,
     ray_dtype,
@@ -15,11 +14,7 @@ from realflare.api.tasks.opencl import (
     intersection_dtype,
 )
 from realflare.api.tasks.raytracing import RaytracingTask
-from realflare.storage import Storage
 from realflare.utils.timing import timer
-
-
-storage = Storage()
 
 
 class DiagramTask(OpenCL):
@@ -62,11 +57,9 @@ class DiagramTask(OpenCL):
         resolution = QtCore.QSize(*reversed(image.array.shape[:2]))
 
         # lens elements
-        prescription_path = storage.decode_path(lens.prescription_path)
-        prescription = self.raytracing_task.update_prescription(File(prescription_path))
-        lens_elements = self.raytracing_task.update_lens_elements(prescription, lens)
+        lens_model = self.raytracing_task.update_lens_model(lens.lens_model_path)
+        lens_elements = self.raytracing_task.update_lens_elements(lens_model, lens)
         lens_elements_count = len(lens_elements.array)
-        # logging.debug(f'lens_elements_count: {lens_elements_count}')
 
         # scale
         self.scale = self.update_scale(resolution, lens_elements)

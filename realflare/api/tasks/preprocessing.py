@@ -1,3 +1,4 @@
+import logging
 from functools import lru_cache
 
 import cv2
@@ -5,7 +6,7 @@ import numpy as np
 import pyopencl as cl
 from PySide2 import QtCore
 
-from realflare.api.data import Project
+from realflare.api.data import Project, RealflareError
 from realflare.api.path import File
 from realflare.api.tasks.opencl import OpenCL, Buffer
 from realflare.api.tasks.raytracing import RaytracingTask
@@ -14,6 +15,7 @@ from qt_extensions.typeutils import HashableDict
 from realflare.storage import Storage
 
 
+logger = logging.getLogger(__name__)
 storage = Storage()
 
 
@@ -75,7 +77,6 @@ class PreprocessTask(OpenCL):
             grid_length=grid_length * 0.01,
             resolution=QtCore.QSize(100, 100),
             wavelength_count=1,
-            store_intersections=False,
         )
         if rays is None:
             return tuple()
@@ -115,7 +116,6 @@ class ImageSamplingTask(OpenCL):
         return sample_data
 
     def run(self, project: Project) -> np.ndarray:
-        file_path = storage.decode_path(project.flare.image_file)
 
         # resolution
         width = max(project.flare.light.image_sample_resolution, 1)
@@ -129,7 +129,14 @@ class ImageSamplingTask(OpenCL):
             height += 1
         sample_resolution = QtCore.QSize(width, height)
 
-        sample_data = self.update_sample_data(
-            File(file_path), sample_resolution, project.flare.light.image_samples
-        )
+        file_path = storage.decode_path(project.flare.image_file)
+        try:
+            image_file = File(file_path)
+            sample_data = self.update_sample_data(
+                image_file, sample_resolution, project.flare.light.image_samples
+            )
+        except ValueError as e:
+            logger.debug(e)
+            message = f'Invalid Image path for flare light: {file_path}'
+            raise RealflareError(message) from None
         return sample_data

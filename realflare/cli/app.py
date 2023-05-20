@@ -15,6 +15,9 @@ from qt_extensions.typeutils import cast
 from realflare.storage import Storage
 
 
+logger = logging.getLogger(__name__)
+
+
 def lerp(
     a: float | list[float], b: float | list[float], t: float
 ) -> float | list[float]:
@@ -76,9 +79,12 @@ def exec_(parser: ArgumentParser):
     if not args.project or not os.path.isfile(args.project):
         parser.error(f'project path not valid: {args.project}')
     storage = Storage()
-    data = storage.read_data(args.project)
-    if data is None:
+    try:
+        data = storage.read_data(args.project)
+    except ValueError as e:
+        logger.debug(e)
         parser.error(f'project is not valid: {args.project}')
+        return
     project = cast(Project, data)
     project.elements = [RenderElement.Type.FLARE]
 

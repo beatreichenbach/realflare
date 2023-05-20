@@ -17,11 +17,11 @@ from realflare.utils import color
 from realflare.api.tasks.aperture import ApertureTask
 from realflare.api.tasks.ghost import GhostTask
 from realflare.api.tasks.starburst import StarburstTask
-from realflare.api.tasks.raytracing import RaytracingTask
+from realflare.api.tasks.raytracing import RaytracingTask, IntersectionsTask
 from realflare.api.tasks.rasterizing import RasterizingTask
 from realflare.api.tasks.compositing import CompositingTask
 
-from realflare.api.data import Project, RenderElement, RenderImage
+from realflare.api.data import Project, RenderElement, RenderImage, RealflareError
 from realflare.api.tasks.opencl import Image
 
 
@@ -65,7 +65,7 @@ class Engine(QtCore.QObject):
         self.aperture_task = ApertureTask(self.queue)
         self.ghost_task = GhostTask(self.queue)
         self.starburst_task = StarburstTask(self.queue)
-        self.intersection_task = RaytracingTask(self.queue, store_intersections=True)
+        self.intersection_task = IntersectionsTask(self.queue)
         self.raytracing_task = RaytracingTask(self.queue)
         self.rasterizing_task = RasterizingTask(self.queue)
         self.compositing_task = CompositingTask(self.queue)
@@ -96,7 +96,7 @@ class Engine(QtCore.QObject):
         return image
 
     def flare(self, project: Project) -> Image:
-        if project.debug.debug_ghosts:
+        if project.debug.debug_ghost_enabled:
             path_indexes = (project.debug.debug_ghost,)
         else:
             path_indexes = self.preprocess_task.run(project)
@@ -131,6 +131,8 @@ class Engine(QtCore.QObject):
                     image = renderer(project)
                     self.emit_image(image, element)
                     self.write_image(image, element, project)
+        except RealflareError as e:
+            logger.error(e)
         except InterruptedError:
             logger.warning('render interrupted by user')
             return False
@@ -138,7 +140,7 @@ class Engine(QtCore.QObject):
             logger.exception(e)
             return False
         finally:
-            self.progress_changed.emit(100)
+            self.progress_changed.emit(1)
         return True
 
     def set_elements(self, elements: list[RenderElement]) -> None:
@@ -159,14 +161,19 @@ class Engine(QtCore.QObject):
             return
 
         filename = storage.parse_output_path(project.output.path, project.output.frame)
-        if not os.path.isdir(os.path.dirname(filename)):
-            os.makedirs(os.path.dirname(filename))
+        try:
+            if not os.path.isdir(os.path.dirname(filename)):
+                os.makedirs(os.path.dirname(filename))
 
-        array = image.array.copy()
-        array = color.colorspace(array, RENDER_SPACE, project.output.colorspace)
+            array = image.array.copy()
+            array = color.colorspace(array, RENDER_SPACE, project.output.colorspace)
 
-        image_bgr = cv2.cvtColor(array, cv2.COLOR_RGBA2BGR)
-        cv2.imwrite(filename, image_bgr)
+            image_bgr = cv2.cvtColor(array, cv2.COLOR_RGBA2BGR)
+            cv2.imwrite(filename, image_bgr)
+        except (OSError, ValueError) as e:
+            logger.debug(e)
+            message = f'Error writing file: {filename}'
+            raise RealflareError(message) from None
         logger.info('image written: {}'.format(filename))
 
 
