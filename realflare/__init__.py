@@ -1,5 +1,5 @@
 import os
 
-__version__ = '0.3.2'
+__version__ = '0.4.0'
 
 os.environ['OPENCV_IO_ENABLE_OPENEXR'] = '1'

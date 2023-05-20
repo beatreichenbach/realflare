@@ -1,5 +1,19 @@
 <!--next-version-placeholder-->
 
+## v0.4.0 (2023-05-20)
+### Feature
+* **storage:** Work on storage ([`537f4f8`](https://github.com/beatreichenbach/realflare/commit/537f4f84065dd5f7ef075cdca80022eac2560c74))
+* **storage:** Move settings to storage ([`2901400`](https://github.com/beatreichenbach/realflare/commit/2901400f564d8258fd009e7d09033ba5fddaa81a))
+* **sentry:** Add sentry check ([`d6c6f2b`](https://github.com/beatreichenbach/realflare/commit/d6c6f2b0c9f4facbd04be3b1f8f8fb25397b44be))
+
+### Fix
+* **storage:** Implement singleton ([`f5e27c9`](https://github.com/beatreichenbach/realflare/commit/f5e27c9cf8e66a44534be453535b6e489e347233))
+* **benchmark:** Update and add log support ([`3069f5f`](https://github.com/beatreichenbach/realflare/commit/3069f5f34a44251aa7375eebd59d448960a7374c))
+* **update:** Make dialog modal ([`b6cd472`](https://github.com/beatreichenbach/realflare/commit/b6cd4726475d8dce2e9a4c467bbf8e19757d1733))
+
+### Documentation
+* Changelog ([`cd6378f`](https://github.com/beatreichenbach/realflare/commit/cd6378f15f74b16aa2841c6a592694c103b9ea7b))
+
 ## v0.3.2 (2023-04-30)
 ### Fix
 * Error handling(#59) ([`3f58677`](https://github.com/beatreichenbach/realflare/commit/3f586777016549e38859b73e006ea4fe872ad3ae))
