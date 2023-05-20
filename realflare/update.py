@@ -30,6 +30,12 @@ class UpdateDialog(LogViewer):
     ) -> None:
         super().__init__(cache, parent)
 
+        # force Dialog class
+        self.setWindowFlag(QtCore.Qt.Dialog)
+        self.setWindowTitle('Update')
+        self.resize(QtCore.QSize(800, 600))
+
+        # logger
         self.formatter = logging.Formatter(
             fmt='{message}',
             datefmt='%I:%M:%S%p',
@@ -38,9 +44,7 @@ class UpdateDialog(LogViewer):
         )
         self.set_levels((logging.ERROR, logging.WARNING, logging.INFO, logging.DEBUG))
 
-        self.setWindowTitle('Update')
-        self.resize(QtCore.QSize(800, 600))
-
+        # update process
         self.process = UpdateProcess()
         self.process.log_changed.connect(self.update_log)
 
@@ -84,6 +88,10 @@ class UpdateDialog(LogViewer):
 
     def update_log(self, record: logging.LogRecord) -> None:
         self.add_record(record)
+
+    def exec_(self):
+        self.setWindowModality(QtGui.Qt.ApplicationModal)
+        self.show()
 
 
 def restart() -> None:
