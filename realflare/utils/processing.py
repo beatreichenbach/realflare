@@ -45,7 +45,8 @@ class Process(QtCore.QObject):
         process = popen(args)
 
         while process.poll() is None:
-            self.logger.info(process.stdout.readline(), extra={'raw': True})
+            line = process.stdout.readline().strip()
+            self.logger.info(line)
         process.stdout.close()
         return_code = process.returncode
 
@@ -69,8 +70,5 @@ class ProcessStreamHandler(logging.StreamHandler):
         self.process = process
 
     def emit(self, record: logging.LogRecord) -> None:
-        if hasattr(record, 'raw') and record.raw:
-            self.stream.write(record.getMessage())
-        else:
-            super().emit(record)
+        super().emit(record)
         self.process.log_changed.emit(record)

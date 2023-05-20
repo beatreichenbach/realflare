@@ -3,6 +3,8 @@ import sys
 
 from PySide2 import QtWidgets, QtGui, QtCore
 
+from qt_extensions.button import Button
+from qt_extensions.logger import LogViewer, LogCache
 from realflare.utils.processing import Process, popen
 
 
@@ -11,7 +13,8 @@ class UpdateProcess(Process):
 
         args = [
             sys.executable,
-            '-m' 'pip',
+            '-m',
+            'pip',
             'install',
             '--upgrade',
             'realflare@https://github.com/beatreichenbach/realflare/archive/refs/heads/main.zip',
@@ -19,15 +22,24 @@ class UpdateProcess(Process):
         self.popen(args)
 
 
-class UpdateDialog(QtWidgets.QDialog):
+class UpdateDialog(LogViewer):
     started: QtCore.Signal = QtCore.Signal()
 
-    def __init__(self, parent: QtWidgets.QWidget | None = None) -> None:
-        super().__init__(parent)
+    def __init__(
+        self, cache: LogCache | None = None, parent: QtWidgets.QWidget | None = None
+    ) -> None:
+        super().__init__(cache, parent)
+
+        self.formatter = logging.Formatter(
+            fmt='{message}',
+            datefmt='%I:%M:%S%p',
+            style='{',
+            defaults={'color': ''},
+        )
+        self.set_levels((logging.ERROR, logging.WARNING, logging.INFO, logging.DEBUG))
 
         self.setWindowTitle('Update')
-
-        self._init_ui()
+        self.resize(QtCore.QSize(800, 600))
 
         self.process = UpdateProcess()
         self.process.log_changed.connect(self.update_log)
@@ -41,32 +53,22 @@ class UpdateDialog(QtWidgets.QDialog):
         self.started.emit()
 
     def _init_ui(self) -> None:
-        self.setLayout(QtWidgets.QVBoxLayout())
-
-        self.text_edit = QtWidgets.QTextEdit()
-        self.text_edit.setReadOnly(True)
-        font = QtGui.QFont('Monospace')
-        font.setStyleHint(QtGui.QFont.Monospace)
-        self.text_edit.setFont(font)
-        self.layout().addWidget(self.text_edit)
+        super()._init_ui()
+        self.toolbar.setVisible(False)
 
         button_layout = QtWidgets.QHBoxLayout()
         button_layout.addStretch()
         self.layout().addLayout(button_layout)
 
-        self.restart_button = QtWidgets.QPushButton('Restart')
+        self.restart_button = Button('Restart', color='primary')
         self.restart_button.setEnabled(False)
-        self.restart_button.pressed.connect(self.restart)
+        self.restart_button.pressed.connect(restart)
         button_layout.addWidget(self.restart_button)
 
-        self.close_button = QtWidgets.QPushButton('Close')
+        self.close_button = Button('Close')
         self.close_button.setEnabled(False)
         self.close_button.pressed.connect(self.close)
         button_layout.addWidget(self.close_button)
-
-        self.window_text_color = self.text_edit.palette().color(
-            QtGui.QPalette.WindowText
-        )
 
     def closeEvent(self, event: QtGui.QCloseEvent) -> None:
         self.process_thread.quit()
@@ -77,17 +79,14 @@ class UpdateDialog(QtWidgets.QDialog):
         self.restart_button.setEnabled(True)
         self.close_button.setEnabled(True)
 
-    def restart(self) -> None:
-        app = QtWidgets.QApplication.instance()
-        app.closeAllWindows()
-        popen([sys.executable, *sys.argv])
-
     def start(self) -> None:
         self.started.emit()
 
     def update_log(self, record: logging.LogRecord) -> None:
-        if record.levelno > logging.INFO:
-            self.text_edit.setTextColor(QtGui.QColor('red'))
-        self.text_edit.insertPlainText(record.getMessage().strip() + '\n')
-        self.text_edit.setTextColor(self.window_text_color)
-        self.text_edit.ensureCursorVisible()
+        self.add_record(record)
+
+
+def restart() -> None:
+    app = QtWidgets.QApplication.instance()
+    app.closeAllWindows()
+    popen([sys.executable, *sys.argv])
