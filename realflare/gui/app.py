@@ -72,6 +72,8 @@ class MainWindow(DockWindow):
         ]
     }
 
+    default_widget_states = {'Log': {'names': ['realflare']}}
+
     def __init__(self, parent: QtWidgets.QWidget | None = None) -> None:
         super().__init__(parent)
 
@@ -579,7 +581,9 @@ class MainWindow(DockWindow):
         # restore state
         title = self.widget_title(widget)
         if title is not None:
-            state = storage.state.widget_states.get(title)
+            states = self.default_widget_states.copy()
+            states.update(storage.state.widget_states)
+            state = states.get(title)
             set_widget_state(widget, state)
 
         # reconnect signals
