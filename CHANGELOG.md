@@ -1,5 +1,9 @@
 <!--next-version-placeholder-->
 
+## v0.4.2 (2023-05-20)
+### Fix
+* **sentry:** Only ask in gui ([`cc48d8e`](https://github.com/beatreichenbach/realflare/commit/cc48d8e725dd6cf609946333614d9ffc60a54764))
+
 ## v0.4.1 (2023-05-20)
 ### Fix
 * **engine:** Remove old imports ([`5bd78f6`](https://github.com/beatreichenbach/realflare/commit/5bd78f6cfa9714466f5821613b35cceb880f923f))
