@@ -13,6 +13,7 @@ from PySide2 import QtCore, QtGui, QtWidgets
 
 from qt_extensions.icons import MaterialIcon
 from qt_extensions.logger import LogCache, LogBar, LogViewer
+from qt_extensions.messagebox import MessageBox
 from realflare.gui.lensmodeleditor import LensModelDialog
 from realflare.gui.parameters import ProjectEditor
 from realflare.gui.settings import SettingsDialog
@@ -624,6 +625,24 @@ def widget_state(widget: QtWidgets.QWidget) -> dict | None:
         return widget.state()
 
 
+def sentry_request_permission():
+    from realflare import sentry
+
+    result = MessageBox.question(
+        None,
+        'Enable Automated Crash Reporting',
+        'May Realflare upload crash reports automatically? \n\n'
+        'Crash reports don\'t include any personal information. '
+        'Enabling automated crash reporting with Sentry.io means issues don\'t '
+        'have to be reported manually and bugs can be fixed sooner. \n\n'
+        'Crash reporting can be disabled at any time under Settings.',
+    )
+
+    storage.settings.sentry = result == QtWidgets.QMessageBox.StandardButton.Yes
+    storage.save_settings()
+    sentry.init()
+
+
 def exec_():
     # set application
     app = QtWidgets.QApplication(sys.argv)
@@ -636,6 +655,10 @@ def exec_():
 
     # theme
     theme.apply_theme(theme.monokai)
+
+    # sentry
+    if storage.settings.sentry is None:
+        sentry_request_permission()
 
     # main window
     window = MainWindow()

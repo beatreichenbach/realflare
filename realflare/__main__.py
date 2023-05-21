@@ -1,13 +1,10 @@
 import argparse
 import logging
-import os
 import sys
 
+from realflare import sentry
 from realflare.cli import app as cli_app
 from realflare.gui import app as gui_app
-from realflare.storage import Storage
-
-os.environ["OPENCV_IO_ENABLE_OPENEXR"] = "1"
 
 
 def argument_parser():
@@ -65,25 +62,8 @@ def argument_parser():
     return parser
 
 
-def sentry():
-    storage = Storage()
-
-    if storage.settings.sentry is None:
-        from realflare.gui import sentry
-
-        sentry.request_permission()
-
-    if storage.settings.sentry:
-        import sentry_sdk
-
-        sentry_sdk.init(
-            dsn='https://ca69319449554a2885eb98218ede9110@o4504738332016640.ingest.sentry.io/4504738333655040',
-            traces_sample_rate=1.0,
-        )
-
-
 def main():
-    sentry()
+    sentry.init()
 
     parser = argument_parser()
     args = parser.parse_args(sys.argv[1:])
