@@ -44,22 +44,25 @@ echo Installing Realflare
 %venv% -m pip install --upgrade realflare@https://github.com/beatreichenbach/realflare/archive/refs/heads/main.zip
 if %errorlevel% neq 0 goto error
 
-@REM create run_console.bat
-set run=run_console.bat
+@REM create run bat
+set run=run.bat
 if not exist %run% (
-    echo Creating run_console.bat
+    echo Creating %run%
     echo @echo off >> %run%
     echo %venv% -m realflare --gui >> %run%
     echo if %%errorlevel%% neq 0 pause >> %run%
 )
 
-@REM create run.bat
-set run=run.bat
-if not exist %run% (
-    set venv="%~dp0venv\Scripts\pythonw.exe"
-    echo Creating run.bat
-    echo @echo off >> %run%
-    echo %venv% -m realflare --gui >> %run%
+@REM create shortcut
+set shortcut='Realflare.lnk'
+set icon='%~dp0venv\Lib\site-packages\realflare\assets\icon.ico'
+set target='%~dp0venv\Scripts\pythonw.exe'
+set arguments='-m realflare --gui'
+set pws=powershell.exe -ExecutionPolicy Bypass -NoLogo -NonInteractive -NoProfile
+
+if not exist %shortcut% (
+    echo Creating Shortcut
+    %pws% -Command "$ws = New-Object -ComObject WScript.Shell; $s = $ws.CreateShortcut(%shortcut%); $S.TargetPath = %target%; $S.IconLocation = %icon%; $S.Arguments = %arguments%; $S.Save()"
 )
 
 @REM success

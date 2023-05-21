@@ -35,7 +35,7 @@ build-backend = "setuptools.build_meta"
 include = ["realflare*"]
 
 [tool.setuptools.package-data]
-realflare = ["**/*.cl", "**/*.png", "**/*.json", "**/*.yml"]
+realflare = ["**/*.cl", "**/*.ico", "**/*.png", "**/*.json", "**/*.yml"]
 
 [tool.pytest.ini_options]
 log_cli = true
