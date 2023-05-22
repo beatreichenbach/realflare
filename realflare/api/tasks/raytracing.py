@@ -52,21 +52,23 @@ class RaytracingTask(OpenCL):
         super().build()
         self.kernel = cl.Kernel(self.program, 'raytrace')
 
+    @staticmethod
     @lru_cache(10)
-    def build_lens_model(self, file: File) -> LensModel:
+    def build_lens_model(file: File) -> LensModel:
         file_path = str(file)
         data = storage.read_data(file_path)
         lens_model = cast(LensModel, data)
         return lens_model
 
-    def update_lens_model(self, lens_model_path: str) -> LensModel:
+    @staticmethod
+    def update_lens_model(lens_model_path: str) -> LensModel:
         if not lens_model_path:
             raise RealflareError('No Lens Model')
 
         filename = storage.decode_path(lens_model_path)
         try:
             lens_model_file = File(filename)
-            lens_model = self.build_lens_model(lens_model_file)
+            lens_model = RaytracingTask.build_lens_model(lens_model_file)
         except (OSError, ValueError) as e:
             logger.debug(e)
             message = f'Invalid Lens Model: {filename}'

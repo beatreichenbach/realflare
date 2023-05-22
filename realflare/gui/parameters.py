@@ -1,12 +1,12 @@
+import logging
 import os
 import random
-import enum
 from functools import partial
 
-from PySide2 import QtWidgets
+from PySide2 import QtWidgets, QtCore
 
 from realflare.api.data import LensModel, AntiAliasing, RenderElement, Project
-from realflare.api.tasks import opencl
+from realflare.api.tasks import opencl, raytracing
 from qt_extensions.parameters import (
     ParameterEditor,
     IntParameter,
@@ -687,24 +687,26 @@ class ProjectEditor(ParameterEditor):
         return project
 
     def randomize_coatings(self):
-        flare = self.flare_config()
+        project = self.project()
 
-        try:
-            data = storage.read_data(flare.lens.lens_model_path)
-        except ValueError:
-            return
-        lens_model = cast(LensModel, data)
+        # TODO: clean up...
+        lens_model = raytracing.RaytracingTask.update_lens_model(
+            project.flare.lens.lens_model_path
+        )
         element_count = len(lens_model.lens_elements)
 
-        wavelength_range = self._coating_wavelength_range.value
-        refractive_range = self._coating_refractive_index_range.value
+        # TODO: parameters should return right type
+        wavelength_range = cast(QtCore.QPoint, self._coating_wavelength_range.value)
+        refractive_range = cast(
+            QtCore.QPointF, self._coating_refractive_index_range.value
+        )
 
         coatings = []
         for i in range(element_count):
             coatings.append(
                 [
-                    random.randint(wavelength_range.width(), wavelength_range.height()),
-                    random.uniform(refractive_range.width(), refractive_range.height()),
+                    random.randint(wavelength_range.x(), wavelength_range.y()),
+                    random.uniform(refractive_range.x(), refractive_range.y()),
                 ]
             )
         self._coating_tab_data.value = coatings
