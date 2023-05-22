@@ -34,9 +34,13 @@ from qt_extensions.typeutils import cast, cast_basic
 #  A QImage is not a gui object, so your worker thread can paint to it.
 #  Then in main thread run a timer that calls update() at the update frequency you want.
 #  A quarter to half second should be fine for most purposes.
-#  In the repaint, just draw the qimage.
+#  In the repaint, just draw the QImage.
 #  Or you could do the same thing with an array of points, etc.
+
 # TODO: cast can raise TypeError or ValueError
+
+# TODO: should widget.value cast the value to the right type?
+#  (yes but consider using set_value in the future)
 
 logger = logging.getLogger(__name__)
 storage = Storage()

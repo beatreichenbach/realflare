@@ -323,7 +323,7 @@ class LensModelDialog(QtWidgets.QWidget):
             | QtWidgets.QMessageBox.StandardButton.Discard
         )
 
-        result = MessageBox.message(
+        result = MessageBox.question(
             parent=self,
             title='Unsaved Changes',
             text='You have unsaved changes that will be lost. Do you want to save them?',
