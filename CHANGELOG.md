@@ -1,5 +1,12 @@
 <!--next-version-placeholder-->
 
+## v0.4.3 (2023-05-21)
+### Feature
+* **window:** Add default widget states ([`f8ee4ee`](https://github.com/beatreichenbach/realflare/commit/f8ee4ee3b6f61dd5efd9c7b3249bb11bb6f92615))
+
+### Fix
+* **paramaters:** Use staticmethod to get lens model ([`4e13d4c`](https://github.com/beatreichenbach/realflare/commit/4e13d4c905e1fb6917c82ee250cd9d046d6e5a91))
+
 ## v0.4.2 (2023-05-20)
 ### Fix
 * **sentry:** Only ask in gui ([`cc48d8e`](https://github.com/beatreichenbach/realflare/commit/cc48d8e725dd6cf609946333614d9ffc60a54764))
