@@ -233,11 +233,11 @@ class Engine(QtCore.QObject):
 
             image_bgr = cv2.cvtColor(array, cv2.COLOR_RGBA2BGR)
             cv2.imwrite(filename, image_bgr)
-        except (OSError, ValueError) as e:
+            logger.info('image written: {}'.format(filename))
+        except (OSError, ValueError, cv2.error) as e:
             logger.debug(e)
             message = f'Error writing file: {filename}'
             raise RealflareError(message) from None
-        logger.info('image written: {}'.format(filename))
 
     def colorspace_processor(self, colorspace: str) -> OCIO.CPUProcessor | None:
         cpu_processor = self._colorspace_processors.get(colorspace)
