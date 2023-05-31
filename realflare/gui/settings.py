@@ -154,6 +154,7 @@ class SettingsDialog(QtWidgets.QDialog):
 
     def save(self) -> bool:
         storage.settings = self.editor.settings()
+        storage.update_ocio()
         result = storage.save_settings()
         if result:
             self.button_box.hide()

@@ -92,6 +92,7 @@ class Storage(JSONStorage, metaclass=Singleton):
             except ValueError:
                 data = {}
             self._settings = cast(Settings, data)
+            self.update_ocio()
         return self._settings
 
     @settings.setter
@@ -169,3 +170,7 @@ class Storage(JSONStorage, metaclass=Singleton):
         path = path.format(frame)
         path = os.path.abspath(path)
         return path
+
+    def update_ocio(self) -> None:
+        if self.settings.ocio:
+            os.environ['OCIO'] = self.settings.ocio
