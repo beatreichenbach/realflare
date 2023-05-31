@@ -48,7 +48,8 @@ class ElementViewer(Viewer):
             #
             # gpu.extractGpuShaderInfo(shader_desc)
             # print(shader_desc.getShaderText())
-            self.item.post_processes.append(self._apply_colorspace)
+
+            self.post_processes.append(self._apply_colorspace)
         except OCIO.Exception as e:
             logging.debug(e)
             logging.warning(

@@ -551,7 +551,7 @@ class MainWindow(DockWindow):
     def _image_rendered(self, image: RenderImage) -> None:
         for widget in self._widgets.values():
             if isinstance(widget, ElementViewer) and widget.element == image.element:
-                widget.update_image(image.image.array)
+                widget.set_array(image.image.array)
 
     def _test_changes(self, quick: bool = True) -> None:
         # checks whether project has changed
