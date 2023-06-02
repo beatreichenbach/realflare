@@ -22,8 +22,6 @@ __kernel void sample_simple(
 
 	sampler_t sampler = CLK_NORMALIZED_COORDS_TRUE | CLK_ADDRESS_CLAMP | CLK_FILTER_LINEAR;
 
-	// override samples
-	// int samples = 1024;
 	float3 rgb = (float3)(0, 0, 0);
 
 	for (int t = 0; t < samples; ++t)
@@ -62,8 +60,8 @@ __kernel void sample_simple(
 		sx += 0.5f;
 		sy += 0.5f;
 
-		// sampling happens in normalized space
 		// sample the intensity from the fourier power spectrum
+		// sampling happens in normalized space
 		float fourier_intensity = read_imagef(fourier_spectrum, sampler, (float2)(sx, sy)).x;
 		// sample XYZ color data from light spectrum
 		float3 xyz = read_imagef(light_spectrum, sampler, (float2)(step, 0)).xyz;
@@ -80,5 +78,6 @@ __kernel void sample_simple(
 	rgb *= smoothstep(fadeout.y, fadeout.x, radius);
 	rgb *= intensity;
 
-    write_imagef(image, (int2)(px, py), (float4)(rgb, 1));
+	float4 output = xyz_to_ap1((float4)(rgb, 1));
+    write_imagef(image, (int2)(px, py), output);
 }

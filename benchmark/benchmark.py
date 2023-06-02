@@ -35,7 +35,6 @@ def markdown_table(data: dict, headers: tuple[str, str]) -> str:
 
 
 def build_report(project_path: str, args: list, output: str):
-
     # hardware
     queue = opencl.command_queue()
     device = queue.device
@@ -121,7 +120,6 @@ def build_report(project_path: str, args: list, output: str):
 
 
 def run(name: str = 'nikon_ai_50_135mm') -> None:
-
     # set environment variables
     env = os.environ.copy()
     if 'REALFLARE_DEV' in env:
@@ -140,6 +138,8 @@ def run(name: str = 'nikon_ai_50_135mm') -> None:
         '--log',
         str(logging.INFO),
     ]
+
+    print(' '.join(command))
 
     output = subprocess.check_output(command, env=env, stderr=subprocess.STDOUT)
 

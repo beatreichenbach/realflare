@@ -19,6 +19,7 @@ class StarburstTask(OpenCL):
         self.source = f'__constant int LAMBDA_MIN = {LAMBDA_MIN};\n'
         self.source += f'__constant int LAMBDA_MAX = {LAMBDA_MAX};\n'
         self.source += f'__constant int LAMBDA_MID = {LAMBDA_MID};\n'
+        self.source += self.read_source_file('color.cl')
         self.source += self.read_source_file('starburst.cl')
         super().build()
         self.kernel = cl.Kernel(self.program, 'sample_simple')

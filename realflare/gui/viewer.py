@@ -29,27 +29,14 @@ class ElementViewer(Viewer):
         self.colorspace_processor = None
         try:
             config = OCIO.GetCurrentConfig()
-            src_colorspace = 'Utility - XYZ - D60'
+            src_colorspace = 'ACES - ACEScg'
             display = 'ACES'
             view = 'sRGB'
-            processor = config.getProcessor(
-                src_colorspace,
-                display,
-                view,
-                OCIO.TransformDirection.TRANSFORM_DIR_FORWARD,
-            )
+            direction = OCIO.TransformDirection.TRANSFORM_DIR_FORWARD
+            processor = config.getProcessor(src_colorspace, display, view, direction)
             self.colorspace_processor = processor.getDefaultCPUProcessor()
-
-            # gpu = processor.getDefaultGPUProcessor()
-            # shader_desc = OCIO.GpuShaderDesc.CreateShaderDesc()
-            # shader_desc.setLanguage(OCIO.GPU_LANGUAGE_GLSL_1_3)
-            # shader_desc.setFunctionName("OCIODisplay")
-            # shader_desc.setResourcePrefix("ocio_")
-            #
-            # gpu.extractGpuShaderInfo(shader_desc)
-            # print(shader_desc.getShaderText())
-
             self.post_processes.append(self._apply_colorspace)
+
         except OCIO.Exception as e:
             logging.debug(e)
             logging.warning(
@@ -80,10 +67,10 @@ class ElementViewer(Viewer):
         self._element = value
         self.element_changed.emit(self._element)
 
-    def _apply_colorspace(self, array: np.ndarray) -> np.ndarray:
+    def _apply_colorspace(self, array: np.ndarray):
+        if self.colorspace_processor is None:
+            return
         try:
             self.colorspace_processor.applyRGB(array)
         except OCIO.Exception as e:
             logging.debug(e)
-        finally:
-            return array

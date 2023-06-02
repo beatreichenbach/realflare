@@ -70,6 +70,7 @@ class RasterizingTask(OpenCL):
         self.source += f'__constant int BIN_SIZE = {self.bin_size};\n'
         self.source += f'__constant int LAMBDA_MIN = {LAMBDA_MIN};\n'
         self.source += f'__constant int LAMBDA_MAX = {LAMBDA_MAX};\n'
+        self.source += self.read_source_file('color.cl')
         self.source += self.read_source_file('rasterizing.cl')
 
         super().build()
@@ -422,8 +423,7 @@ class RasterizingTask(OpenCL):
         # logging.debug(f'WORK_GROUP_SIZE: {self.kernels["rasterizer"].get_work_group_info(cl.kernel_work_group_info.WORK_GROUP_SIZE, device)}')
 
         # TODO: can if statements be removed? (wavelength_count != 1). Less branching is better
-        # TODO: wavelength sub count implementation has to be rethought. It can't be smart to calculate the values in a loop between two vertices.
-        # TODO: can we only calculate the fragment once per substeps?
+
         self.kernels['rasterizer'].set_arg(0, flare_image.image)
         self.kernels['rasterizer'].set_arg(1, ghost.image)
         self.kernels['rasterizer'].set_arg(2, light_spectrum.image)

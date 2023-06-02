@@ -36,7 +36,7 @@ GHOST = RenderElement.GHOST
 FLARE = RenderElement.FLARE
 DIAGRAM = RenderElement.DIAGRAM
 
-RENDER_SPACE = 'Utility - XYZ - D60'
+RENDER_SPACE = 'ACES - ACEScg'
 
 
 class Engine(QtCore.QObject):
@@ -148,9 +148,7 @@ class Engine(QtCore.QObject):
                         project.flare, project.render, path_indexes
                     )
 
-                    flare = self.rasterizing_task.run(
-                        project.flare, project.render, rays, ghost
-                    )
+                    flare = self.rasterizing_task.run(project, rays, ghost)
                     flare_array = flare.array[:, :, :3]
                     image_array += values[0] * flare_array
                     flare_array = np.flip(flare_array, 0)

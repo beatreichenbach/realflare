@@ -1,6 +1,5 @@
 // leave room for 1 bit batch header to store whether list is empty
 #define BATCH_PRIMITIVE_COUNT 255
-// #define BATCH_COUNT 11694
 
 int edge_function_int(
 	int2 a,
@@ -83,7 +82,6 @@ bool intersect_quad(
 	bool w30 = l30 >= 0;
 
 	// dealing with 3 points in one line
-	// TODO: something happened and i fucked the else statement, why did we need to change w20 when three points are on a line?
 	if (edge_function_int(p0, p1, p2) == 0 && edge_function_int(p0, p2, p3) == 0) return false;
 	bool w20 = l20 >= 0;
 
@@ -95,7 +93,6 @@ bool intersect_quad(
 		(w20 && !w23 && !w30 && (!w01 || !w12));
 
 	return front || back;
-	// return back;
 }
 
 float4 compute_barycentric_quad(
@@ -548,6 +545,7 @@ __kernel void rasterizer(
 	// write_imagef(image, (int2)(0, 0), (float4) (get_global_size(0), get_global_size(1), 0, 0));
 	if (x >= dims.x || y >= dims.y) return;
 	int2 p = (int2) (x, y) * sub_steps;
+	int2 p_center = p + sub_steps / 2;
 
 	// int round up
 	// https://stackoverflow.com/questions/17944/how-to-round-up-the-result-of-integer-division/96921#96921
@@ -555,6 +553,11 @@ __kernel void rasterizer(
 	int bin_index = (y / BIN_SIZE) * bin_dims.x + (x / BIN_SIZE);
 	int quad_count = (grid_count - 1) * (grid_count - 1);
 	int vertex_count = grid_count * grid_count;
+	int max_wavelength_count = max(wavelength_count - 1, 1);
+	int total_samples = wavelength_count * sub_steps * wavelength_sub_count;
+
+	float wavelength_sub_step = 1.0f / wavelength_sub_count;
+	float wavelength_step = wavelength_sub_step / wavelength_count;
 
 	// localize bin queues
 	// 1 long4 = 256 bytes
@@ -591,7 +594,6 @@ __kernel void rasterizer(
 			int quad_id = prim_id % quad_count;
 
 			int4 quads = quad_vertexes(grid_count, quad_id);
-			// if (quad_id != 249 && quad_id != 269) continue;
 			// if (quad_id != 1244) continue;
 
 			int4 vertex_index = (path_id * vertex_count + quads) * wavelength_count;
@@ -604,7 +606,7 @@ __kernel void rasterizer(
 			v_source[7] = vertexes[vertex_index.w];
 			vertex_index++;
 
-			for (int wavelength_id = 0; wavelength_id < max(wavelength_count - 1, 1); wavelength_id++, vertex_index++) {
+			for (int wavelength_id = 0; wavelength_id < max_wavelength_count; wavelength_id++, vertex_index++) {
 				v_source[0] = v_source[4];
 				v_source[1] = v_source[5];
 				v_source[2] = v_source[6];
@@ -614,23 +616,14 @@ __kernel void rasterizer(
 				v_source[6] = vertexes[vertex_index.z];
 				v_source[7] = vertexes[vertex_index.w];
 
-				// v_source[0] = vertexes[vertex_index.x];
-				// v_source[1] = vertexes[vertex_index.y];
-				// v_source[2] = vertexes[vertex_index.z];
-				// v_source[3] = vertexes[vertex_index.w];
-				// v_source[4] = vertexes[vertex_index.x + 1];
-				// v_source[5] = vertexes[vertex_index.y + 1];
-				// v_source[6] = vertexes[vertex_index.z + 1];
-				// v_source[7] = vertexes[vertex_index.w + 1];
-
+				float wavelength_sub_pos = 0;
+				float wavelength_pos = ((float) wavelength_id + 0.5f) / wavelength_count;
 				for (int i = 0; i < wavelength_sub_count; i++) {
-					float a = (float) i / wavelength_sub_count;
-
 					int2 v_pos[4];
 					Vertex v[4];
 
 					for (int j = 0; j < 4; j++) {
-						v[j] = mix_vertex(v_source[j], v_source[j + 4], a);
+						v[j] = mix_vertex(v_source[j], v_source[j + 4], wavelength_sub_pos);
 						v_pos[j] = convert_int2(v[j].pos * sub_steps);
 					}
 
@@ -644,31 +637,30 @@ __kernel void rasterizer(
 					}
 					float intensity = 0;
 					if (hits > 0) {
-						int2 p_center = p + sub_steps / 2;
-						float4 weights = compute_barycentric_quad(p, v_pos[0], v_pos[1], v_pos[2], v_pos[3]);
+						float4 weights = compute_barycentric_quad(p_center, v_pos[0], v_pos[1], v_pos[2], v_pos[3]);
 						intensity += fragment_shader(weights, v[0], v[1], v[2], v[3], ghost) * hits;
 					}
 
-					if(wavelength_count != 1) {
-						float wavelength_step = ((float) wavelength_id + 0.5f + a) / wavelength_count;
-						float3 xyz = read_imagef(light_spectrum, sampler, (float2) (wavelength_step, 0)).xyz;
+					if(wavelength_count > 1) {
+						// before optimization:
+						// float wavelength_pos = ((float) wavelength_id + 0.5f + wavelength_sub_pos) / wavelength_count;
+						float3 xyz = read_imagef(light_spectrum, sampler, (float2) (wavelength_pos, 0)).xyz;
 						rgba.xyz += xyz * intensity;
 					} else {
 						rgba.xyz += intensity;
 					}
+
+					wavelength_sub_pos += wavelength_sub_step;
+					wavelength_pos += wavelength_step;
 				}
-
-
-
 			}
-
-
 		}
 	}
 
 	if(rgba.x > 0 || rgba.y > 0 || rgba.z > 0) {
-		rgba /= (wavelength_count * sub_steps * wavelength_sub_count);
+		rgba /= total_samples;
 		y = dims.y - (y + 1);
-		write_imagef(image, (int2)(x, y), rgba);
+		float4 output = xyz_to_ap1(rgba);
+		write_imagef(image, (int2)(x, y), output);
 	}
 }
