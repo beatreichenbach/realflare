@@ -7,7 +7,7 @@ from realflare.cli import app as cli_app
 from realflare.gui import app as gui_app
 
 
-def argument_parser():
+def argument_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog='Realflare',
         description='Physically-Based Lens Flares',
@@ -62,7 +62,7 @@ def argument_parser():
     return parser
 
 
-def main():
+def main() -> None:
     sentry.init()
 
     parser = argument_parser()

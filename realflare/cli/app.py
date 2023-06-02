@@ -1,3 +1,4 @@
+from __future__ import annotations
 import dataclasses
 import json
 import logging
@@ -72,7 +73,7 @@ def update_project(project: Project, kwargs: dict, frame_time: float):
     return project
 
 
-def exec_(parser: ArgumentParser):
+def exec_(parser: ArgumentParser) -> None:
     args = parser.parse_args(sys.argv[1:])
 
     logging.basicConfig(level=args.log)

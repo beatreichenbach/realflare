@@ -1,3 +1,4 @@
+from __future__ import annotations
 import logging
 import os
 from collections import OrderedDict
@@ -54,7 +55,7 @@ class Engine(QtCore.QObject):
         self._init_renderers()
         self._init_tasks()
 
-    def _init_renderers(self):
+    def _init_renderers(self) -> None:
         self.renderers: dict[RenderElement, Callable] = OrderedDict()
         self.renderers[STARBURST_APERTURE] = self.starburst_aperture
         self.renderers[GHOST_APERTURE] = self.ghost_aperture
@@ -63,7 +64,7 @@ class Engine(QtCore.QObject):
         self.renderers[FLARE] = self.flare
         self.renderers[DIAGRAM] = self.diagram
 
-    def _init_tasks(self):
+    def _init_tasks(self) -> None:
         self.aperture_task = ApertureTask(self.queue)
         self.ghost_task = GhostTask(self.queue)
         self.starburst_task = StarburstTask(self.queue)
@@ -256,5 +257,5 @@ class Engine(QtCore.QObject):
         return cpu_processor
 
 
-def clear_cache():
+def clear_cache() -> None:
     cl.tools.clear_first_arg_caches()

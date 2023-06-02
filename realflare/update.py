@@ -1,3 +1,4 @@
+from __future__ import annotations
 import logging
 import sys
 
@@ -10,7 +11,6 @@ from realflare.utils.processing import Process, popen
 
 class UpdateProcess(Process):
     def run(self) -> None:
-
         args = [
             sys.executable,
             '-m',
@@ -89,7 +89,7 @@ class UpdateDialog(LogViewer):
     def update_log(self, record: logging.LogRecord) -> None:
         self.add_record(record)
 
-    def exec_(self):
+    def exec_(self) -> None:
         self.setWindowModality(QtGui.Qt.ApplicationModal)
         self.show()
 

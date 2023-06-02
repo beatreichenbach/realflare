@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from importlib.resources import files
 import os
 import typing

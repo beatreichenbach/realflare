@@ -1,7 +1,7 @@
 from realflare.storage import Storage
 
 
-def init():
+def init() -> None:
     storage = Storage()
 
     if storage.settings.sentry:

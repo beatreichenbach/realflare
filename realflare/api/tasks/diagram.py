@@ -18,14 +18,14 @@ from realflare.utils.timing import timer
 
 
 class DiagramTask(OpenCL):
-    def __init__(self, queue):
+    def __init__(self, queue) -> None:
         super().__init__(queue)
         self.raytracing_task = RaytracingTask(queue)
         self.kernels = {}
         self.scale = 1
         self.build()
 
-    def build(self, *args, **kwargs):
+    def build(self, *args, **kwargs) -> None:
         self.source = ''
         self.register_dtype('Ray', ray_dtype)
         self.register_dtype('LensElement', lens_element_dtype)
@@ -90,7 +90,9 @@ class DiagramTask(OpenCL):
         )
 
     @timer
-    def intersections(self, image: Image, intersections: Buffer, column_offset: int):
+    def intersections(
+        self, image: Image, intersections: Buffer, column_offset: int
+    ) -> None:
         # rebuild kernel
         if self.rebuild:
             self.build()
@@ -137,7 +139,7 @@ class DiagramTask(OpenCL):
             region=(w, h),
         )
 
-    def run(self, project: Project, intersections: Buffer):
+    def run(self, project: Project, intersections: Buffer) -> Image:
         # lenses
         resolution = project.render.diagram.resolution
         image = self.update_image(resolution, flags=cl.mem_flags.READ_WRITE)

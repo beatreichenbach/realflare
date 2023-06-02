@@ -1,4 +1,4 @@
-import logging
+from __future__ import annotations
 import os
 import random
 from functools import partial
@@ -58,7 +58,7 @@ class ProjectEditor(ParameterEditor):
         )
         self.tabs = tab_widget.tabs
 
-    def _init_output_group(self):
+    def _init_output_group(self) -> None:
         output_group = self.add_group(
             'output', collapsible=True, style=CollapsibleBox.Style.SIMPLE
         )
@@ -89,7 +89,7 @@ class ProjectEditor(ParameterEditor):
         parm.tooltip = 'Colorspace from the OCIO config.\nFor example: ACES - ACEScg'
         output_group.add_parameter(parm)
 
-    def _init_flare_group(self):
+    def _init_flare_group(self) -> None:
         self.tabs['lens_flare'].create_hierarchy = False
 
         resource_dir = storage.decode_path('$RES')
@@ -429,7 +429,7 @@ class ProjectEditor(ParameterEditor):
         )
         ghost_group.add_parameter(parm)
 
-    def _init_rendering_group(self):
+    def _init_rendering_group(self) -> None:
         # renderer
         renderer_group = self.tabs['render'].add_group(
             'renderer', collapsible=True, style=CollapsibleBox.Style.BUTTON
@@ -554,7 +554,7 @@ class ProjectEditor(ParameterEditor):
         parm.menu = opencl.devices()
         system_group.add_parameter(parm)
 
-    def _init_diagram_group(self):
+    def _init_diagram_group(self) -> None:
         diagram_renderer_group = self.tabs['diagram'].add_group(
             'renderer', collapsible=True, style=CollapsibleBox.Style.BUTTON
         )
@@ -592,7 +592,7 @@ class ProjectEditor(ParameterEditor):
         parm.slider_max = 20
         diagram_rays_group.add_parameter(parm)
 
-    def _init_debug_group(self):
+    def _init_debug_group(self) -> None:
         flare_group = self.tabs['debug'].add_group(
             'flare', collapsible=True, style=CollapsibleBox.Style.BUTTON
         )
@@ -676,7 +676,7 @@ class ProjectEditor(ParameterEditor):
     #
     #     self.update_editor(new_config)
 
-    def project(self):
+    def project(self) -> Project:
         values = self.values()
 
         values['render']['grid_count'] = values['render']['grid_subdivisions'] + 1
@@ -686,7 +686,7 @@ class ProjectEditor(ParameterEditor):
 
         return project
 
-    def randomize_coatings(self):
+    def randomize_coatings(self) -> None:
         project = self.project()
 
         # TODO: clean up...

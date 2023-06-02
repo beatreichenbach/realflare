@@ -1,3 +1,4 @@
+from __future__ import annotations
 import logging
 from functools import lru_cache
 
@@ -23,7 +24,7 @@ class ApertureTask(OpenCL):
         self.kernel = None
         self.build()
 
-    def build(self, *args, **kwargs):
+    def build(self, *args, **kwargs) -> None:
         self.source = self.read_source_file('aperture.cl')
         super().build()
         self.kernel = cl.Kernel(self.program, 'aperture')

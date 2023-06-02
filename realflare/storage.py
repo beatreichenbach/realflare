@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import json
 import logging
 import os
@@ -5,7 +7,7 @@ import re
 import shutil
 from dataclasses import dataclass, field
 from importlib.resources import files
-from typing import Any
+from typing import Any, Union
 
 from qt_extensions.typeutils import cast, cast_basic
 
@@ -43,7 +45,7 @@ class JSONStorage(metaclass=Singleton):
 
 @dataclass()
 class Settings:
-    sentry: bool | None = None
+    sentry: Union[bool, None] = None
     ocio: str = ''
     clear_log_on_render: bool = True
 

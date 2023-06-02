@@ -15,7 +15,7 @@ class StarburstTask(OpenCL):
         self.kernel = None
         self.build()
 
-    def build(self, *args, **kwargs):
+    def build(self, *args, **kwargs) -> None:
         self.source = f'__constant int LAMBDA_MIN = {LAMBDA_MIN};\n'
         self.source += f'__constant int LAMBDA_MAX = {LAMBDA_MAX};\n'
         self.source += f'__constant int LAMBDA_MID = {LAMBDA_MID};\n'

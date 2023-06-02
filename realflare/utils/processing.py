@@ -1,3 +1,4 @@
+from __future__ import annotations
 import logging
 import os
 import subprocess
@@ -65,7 +66,7 @@ class Process(QtCore.QObject):
 
 
 class ProcessStreamHandler(logging.StreamHandler):
-    def __init__(self, process: Process, stream: typing.IO | None = None):
+    def __init__(self, process: Process, stream: typing.IO | None = None) -> None:
         super().__init__(stream)
         self.process = process
 

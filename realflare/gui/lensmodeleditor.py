@@ -1,3 +1,4 @@
+from __future__ import annotations
 import dataclasses
 import logging
 import os
@@ -94,7 +95,7 @@ class LensModelEditor(ParameterEditor):
 
         self._init_editor()
 
-    def _init_editor(self):
+    def _init_editor(self) -> None:
         # lens model
         model_group = self.add_group('model', style=CollapsibleBox.Style.SIMPLE)
         model_group.create_hierarchy = False

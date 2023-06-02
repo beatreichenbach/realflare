@@ -16,7 +16,7 @@ dependencies = [
     "sentry-sdk",
     "python-slugify[unidecode]"
 ]
-requires-python = ">=3.10"
+requires-python = ">=3.9"
 license = {text = "MIT"}
 readme = "README.md"
 

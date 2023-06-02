@@ -1,3 +1,4 @@
+from __future__ import annotations
 from collections.abc import Iterable
 from functools import lru_cache
 
@@ -22,7 +23,7 @@ from realflare.api.tasks.opencl import (
 BATCH_PRIMITIVE_COUNT = 255
 
 
-def triangle_vertexes(n):
+def triangle_vertexes(n) -> list[tuple[int, int, int]]:
     # returns a list of tuples (vertex indexes per triangle)
     # n is the amount of rows of the vertex grid
     # v1, v2, v3 are the vertexes making up a triangle
@@ -58,12 +59,12 @@ def quad_vertexes(n: int) -> list[tuple[int, int, int, int]]:
 class RasterizingTask(OpenCL):
     bin_size = 32
 
-    def __init__(self, queue):
+    def __init__(self, queue) -> None:
         super().__init__(queue)
         self.kernels = {}
         self.build()
 
-    def build(self, *args, **kwargs):
+    def build(self, *args, **kwargs) -> None:
         self.source = ''
         self.register_dtype('Ray', ray_dtype)
         self.register_dtype('Vertex', vertex_dtype)

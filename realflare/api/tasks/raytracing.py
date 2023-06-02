@@ -1,3 +1,4 @@
+from __future__ import annotations
 import logging
 from functools import lru_cache
 
@@ -41,7 +42,7 @@ class RaytracingTask(OpenCL):
         self.kernel = None
         self.build()
 
-    def build(self, *args, **kwargs):
+    def build(self, *args, **kwargs) -> None:
         self.source = ''
         self.register_dtype('Ray', ray_dtype)
         self.register_dtype('LensElement', lens_element_dtype)
@@ -101,7 +102,6 @@ class RaytracingTask(OpenCL):
         array = np.zeros(len(lens_elements), dtype)
         offset = 0
         for i, lens_element in enumerate(lens_elements):
-
             array[i]['radius'] = lens_element.radius
             array[i]['distance'] = lens_element.distance
             array[i]['ior'] = lens_element.refractive_index
@@ -227,7 +227,6 @@ class RaytracingTask(OpenCL):
         wavelength_count: int,
         path_indexes: tuple[int] | None = None,
     ) -> Buffer | None:
-
         # rebuild kernel
         if self.rebuild:
             self.build()
@@ -305,7 +304,7 @@ class IntersectionsTask(RaytracingTask):
         self.kernel = None
         self.build()
 
-    def build(self, *args, **kwargs):
+    def build(self, *args, **kwargs) -> None:
         self.source = ''
         self.register_dtype('Ray', ray_dtype)
         self.register_dtype('LensElement', lens_element_dtype)
@@ -328,7 +327,6 @@ class IntersectionsTask(RaytracingTask):
         wavelength_count: int,
         path_indexes: tuple[int] | None = None,
     ) -> Buffer | None:
-
         # rebuild kernel
         if self.rebuild:
             self.build()

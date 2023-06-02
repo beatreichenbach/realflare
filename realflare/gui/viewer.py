@@ -1,8 +1,9 @@
+from __future__ import annotations
 import logging
 
 import numpy as np
-from PySide2 import QtWidgets, QtCore
 import PyOpenColorIO as OCIO
+from PySide2 import QtWidgets, QtCore
 
 from realflare.api.data import RenderElement
 

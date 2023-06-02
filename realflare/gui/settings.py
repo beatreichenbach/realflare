@@ -1,3 +1,4 @@
+from __future__ import annotations
 import logging
 
 from PySide2 import QtWidgets, QtGui, QtCore
@@ -82,14 +83,14 @@ class SettingsEditor(ParameterEditor):
 
 
 class SettingsDialog(QtWidgets.QDialog):
-    def __init__(self, parent: QtWidgets.QWidget | None = None):
+    def __init__(self, parent: QtWidgets.QWidget | None = None) -> None:
         super().__init__(parent)
 
         self._init_ui()
         self.setWindowTitle('Settings')
         self.resize(QtCore.QSize(800, 600))
 
-    def _init_ui(self):
+    def _init_ui(self) -> None:
         self.setLayout(QtWidgets.QVBoxLayout())
 
         # editor
