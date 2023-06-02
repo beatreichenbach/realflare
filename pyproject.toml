@@ -10,7 +10,7 @@ dependencies = [
     "PySide2",
     "PyYAML",
     "numpy",
-    "opencv-python",
+    "opencv-python-headless",
     "pyopencl",
     "opencolorio",
     "sentry-sdk",
