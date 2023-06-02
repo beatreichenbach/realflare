@@ -168,7 +168,7 @@ class Engine(QtCore.QObject):
         return image
 
     def diagram(self, project: Project) -> Image:
-        path_indexes = (project.render.diagram.debug_ghost,)
+        path_indexes = (project.diagram.debug_ghost,)
         intersections = self.intersection_task.run(project, path_indexes)
         image = self.diagram_task.run(project, intersections)
         return image

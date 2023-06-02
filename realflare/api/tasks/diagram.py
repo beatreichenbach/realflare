@@ -141,14 +141,14 @@ class DiagramTask(OpenCL):
 
     def run(self, project: Project, intersections: Buffer) -> Image:
         # lenses
-        resolution = project.render.diagram.resolution
+        resolution = project.diagram.resolution
         image = self.update_image(resolution, flags=cl.mem_flags.READ_WRITE)
         lens = project.flare.lens
         self.lenses(image, lens)
 
         # rays
         if intersections is not None:
-            offset = project.render.diagram.column_offset
+            offset = project.diagram.column_offset
             self.intersections(image, intersections, offset)
 
         return image

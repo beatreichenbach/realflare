@@ -313,7 +313,7 @@ class IntersectionsTask(RaytracingTask):
         self.source += f'__constant int LAMBDA_MIN = {LAMBDA_MIN};\n'
         self.source += f'__constant int LAMBDA_MAX = {LAMBDA_MAX};\n'
         self.source += self.read_source_file('raytracing.cl')
-        super().build()
+        OpenCL.build(self, *args, **kwargs)
         self.kernel = cl.Kernel(self.program, 'raytrace')
 
     @lru_cache(10)
@@ -390,13 +390,13 @@ class IntersectionsTask(RaytracingTask):
         self, project: Project, path_indexes: tuple[int] | None = None
     ) -> Buffer | None:
         # make light_position hashable
-        light_position = (0, project.render.diagram.light_position.y())
+        light_position = (0, project.diagram.light_position)
         buffer = self.raytrace(
             light_position,
             project.flare.lens,
-            project.render.diagram.grid_count,
-            project.render.diagram.grid_length,
-            project.render.diagram.resolution,
+            project.diagram.grid_count,
+            project.diagram.grid_length,
+            project.diagram.resolution,
             1,
             path_indexes,
         )
