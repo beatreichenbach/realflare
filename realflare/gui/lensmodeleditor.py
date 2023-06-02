@@ -85,7 +85,7 @@ class GroupEditor(ParameterEditor):
         self.set_values({'name': name})
         self.blockSignals(False)
 
-    def name(self) -> str:
+    def group_name(self) -> str:
         return self.values().get('name', '')
 
 
@@ -209,17 +209,17 @@ class LensModelBrowser(FileBrowser):
     ) -> None:
         super().__init__(path, fields, parent)
 
-    def _append_dir(self, path: str, parent: QtCore.QModelIndex):
+    def _append_dir(self, path: str, parent: QtCore.QModelIndex) -> None:
         name = os.path.basename(path)
         element = LensModelFileElement(name=name, path=path)
         icon = MaterialIcon('folder')
         self.model.append_element(element, icon=icon, parent=parent)
 
-    def _append_file(self, path: str, parent: QtCore.QModelIndex):
+    def _append_file(self, path: str, parent: QtCore.QModelIndex) -> None:
         try:
             data = storage.read_data(path)
         except ValueError:
-            return
+            data = {}
         lens_model = cast(LensModel, data)
         name = lens_model.name
         element = LensModelFileElement(name=name, path=path, lens_model=lens_model)
@@ -227,7 +227,7 @@ class LensModelBrowser(FileBrowser):
 
 
 class LensModelDialog(QtWidgets.QWidget):
-    def __init__(self, parent: QtWidgets.QWidget | None = None):
+    def __init__(self, parent: QtWidgets.QWidget | None = None) -> None:
         super().__init__(parent)
 
         self.current_element = None
@@ -237,7 +237,7 @@ class LensModelDialog(QtWidgets.QWidget):
 
         self.change_content()
 
-    def _init_ui(self):
+    def _init_ui(self) -> None:
         self.setLayout(QtWidgets.QVBoxLayout())
 
         content_layout = QtWidgets.QHBoxLayout()
@@ -315,7 +315,7 @@ class LensModelDialog(QtWidgets.QWidget):
                 return True
         else:
             # group
-            if self.current_element.name == self.group_editor.name():
+            if self.current_element.name == self.group_editor.group_name():
                 return True
 
         buttons = (
@@ -352,7 +352,7 @@ class LensModelDialog(QtWidgets.QWidget):
     def save_group(self) -> bool:
         source_path = self.current_element.path
         parent_path = os.path.dirname(self.current_element.path)
-        name = self.group_editor.name()
+        name = self.group_editor.group_name()
         destination_path = unique_path(os.path.join(parent_path, name))
         try:
             shutil.move(source_path, destination_path)
@@ -398,7 +398,7 @@ class LensModelDialog(QtWidgets.QWidget):
         return True
 
     def _group_change(self) -> None:
-        name = self.group_editor.name()
+        name = self.group_editor.group_name()
         if self.current_element and self.current_element.name != name:
             self.button_box.show()
         else:
