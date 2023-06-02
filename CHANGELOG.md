@@ -1,5 +1,14 @@
 <!--next-version-placeholder-->
 
+## v0.4.4 (2023-06-01)
+### Fix
+
+* Make python 3.9 compatible ([`d188d9e`](https://github.com/beatreichenbach/realflare/commit/d188d9e516fe15933b0e7f93b8a17c6258e36f20))
+* **engine:** Convert to acescg in render ([`68df2a8`](https://github.com/beatreichenbach/realflare/commit/68df2a8954f27dfe5ca84011b63e0f69ee47d9d7))
+* **storage:** Add ocio support ([`5cdf593`](https://github.com/beatreichenbach/realflare/commit/5cdf593ca62e3e1390dc960b131c192906939525))
+* **engine:** Handle cv2 errors ([`aae1460`](https://github.com/beatreichenbach/realflare/commit/aae1460ec9ff905a596cfc6f5a51339e344d803b))
+* **viewer:** Update to latest qt_extension ([`6a7dc6c`](https://github.com/beatreichenbach/realflare/commit/6a7dc6c0b84ad3409d343d9162b62acbafc0ba4e))
+
 ## v0.4.3 (2023-05-21)
 ### Feature
 * **window:** Add default widget states ([`f8ee4ee`](https://github.com/beatreichenbach/realflare/commit/f8ee4ee3b6f61dd5efd9c7b3249bb11bb6f92615))
