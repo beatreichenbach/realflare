@@ -220,16 +220,14 @@ class Engine(QtCore.QObject):
             return
 
         processor = self.colorspace_processor(project.output.colorspace)
+        array = image.array.copy()
+        if processor:
+            processor.applyRGBA(array)
 
         filename = storage.parse_output_path(project.output.path, project.output.frame)
         try:
             if not os.path.isdir(os.path.dirname(filename)):
                 os.makedirs(os.path.dirname(filename))
-
-            array = image.array.copy()
-            if processor:
-                processor.applyRGBA(array)
-
             image_bgr = cv2.cvtColor(array, cv2.COLOR_RGBA2BGR)
             cv2.imwrite(filename, image_bgr)
             logger.info('image written: {}'.format(filename))
@@ -240,7 +238,7 @@ class Engine(QtCore.QObject):
 
     def colorspace_processor(self, colorspace: str) -> OCIO.CPUProcessor | None:
         cpu_processor = self._colorspace_processors.get(colorspace)
-        if cpu_processor is None:
+        if cpu_processor is None and colorspace != RENDER_SPACE:
             try:
                 config = OCIO.GetCurrentConfig()
                 src_colorspace = config.getColorSpace(RENDER_SPACE)

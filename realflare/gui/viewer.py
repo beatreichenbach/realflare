@@ -6,6 +6,7 @@ import PyOpenColorIO as OCIO
 from PySide2 import QtWidgets, QtCore
 
 from realflare.api.data import RenderElement
+from realflare.api.engine import RENDER_SPACE
 
 from qt_extensions.parameters import EnumParameter
 from qt_extensions.viewer import Viewer
@@ -30,7 +31,7 @@ class ElementViewer(Viewer):
         self.colorspace_processor = None
         try:
             config = OCIO.GetCurrentConfig()
-            src_colorspace = 'ACES - ACEScg'
+            src_colorspace = RENDER_SPACE
             display = 'ACES'
             view = 'sRGB'
             direction = OCIO.TransformDirection.TRANSFORM_DIR_FORWARD
