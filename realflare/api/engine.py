@@ -51,6 +51,7 @@ class Engine(QtCore.QObject):
         logger.debug(f'engine initialized on device: {self.queue.device.name}')
 
         self._colorspace_processors = {}
+        self._emit_cache = {}
         self.elements = []
         self._init_renderers()
         self._init_tasks()
@@ -203,12 +204,14 @@ class Engine(QtCore.QObject):
     def set_elements(self, elements: list[RenderElement]) -> None:
         self.elements = elements
         # clear cache to force updates to viewers
-        self.emit_image.cache_clear()
+        self._emit_cache = {}
 
-    @lru_cache(10)
     def emit_image(self, image: Image, element: RenderElement) -> None:
-        render_image = RenderImage(image, element)
-        self.image_rendered.emit(render_image)
+        _hash = hash(image)
+        if self._emit_cache.get(element) != _hash:
+            self._emit_cache[element] = _hash
+            render_image = RenderImage(image, element)
+            self.image_rendered.emit(render_image)
 
     # noinspection PyMethodMayBeStatic
     def write_image(
