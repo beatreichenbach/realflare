@@ -21,7 +21,12 @@ def argument_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         '--project',
         type=str,
-        help='the project to render the flare, a path to a .json file',
+        help='the project to render, a path to a .json file',
+    )
+    parser.add_argument(
+        '--animation',
+        type=str,
+        help='path to a .json file containing animation data',
     )
     parser.add_argument(
         '--output',
@@ -29,17 +34,16 @@ def argument_parser() -> argparse.ArgumentParser:
         help='Output image',
     )
     parser.add_argument(
+        '--element',
+        type=str,
+        help='element to render, for example: '
+        'STARBURST_APERTURE, STARBURST ... FLARE, FLARE_STARBURST',
+    )
+    parser.add_argument(
         '--colorspace',
         type=str,
         default='ACES - ACEScg',
         help='output colorspace',
-    )
-    parser.add_argument(
-        '--arg',
-        type=str,
-        metavar='ARG VALUE VALUE',
-        action='append',
-        help='argument being interpolated from frame-start to frame-end',
     )
     parser.add_argument(
         '--frame-start',
