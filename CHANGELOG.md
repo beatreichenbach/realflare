@@ -1,5 +1,20 @@
 <!--next-version-placeholder-->
 
+## v0.5.0 (2023-06-19)
+### Feature
+
+* **engine:** Add animation ([`09cd910`](https://github.com/beatreichenbach/realflare/commit/09cd910923c0f7f033ad3b6ff0c7c03ff9a4f3b6))
+* **engine:** Add compositing ([`8097e8f`](https://github.com/beatreichenbach/realflare/commit/8097e8f22c348a91da6b51f052d36a1470f9224f))
+* **engine:** Add aperture/starburst parameters ([`27a08b1`](https://github.com/beatreichenbach/realflare/commit/27a08b123b50668a6017e2e0c16edfc0bd684115))
+* **engine:** Add starburst/aperture parameters ([`b700119`](https://github.com/beatreichenbach/realflare/commit/b700119cc4131f7c401af1a3c270d4af4db79bbb))
+* **nuke:** Initial nuke gizmo ([`ffcf99b`](https://github.com/beatreichenbach/realflare/commit/ffcf99bcbcb02fe2dad688964a63f0fb9bb89a63))
+
+### Fix
+
+* **engine:** Emit_image cache ([`6c1d1fc`](https://github.com/beatreichenbach/realflare/commit/6c1d1fcb945e8cc48b942bbc89e753ffb2bdc464))
+* **diagram:** Match latest project config ([`8b1b031`](https://github.com/beatreichenbach/realflare/commit/8b1b03159ab2137e3acc0c44ce4c169eb263646f))
+* **lens model editor:** Match refactor of qt_extension ([`c85f366`](https://github.com/beatreichenbach/realflare/commit/c85f366217f45f538fe48a82525c83dd9e96d3d3))
+
 ## v0.4.4 (2023-06-01)
 ### Fix
 
