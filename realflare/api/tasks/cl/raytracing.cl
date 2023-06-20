@@ -169,33 +169,28 @@ Ray init_ray(
 	int y = trunc((float) ray_id / grid_count);
 	int x = ray_id - (y * grid_count);
 
-	// x: left right, y: top down
+	// x: left right, y: top down3
 	float2 point_position;
 	point_position.x = grid_length * ((float) x / (grid_count - 1) - 0.5);
 	point_position.y = grid_length * (0.5 - (float) y / (grid_count - 1));
 
 	// initialize ray
-	Ray ray;
 	// cast initial ray straight towards the first lens to get initial position
 	// of the grid mapped onto the lens
+	Ray ray;
 	ray.pos = (float3) (point_position, 1);
 	ray.dir = (float3) (0, 0, -1);
+
 	Intersection i;
 	i = intersect(ray, lens);
 
-	// TODO: the screen position needs to be converted to an actual vector
-	// the screen position goes left right top down but coord system goes left right down up
-	// so inverting pos.y is needed.
-	// float3 direction = (float3) (position.x, -position.y, 1.0) * -1;
-
-	float3 direction = normalize(initial_direction.xyz * -1);
-
 	// back up and set the actual direction.
+	float3 direction = normalize(initial_direction.xyz * -1);
 	ray.pos = i.pos - direction;
 	ray.pos_apt = (float2) (0, 0);
 	ray.dir = direction.xyz;
 	ray.rrel = 0.0f;
-	ray.reflectance = 1000.0f;
+	ray.reflectance = 1.0f;
 
 	return ray;
 }
@@ -209,7 +204,6 @@ __kernel void raytrace(
 	int grid_count,
 	float grid_length,
 	float4 direction,
-	const int disperse,
 	__constant int *wavelengths
 #if defined(STORE_INTERSECTIONS)
 	, __global Intersection *intersections,
@@ -236,6 +230,8 @@ __kernel void raytrace(
 	int step = 0;
 	int inter_id = 0;
 	int delta = 1;
+
+	bool disperse = !isnan(lenses[0].coefficients.x);
 
 	size_t lens_id;
 	for (lens_id = 0; lens_id < lenses_count; inter_id++, lens_id += delta)
@@ -281,10 +277,10 @@ __kernel void raytrace(
 		float n2 = lens.ior;
 
 		// calculate dispersion on glass mediums (n>1)
-		if (disperse != 0 && n1 > 1) {
+		if (disperse && n1 > 1) {
 			n1 = dispersion(wavelength, lenses[n_index].coefficients);
 		}
-		if (disperse != 0 && n2 > 1) {
+		if (disperse && n2 > 1) {
 			n2 = dispersion(wavelength, lens.coefficients);
 		}
 

@@ -377,7 +377,8 @@ __kernel void vertex_shader(
 		v.pos = pos;
 
 		// uv
-		v.uv = (r.pos_apt + 1) / 2;
+		// v.uv = (r.pos_apt + 1) / 2;
+		v.uv = r.pos_apt;
 
 		// rrel
 		v.rrel = r.rrel;
@@ -477,12 +478,14 @@ float fragment_shader(
 	Vertex v1,
 	Vertex v2,
 	Vertex v3,
-	__read_only image2d_t ghost
+	__read_only image2d_t ghost,
+	float scale
 	)
 {
 	// ghost texture
 	float2 uv = weights.x * v0.uv + weights.y * v1.uv + weights.z * v2.uv + weights.w * v3.uv;
-	sampler_t sampler_norm = CLK_FILTER_LINEAR | CLK_NORMALIZED_COORDS_TRUE | CLK_ADDRESS_CLAMP_TO_EDGE;
+	uv = (uv * scale + 1.0f) / 2.0f;
+	sampler_t sampler_norm = CLK_FILTER_LINEAR | CLK_NORMALIZED_COORDS_TRUE | CLK_ADDRESS_CLAMP;
 	float ghost_intensity = read_imagef(ghost, sampler_norm, uv).x;
 
 	// relative distance from lens housing, rrel > 1 = ray left lens housing
@@ -534,7 +537,9 @@ __kernel void rasterizer(
 	const int wavelength_sub_count,
 	const int grid_count,
 	const int sub_steps,
-	__constant uchar *sub_offsets
+	__constant uchar *sub_offsets,
+	const float intensity,
+	const float scale
 )
 {
 	int x = get_global_id(0);
@@ -635,19 +640,19 @@ __kernel void rasterizer(
 							hits++;
 						}
 					}
-					float intensity = 0;
+					float fragment = 0;
 					if (hits > 0) {
 						float4 weights = compute_barycentric_quad(p_center, v_pos[0], v_pos[1], v_pos[2], v_pos[3]);
-						intensity += fragment_shader(weights, v[0], v[1], v[2], v[3], ghost) * hits;
+						fragment += fragment_shader(weights, v[0], v[1], v[2], v[3], ghost, scale) * hits;
 					}
 
 					if(wavelength_count > 1) {
 						// before optimization:
 						// float wavelength_pos = ((float) wavelength_id + 0.5f + wavelength_sub_pos) / wavelength_count;
 						float3 xyz = read_imagef(light_spectrum, sampler, (float2) (wavelength_pos, 0)).xyz;
-						rgba.xyz += xyz * intensity;
+						rgba.xyz += xyz * fragment;
 					} else {
-						rgba.xyz += intensity;
+						rgba.xyz += fragment;
 					}
 
 					wavelength_sub_pos += wavelength_sub_step;
@@ -658,7 +663,7 @@ __kernel void rasterizer(
 	}
 
 	if(rgba.x > 0 || rgba.y > 0 || rgba.z > 0) {
-		rgba /= total_samples;
+		rgba *= intensity / total_samples;
 		y = dims.y - (y + 1);
 		float4 output = xyz_to_ap1(rgba);
 		write_imagef(image, (int2)(x, y), output);

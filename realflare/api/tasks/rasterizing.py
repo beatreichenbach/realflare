@@ -6,6 +6,7 @@ import numpy as np
 import pyopencl as cl
 from PySide2 import QtCore
 
+from qt_extensions.typeutils import cast_basic
 from realflare.api.data import Render, Project
 from realflare.utils.timing import timer
 from realflare.utils.ciexyz import CIEXYZ
@@ -137,9 +138,9 @@ class RasterizingTask(OpenCL):
 
     @lru_cache(10)
     def update_sensor(
-        self, resolution: QtCore.QSize, sensor_size: QtCore.QSizeF
+        self, resolution: QtCore.QSize, sensor_size: tuple[float, float]
     ) -> float:
-        sensor_length = np.linalg.norm((sensor_size.width(), sensor_size.height())) / 2
+        sensor_length = np.linalg.norm((sensor_size[0], sensor_size[1])) / 2
         screen_transform = resolution.width() / sensor_length
         return screen_transform
 
@@ -296,9 +297,11 @@ class RasterizingTask(OpenCL):
         render: Render,
         rays: Buffer,
         ghost: Image,
-        sensor_size: QtCore.QSizeF,
+        sensor_size: tuple[float, float],
         min_area: float,
-    ) -> Image | Buffer:
+        intensity: float,
+        fstop: float,
+    ) -> Image:
         resolution = render.resolution
 
         # rebuild kernel
@@ -309,8 +312,16 @@ class RasterizingTask(OpenCL):
             self.build()
 
         # image
-        flare_image = self.update_image(resolution)
-        flare_image.args = (rays, ghost, render)
+        flare_image = self.update_image(resolution, flags=cl.mem_flags.READ_WRITE)
+        flare_image.args = (
+            rays,
+            ghost,
+            render,
+            min_area,
+            intensity,
+            sensor_size,
+            fstop,
+        )
 
         if rays is None:
             return flare_image
@@ -348,7 +359,7 @@ class RasterizingTask(OpenCL):
         # vertex shader
         vertex_shape = (path_count, ray_count, wavelength_count)
         vertexes = self.update_vertexes(vertex_shape)
-        vertexes.args = (rays, render, sensor_size)
+        vertexes.args = (rays, render, min_area, sensor_size)
         resolution_buffer = self.update_resolution(resolution)
         screen_transform = self.update_sensor(resolution, sensor_size)
 
@@ -415,6 +426,10 @@ class RasterizingTask(OpenCL):
         wavelength_sub_count = (
             render.wavelength_sub_count if wavelength_count > 1 else 1
         )
+        try:
+            scale = 1 - 32 / fstop
+        except ZeroDivisionError:
+            scale = 1
 
         # device = self.queue.get_info(cl.command_queue_info.DEVICE)
         # logging.debug(f'COMPILE_WORK_GROUP_SIZE: {self.kernels["rasterizer"].get_work_group_info(cl.kernel_work_group_info.COMPILE_WORK_GROUP_SIZE, device)}')
@@ -437,6 +452,8 @@ class RasterizingTask(OpenCL):
         self.kernels['rasterizer'].set_arg(9, np.int32(render.grid_count))
         self.kernels['rasterizer'].set_arg(10, np.int32(sub_steps))
         self.kernels['rasterizer'].set_arg(11, sub_offsets.buffer)
+        self.kernels['rasterizer'].set_arg(12, np.float32(intensity * 1e3))
+        self.kernels['rasterizer'].set_arg(13, np.float32(scale))
 
         # clear image
         w, h = resolution.width(), resolution.height()
@@ -456,12 +473,15 @@ class RasterizingTask(OpenCL):
         project: Project,
         rays: Buffer,
         ghost: Image,
-    ) -> Image | Buffer:
+    ) -> Image:
+        sensor_size = tuple(cast_basic(project.flare.lens.sensor_size))
         output = self.rasterize(
             project.render,
             rays,
             ghost,
-            project.flare.lens.sensor_size,
+            sensor_size,
             project.flare.lens.min_area,
+            project.flare.light.intensity,
+            project.flare.lens.fstop,
         )
         return output

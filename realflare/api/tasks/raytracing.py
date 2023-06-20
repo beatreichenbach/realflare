@@ -54,7 +54,7 @@ class RaytracingTask(OpenCL):
         self.kernel = cl.Kernel(self.program, 'raytrace')
 
     @staticmethod
-    @lru_cache(10)
+    @lru_cache(1)
     def build_lens_model(file: File) -> LensModel:
         file_path = str(file)
         data = storage.read_data(file_path)
@@ -76,7 +76,7 @@ class RaytracingTask(OpenCL):
             raise RealflareError(message) from None
         return lens_model
 
-    @lru_cache(10)
+    @lru_cache(1)
     def update_lens_elements(
         self,
         lens_model: LensModel,
@@ -100,6 +100,9 @@ class RaytracingTask(OpenCL):
         # array
         dtype = self.dtypes['LensElement']
         array = np.zeros(len(lens_elements), dtype)
+        if not glasses:
+            array[0]['coefficients'][0] = np.NAN
+
         offset = 0
         for i, lens_element in enumerate(lens_elements):
             array[i]['radius'] = lens_element.radius
@@ -136,11 +139,7 @@ class RaytracingTask(OpenCL):
         return buffer
 
     @lru_cache(10)
-    def update_paths(
-        self,
-        lens_model: LensModel,
-        path_indexes: tuple[int] | None,
-    ) -> Buffer:
+    def update_paths(self, lens_model: LensModel, path_indexes: tuple[int]) -> Buffer:
         # create paths that describe possible paths the rays can travel
         # path = (first bounce, 2nd bounce)
         # the ray can only bounce either before or after the aperture
@@ -172,13 +171,11 @@ class RaytracingTask(OpenCL):
         sensor_size: tuple[float, float],
         focal_length: float,
     ) -> np.ndarray:
+        sensor_length = sensor_size[0] / 2
+        ratio = resolution.height() / resolution.width()
         direction = np.array((1, 1, 1, 1), cl.cltypes.float4)
-        direction['x'] = position[0] * (sensor_size[0] / 2)
-        direction['y'] = (
-            position[1]
-            * (resolution.height() / resolution.width())
-            * (sensor_size[0] / 2)
-        )
+        direction['x'] = position[0] * sensor_length
+        direction['y'] = position[1] * ratio * sensor_length
         direction['z'] = focal_length
 
         return direction
@@ -216,7 +213,7 @@ class RaytracingTask(OpenCL):
         raytracing_event.wait()
         return raytracing_event
 
-    @lru_cache(10)
+    @lru_cache(1)
     def raytrace(
         self,
         light_position: tuple[float, float],
@@ -225,7 +222,7 @@ class RaytracingTask(OpenCL):
         grid_length: float,
         resolution: QtCore.QSize,
         wavelength_count: int,
-        path_indexes: tuple[int] | None = None,
+        path_indexes: tuple[int],
     ) -> Buffer | None:
         # rebuild kernel
         if self.rebuild:
@@ -238,8 +235,6 @@ class RaytracingTask(OpenCL):
         lens_elements_count = len(lens_elements.array)
         paths = self.update_paths(lens_model, path_indexes)
         paths.clear_buffer()
-        # TODO: cl implementation could be better?
-        disperse = bool(lens.glasses_path)
 
         if lens_elements_count <= 1:
             # no lens elements
@@ -267,8 +262,7 @@ class RaytracingTask(OpenCL):
         self.kernel.set_arg(4, np.int32(grid_count))
         self.kernel.set_arg(5, np.float32(grid_length))
         self.kernel.set_arg(6, direction)
-        self.kernel.set_arg(7, cl.cltypes.int(disperse))
-        self.kernel.set_arg(8, wavelengths.buffer)
+        self.kernel.set_arg(7, wavelengths.buffer)
 
         self.trace(rays)
 
@@ -281,9 +275,7 @@ class RaytracingTask(OpenCL):
         return rays
 
     @timer
-    def run(
-        self, project: Project, path_indexes: tuple[int] | None = None
-    ) -> Buffer | None:
+    def run(self, project: Project, path_indexes: tuple[int]) -> Buffer | None:
         # make light_position hashable
         light_position = tuple(cast_basic(project.flare.light.position))
         buffer = self.raytrace(
@@ -316,7 +308,7 @@ class IntersectionsTask(RaytracingTask):
         OpenCL.build(self, *args, **kwargs)
         self.kernel = cl.Kernel(self.program, 'raytrace')
 
-    @lru_cache(10)
+    @lru_cache(1)
     def raytrace(
         self,
         light_position: tuple[float, float],
@@ -325,7 +317,7 @@ class IntersectionsTask(RaytracingTask):
         grid_length: float,
         resolution: QtCore.QSize,
         wavelength_count: int,
-        path_indexes: tuple[int] | None = None,
+        path_indexes: tuple[int],
     ) -> Buffer | None:
         # rebuild kernel
         if self.rebuild:
@@ -338,8 +330,6 @@ class IntersectionsTask(RaytracingTask):
         lens_elements_count = len(lens_elements.array)
         paths = self.update_paths(lens_model, path_indexes)
         paths.clear_buffer()
-        # TODO: cl implementation could be better?
-        disperse = bool(lens.glasses_path)
 
         if lens_elements_count <= 1:
             # no lens elements
@@ -367,28 +357,24 @@ class IntersectionsTask(RaytracingTask):
         self.kernel.set_arg(4, np.int32(grid_count))
         self.kernel.set_arg(5, np.float32(grid_length))
         self.kernel.set_arg(6, direction)
-        self.kernel.set_arg(7, cl.cltypes.int(disperse))
-        self.kernel.set_arg(8, wavelengths.buffer)
+        self.kernel.set_arg(7, wavelengths.buffer)
 
         intersections_count = lens_elements.shape[0] * 3 - 1
         intersections_shape = (*rays.shape, intersections_count)
         intersections = self.update_intersections(intersections_shape)
-        self.kernel.set_arg(9, intersections.buffer)
-        self.kernel.set_arg(10, np.int32(intersections_count))
+        self.kernel.set_arg(8, intersections.buffer)
+        self.kernel.set_arg(9, np.int32(intersections_count))
 
         self.trace(rays)
 
         cl.enqueue_copy(self.queue, intersections.array, intersections.buffer)
         intersections._array = np.reshape(
-            intersections.array,
-            (1, wavelength_count, grid_count, grid_count, -1),
+            intersections.array, (1, wavelength_count, grid_count, grid_count, -1)
         )
         return intersections
 
     @timer
-    def run(
-        self, project: Project, path_indexes: tuple[int] | None = None
-    ) -> Buffer | None:
+    def run(self, project: Project, path_indexes: tuple[int]) -> Buffer | None:
         # make light_position hashable
         light_position = (0, project.diagram.light_position)
         buffer = self.raytrace(

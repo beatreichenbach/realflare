@@ -10,7 +10,7 @@ from realflare.utils.timing import timer
 
 
 class GhostTask(OpenCL):
-    @lru_cache(10)
+    @lru_cache(1)
     def ghost(self, aperture: Image, fstop: float, resolution: QtCore.QSize) -> Image:
         # [Ritschel et al. 2009] 3.3. Ringing pattern
         # alpha = 0.15 * (lambda / 400nm) * (f-stop / 18)

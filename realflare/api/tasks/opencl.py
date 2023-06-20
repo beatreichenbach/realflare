@@ -146,7 +146,7 @@ class Image(MemoryObject):
             self._image = cl.image_from_array(self.context, array, channels)
         return self._image
 
-    def clear_image(self):
+    def clear_image(self) -> None:
         self._image = None
 
 

@@ -143,6 +143,7 @@ class DiagramTask(OpenCL):
         # lenses
         resolution = project.diagram.resolution
         image = self.update_image(resolution, flags=cl.mem_flags.READ_WRITE)
+        image.args = (project.flare.lens, project.diagram)
         lens = project.flare.lens
         self.lenses(image, lens)
 

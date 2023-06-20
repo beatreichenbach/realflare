@@ -88,6 +88,7 @@ class MainWindow(DockWindow):
         self.project = Project()
         self.rendering = False
 
+        self._api_thread = QtCore.QThread()
         self._project_queue = None
         self._project_path = ''
         self._project_hash = hash(self.project)
@@ -100,15 +101,15 @@ class MainWindow(DockWindow):
         self._init_widgets()
         self.show_splash_message('Loading Menu...')
         self._init_menu()
-        self.show_splash_message('Loading Engine...')
-        self._init_engine()
-        self.show_splash_message('Loading UI...')
+        self.show_splash_message('Loading State...')
         self.load_state()
         self.show_splash_message('Loading Project...')
         if storage.state.recent_paths:
             self.file_open(storage.state.recent_paths[0])
         else:
             self.update_window_title()
+        self.show_splash_message('Loading Engine...')
+        self._init_engine()
 
     def _init_splash_screen(self) -> None:
         filename = files('realflare').joinpath('assets').joinpath('splash.png')
@@ -136,7 +137,7 @@ class MainWindow(DockWindow):
         self.log_bar.add_widget(self.progress_bar)
 
     def _init_engine(self) -> None:
-        self.api_thread = QtCore.QThread()
+        self._api_thread = QtCore.QThread()
         self.rendering = False
 
         try:
@@ -146,8 +147,8 @@ class MainWindow(DockWindow):
             logger.error('failed to start the engine')
             return
 
-        self.engine.moveToThread(self.api_thread)
-        self.api_thread.start()
+        self.engine.moveToThread(self._api_thread)
+        self._api_thread.start()
 
         self.engine.image_rendered.connect(self._image_rendered)
         self.engine.progress_changed.connect(self._progress_changed)
@@ -291,7 +292,7 @@ class MainWindow(DockWindow):
                 return
 
         # engine
-        self.api_thread.quit()
+        self._api_thread.quit()
 
         # state
         self.save_state()
@@ -423,7 +424,7 @@ class MainWindow(DockWindow):
         self.set_window_state(self.default_window_state)
 
     def restart(self):
-        self.api_thread.quit()
+        self._api_thread.quit()
         clear_cache()
         self._init_engine()
 
@@ -442,7 +443,7 @@ class MainWindow(DockWindow):
 
         if self.rendering:
             self.stop_requested.emit()
-        elif self._project_queue is not None and self.api_thread.isRunning():
+        elif self._project_queue is not None and self._api_thread.isRunning():
             self.rendering = True
             self.render_requested.emit(self._project_queue)
             self._project_queue = None
@@ -466,7 +467,7 @@ class MainWindow(DockWindow):
 
     def settings_open(self) -> None:
         dialog = SettingsDialog(parent=self)
-        dialog.exec_()
+        dialog.open()
 
     def show_splash_message(self, message: str) -> None:
         if isinstance(self.splash_screen, QtWidgets.QSplashScreen):
@@ -654,7 +655,7 @@ def sentry_request_permission():
 
 
 def exec_():
-    # set application
+    # application
     app = QtWidgets.QApplication(sys.argv)
     app.setApplicationName('realflare')
     app.setApplicationDisplayName('Realflare')
@@ -678,6 +679,19 @@ def exec_():
     window.refresh()
 
     return app.exec_()
+
+
+def show():
+    # sentry
+    if storage.settings.sentry is None:
+        sentry_request_permission()
+
+    # main window
+    window = MainWindow()
+    window.show()
+
+    # render
+    window.refresh()
 
 
 if __name__ == '__main__':

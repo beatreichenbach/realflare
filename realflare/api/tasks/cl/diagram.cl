@@ -2,25 +2,21 @@ bool is_line(
 	float2 pos,
 	float2 point0,
 	float2 point1,
-	float thickness
+	float width
 	)
 {
 	// check if pixel is inside line
 	float2 v = point1 - point0;
 	float2 a = pos - point0;
+	float2 b = pos - point1;
 
-	float d = (v.x*a.y - a.x*v.y) / length(v);
+	bool between = dot(v, a) > 0 && dot(v, b) < 0;
+	float d = fabs(v.x*a.y - a.x*v.y) / length(v);
+	bool close = (d <= width / 2);
 
-	bool between = (pos.x >= min(point0.x, point1.x) - thickness &&
-					pos.x <= max(point0.x, point1.x) + thickness &&
-					pos.y >= min(point0.y, point1.y) - thickness &&
-					pos.y <= max(point0.y, point1.y) + thickness);
-
-	bool close = (fabs(d) <= thickness / 2);
 	return (between && close);
 
 }
-
 
 __kernel void lenses(
 	write_only image2d_t buffer,
