@@ -1,0 +1,108 @@
+Gizmo {
+  inputs 0
+  name Realflare
+  selected true
+  addUserKnob {20 realflare l Realflare}
+  addUserKnob {20 project_group l project n 1}
+  project_group 0
+  addUserKnob {2 project}
+  addUserKnob {2 animation}
+  addUserKnob {20 endGroup_2 n -1}
+  addUserKnob {20 output_group l output n 1}
+  addUserKnob {3 frame_start l "frame range"}
+
+  addUserKnob {2 output_path l output}
+  addUserKnob {1 colorspace}
+  addUserKnob {4 element M {GHOST_APERTURE GHOST STARBURST_APERTURE STARBURST FLARE FLARE_STARBURST DIAGRAM "" ""}}
+  element FLARE_STARBURST
+  addUserKnob {6 split_layers l "split layers" +STARTLINE}
+  addUserKnob {20 endGroup_1 n -1}
+  addUserKnob {20 light_group l light n 1}
+  light_group 0
+  addUserKnob {12 position}
+  position {1056 528}
+  addUserKnob {6 use_image l "use image" +STARTLINE}
+  addUserKnob {2 image}
+  addUserKnob {20 endGroup n -1}
+  addUserKnob {26 ""}
+  frame_start {{root.first_frame}}
+  addUserKnob {3 frame_end l "" -STARTLINE}
+  frame_end {{root.last_frame}}
+  addUserKnob {22 render l Render +STARTLINE}
+  addUserKnob {22 open l Open -STARTLINE}
+}
+ Read {
+  inputs 0
+  file_type exr
+  first {{parent.frame_start}}
+  last {{parent.frame_end}}
+  origfirst {{parent.frame_start}}
+  origlast {{parent.frame_end}}
+  on_error black
+  name read_starburst
+  xpos 290
+  ypos 14
+ }
+set N2266a800 [stack 0]
+push $N2266a800
+ Read {
+  inputs 0
+  file_type exr
+  first {{parent.frame_start}}
+  last {{parent.frame_end}}
+  origfirst {{parent.frame_start}}
+  origlast {{parent.frame_end}}
+  on_error black
+  name read_flare
+  xpos 180
+  ypos 14
+ }
+add_layer {flare flare.red flare.green flare.blue flare.alpha}
+ Shuffle {
+  out flare
+  name shuffle_flare
+  xpos 180
+  ypos 134
+ }
+add_layer {starburst starburst.red starburst.green starburst.blue starburst.alpha}
+ ShuffleCopy {
+  inputs 2
+  in none
+  alpha alpha2
+  out starburst
+  name shuffle_starburst
+  xpos 180
+  ypos 206
+ }
+ Merge2 {
+  inputs 2
+  operation plus
+  name Merge1
+  xpos 180
+  ypos 278
+ }
+ Read {
+  inputs 0
+  file_type exr
+  first {{parent.frame_start}}
+  last {{parent.frame_end}}
+  origfirst {{parent.frame_start}}
+  origlast {{parent.frame_end}}
+  on_error black
+  name read
+  xpos 70
+  ypos 7
+ }
+ Switch {
+  inputs 2
+  which {{parent.split_layers}}
+  name switch_layers
+  xpos 70
+  ypos 374
+ }
+ Output {
+  name Output1
+  xpos 70
+  ypos 470
+ }
+end_group
