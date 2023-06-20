@@ -5,11 +5,16 @@ import numpy as np
 import PyOpenColorIO as OCIO
 from PySide2 import QtWidgets, QtCore
 
+from qt_extensions import helper
 from realflare.api.data import RenderElement
-from realflare.api.engine import RENDER_SPACE
 
 from qt_extensions.parameters import EnumParameter
 from qt_extensions.viewer import Viewer
+from realflare.storage import Storage
+from realflare.utils import ocio
+
+logger = logging.getLogger(__name__)
+storage = Storage()
 
 
 class ElementViewer(Viewer):
@@ -20,31 +25,23 @@ class ElementViewer(Viewer):
 
         self._element = RenderElement.FLARE
 
-        self.element_property = EnumParameter('element')
-        self.element_property.enum = RenderElement
-        self.element_property.default = self._element
-        self.element_property.value_changed.connect(self._change_element)
+        def formatter(text: str):
+            if text == 'FLARE_STARBURST':
+                text = 'Flare + Starburst'
+            return helper.title(text)
+
+        self.element_parm = EnumParameter('element')
+        self.element_parm.enum = RenderElement
+        self.element_parm.default = self._element
+        self.element_parm.formatter = formatter
+        self.element_parm.value_changed.connect(self._change_element)
 
         exposure_action = self.toolbar.find_action('exposure_toggle')
-        self.toolbar.insertWidget(exposure_action, self.element_property)
+        self.toolbar.insertWidget(exposure_action, self.element_parm)
 
-        self.colorspace_processor = None
-        try:
-            config = OCIO.GetCurrentConfig()
-            src_colorspace = RENDER_SPACE
-            display = 'ACES'
-            view = 'sRGB'
-            direction = OCIO.TransformDirection.TRANSFORM_DIR_FORWARD
-            processor = config.getProcessor(src_colorspace, display, view, direction)
-            self.colorspace_processor = processor.getDefaultCPUProcessor()
-            self.post_processes.append(self._apply_colorspace)
-
-        except OCIO.Exception as e:
-            logging.debug(e)
-            logging.warning(
-                'Failed to initialize color conversion processor.'
-                'The color in the viewer will not be accurate.'
-            )
+        self.view_processor = ocio.view_processor()
+        if self.view_processor is not None:
+            self.post_processes.append(self._apply_rgb)
 
     @property
     def element(self) -> RenderElement:
@@ -52,7 +49,7 @@ class ElementViewer(Viewer):
 
     @element.setter
     def element(self, value: RenderElement) -> None:
-        self.element_property.value = value
+        self.element_parm.value = value
 
     def state(self) -> dict:
         state = super().state()
@@ -69,10 +66,8 @@ class ElementViewer(Viewer):
         self._element = value
         self.element_changed.emit(self._element)
 
-    def _apply_colorspace(self, array: np.ndarray):
-        if self.colorspace_processor is None:
-            return
+    def _apply_rgb(self, array: np.ndarray) -> None:
         try:
-            self.colorspace_processor.applyRGB(array)
+            self.view_processor.applyRGB(array)
         except OCIO.Exception as e:
             logging.debug(e)

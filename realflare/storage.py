@@ -47,6 +47,7 @@ class JSONStorage(metaclass=Singleton):
 class Settings:
     sentry: Union[bool, None] = None
     ocio: str = ''
+    view_colorspace: str = ''
     clear_log_on_render: bool = True
 
 
@@ -169,6 +170,7 @@ class Storage(JSONStorage, metaclass=Singleton):
             # abspath assumes '' as relative path
             return path
         path = re.sub(r'\$F(\d)?', r'{:0\g<1>d}', path)
+        path = re.sub(r'%0(\d)d', r'{:0\g<1>d}', path)
         path = path.format(frame)
         path = os.path.abspath(path)
         return path

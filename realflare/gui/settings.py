@@ -9,12 +9,13 @@ from qt_extensions.parameters import (
     PathParameter,
     ParameterEditor,
     BoolParameter,
+    StringParameter,
 )
 from qt_extensions.box import CollapsibleBox
 from qt_extensions.typeutils import cast_basic, cast
 
 from realflare.storage import Storage, Settings
-
+from realflare.utils import ocio
 
 logger = logging.getLogger(__name__)
 storage = Storage()
@@ -42,6 +43,10 @@ class SettingsEditor(ParameterEditor):
             'If no path is set here, the system will fall back to '
             'the environment variable \'OCIO\''
         )
+        color_group.add_parameter(parm)
+
+        parm = StringParameter('view_colorspace')
+        parm.menu = ocio.view_names()
         color_group.add_parameter(parm)
 
         # logging

@@ -13,13 +13,14 @@ storage.update_ocio()
 
 
 def main():
-    logging.getLogger().setLevel(logging.DEBUG)
+    # logging.getLogger().setLevel(logging.DEBUG)
+    logging.basicConfig(level=logging.DEBUG)
 
     app = QtWidgets.QApplication(sys.argv)
     theme.apply_theme(theme.monokai)
 
     viewer = ElementViewer()
-    array = np.tile(np.linspace(0, 1, 512), (512, 1))
+    array = np.tile(np.linspace(0, 1, 512, dtype=np.float32), (512, 1))
     image_array = np.dstack((array, array, array))
     viewer.set_array(image_array)
 
