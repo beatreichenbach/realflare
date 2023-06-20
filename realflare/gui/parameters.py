@@ -5,6 +5,7 @@ from functools import partial
 
 from PySide2 import QtWidgets, QtCore
 
+from qt_extensions import helper
 from realflare.api.data import LensModel, AntiAliasing, RenderElement, Project
 from realflare.api.tasks import opencl, raytracing
 from qt_extensions.parameters import (
@@ -26,7 +27,7 @@ from qt_extensions.parameters import (
 from qt_extensions.box import CollapsibleBox
 from qt_extensions.typeutils import cast, cast_basic
 from realflare.storage import Storage
-
+from realflare.utils import ocio
 
 storage = Storage()
 
@@ -72,9 +73,15 @@ class ProjectEditor(ParameterEditor):
         self.render_to_disk = action
 
         # parameters
+        def formatter(text: str):
+            if text == 'FLARE_STARBURST':
+                text = 'Flare + Starburst'
+            return helper.title(text)
+
         parm = EnumParameter('element')
         parm.enum = RenderElement
         parm.tooltip = 'Output element'
+        parm.formatter = formatter
         output_group.add_parameter(parm)
 
         parm = PathParameter('path')
@@ -86,14 +93,19 @@ class ProjectEditor(ParameterEditor):
         output_group.add_parameter(parm)
 
         parm = StringParameter('colorspace')
+        parm.menu = ocio.colorspace_names()
         parm.tooltip = 'Colorspace from the OCIO config.\nFor example: ACES - ACEScg'
+        output_group.add_parameter(parm)
+
+        parm = BoolParameter('split_files')
+        parm.tooltip = (
+            'Multilayer exr files are not supported yet. Enabling this '
+            'parameter will split different layers into separate files.'
+        )
         output_group.add_parameter(parm)
 
     def _init_flare_group(self) -> None:
         self.tabs['lens_flare'].create_hierarchy = False
-
-        resource_dir = storage.decode_path('$RES')
-        aperture_dir = storage.decode_path('$APT')
 
         # flare
         flare_group = self.tabs['lens_flare'].add_group(
@@ -107,17 +119,8 @@ class ProjectEditor(ParameterEditor):
         )
 
         parm = FloatParameter(name='intensity')
-        parm.tooltip = (
-            'A multiplier on the overall brightness of the lens flare. '
-            'Currently not used.'
-        )
-        # light_group.add_parameter(parm)
-
-        parm = ColorParameter(name='color')
-        parm.tooltip = (
-            'A global multiplier on the color of the lens flare. Currently not used.'
-        )
-        # light_group.add_parameter(parm)
+        parm.slider_max = 1
+        light_group.add_parameter(parm)
 
         parm = PointFParameter(name='position')
         parm.decimals = 2
@@ -126,7 +129,7 @@ class ProjectEditor(ParameterEditor):
 
         parm = PathParameter(name='image_file')
         parm.method = PathParameter.Method.OPEN_FILE
-        parm.dir_fallback = resource_dir
+        parm.dir_fallback = storage.decode_path('$RES')
         parm.tooltip = (
             "The path to the image file. Variables such as $RES can be used. "
             "For more information see documentation. (To come...)"
@@ -152,12 +155,17 @@ class ProjectEditor(ParameterEditor):
             'lens', collapsible=True, style=CollapsibleBox.Style.BUTTON
         )
 
-        parm = SizeParameter(name='sensor_size')
+        parm = SizeFParameter(name='sensor_size')
         parm.ratio_visible = False
         parm.tooltip = (
             'The sensor size of the camera. A larger sensor size will show '
             'more of the flare.'
         )
+        lens_group.add_parameter(parm)
+
+        parm = FloatParameter(name='fstop')
+        parm.label = 'F-Stop'
+        parm.slider_max = 32
         lens_group.add_parameter(parm)
 
         parm = StringParameter(name='lens_model_path')
@@ -250,77 +258,41 @@ class ProjectEditor(ParameterEditor):
         button.setDefaultAction(action)
         coating_group.add_widget(button, column=2)
 
-        # starburst
-        starburst_group = flare_group.add_group(
-            'starburst', collapsible=True, style=CollapsibleBox.Style.BUTTON
-        )
-        self.groups[starburst_group.name] = starburst_group
-
-        # starburst aperture
-        starburst_aperture_group = starburst_group.add_group(
-            'aperture', collapsible=True, style=CollapsibleBox.Style.SIMPLE
+        # ghost aperture
+        ghost_aperture_group = flare_group.add_group(
+            'ghost_aperture', collapsible=True, style=CollapsibleBox.Style.BUTTON
         )
 
-        parm = PathParameter(name='file')
-        parm.method = PathParameter.Method.OPEN_FILE
-        parm.dir_fallback = aperture_dir
-        parm.tooltip = (
-            "The path to the image file. Variables such as $APT can be used. "
-            "For more information see documentation. (To come...)"
+        self._init_aperture_group(ghost_aperture_group)
+
+        # ghost
+        ghost_group = flare_group.add_group(
+            'ghost', collapsible=True, style=CollapsibleBox.Style.BUTTON
         )
-        starburst_aperture_group.add_parameter(parm, checkable=True)
-        parm.enabled_changed.connect(partial(self._starburst_aperture_file_enabled))
+        self.groups[ghost_group.name] = ghost_group
 
         parm = FloatParameter(name='fstop')
         parm.label = 'F-Stop'
         parm.slider_min = 0
         parm.slider_max = 32
         parm.tooltip = (
-            'The F-Stop of the aperture. This controls the size of the aperture.'
+            'F-Stop that controls the strength of the ringing pattern visible '
+            'on ghosts.'
         )
-        starburst_aperture_group.add_parameter(parm)
+        ghost_group.add_parameter(parm)
 
-        parm = IntParameter(name='blades')
-        parm.slider_min = 1
-        parm.slider_max = 12
-        parm.line_min = 1
-        parm.tooltip = 'Number of blades for the aperture.'
-        starburst_aperture_group.add_parameter(parm)
-
-        parm = FloatParameter(name='rotation')
-        parm.slider_min = -180
-        parm.slider_max = 180
-        parm.tooltip = 'Rotation in degrees of the aperture. Currently not used.'
-        # starburst_aperture_group.add_parameter(parm)
-
-        parm = FloatParameter(name='corner_radius')
-        parm.slider_min = 0
-        parm.slider_max = 1
-        parm.tooltip = 'Corner radius for blades. Currently not used.'
-        # starburst_aperture_group.add_parameter(parm)
-
-        parm = FloatParameter(name='softness')
-        parm.slider_min = 0
-        parm.slider_max = 1
-        parm.tooltip = 'Softness of the aperture.'
-        starburst_aperture_group.add_parameter(parm)
-
-        parm = FloatParameter(name='dust_amount')
-        parm.tooltip = 'Amount of dust particles. Currently not used.'
-        # starburst_aperture_group.add_parameter(parm)
-
-        parm = FloatParameter(name='scratches_amount')
-        parm.tooltip = 'Amount of scratches. Currently not used.'
-        # starburst_aperture_group.add_parameter(parm)
-
-        parm = FloatParameter(name='grating_amount')
-        parm.tooltip = (
-            'Amount of grating along the edges of the aperture. '
-            'This can be used to generate rainbow circles. Currently not used.'
+        # starburst aperture
+        starburst_aperture_group = flare_group.add_group(
+            'starburst_aperture', collapsible=True, style=CollapsibleBox.Style.BUTTON
         )
-        # starburst_aperture_group.add_parameter(parm)
+
+        self._init_aperture_group(starburst_aperture_group)
 
         # starburst
+        starburst_group = flare_group.add_group(
+            'starburst', collapsible=True, style=CollapsibleBox.Style.BUTTON
+        )
+        self.groups[starburst_group.name] = starburst_group
 
         parm = FloatParameter(name='intensity')
         parm.tooltip = (
@@ -328,8 +300,8 @@ class ProjectEditor(ParameterEditor):
         )
         starburst_group.add_parameter(parm)
 
-        parm = FloatParameter(name='lens_distance')
-        parm.line_min = 0.001
+        parm = FloatParameter(name='distance')
+        parm.line_min = 0
         parm.slider_max = 1
         parm.tooltip = (
             'The distance in mm away from the aperture where the far-field pattern '
@@ -342,12 +314,13 @@ class ProjectEditor(ParameterEditor):
         starburst_group.add_parameter(parm)
 
         parm = FloatParameter(name='rotation')
-        parm.slider_max = 2
-        parm.tooltip = 'Random rotation during sampling (in radians?).'
+        parm.slider_max = 180
+        parm.tooltip = 'Random rotation during sampling.'
         starburst_group.add_parameter(parm)
 
-        parm = FloatParameter(name='rotation_weighting')
-        parm.slider_max = 4
+        parm = FloatParameter(name='rotation_weight')
+        parm.line_min = 0
+        parm.slider_max = 2
         parm.tooltip = (
             'The weighting for the rotation. '
             'Equal weighted = 1, weighted towards the inside = 0, weighted towards '
@@ -355,79 +328,12 @@ class ProjectEditor(ParameterEditor):
         )
         starburst_group.add_parameter(parm)
 
-        parm = PointFParameter(name='fadeout')
+        parm = PointFParameter(name='vignetting')
         parm.tooltip = (
             'A gradient to fade out the starburst towards the edges of the frame. '
             'This prevents visible borders of the starburst frame.'
         )
-        starburst_group.add_parameter(parm)
-
-        parm = SizeFParameter(name='scale')
-        parm.tooltip = 'A multiplier on the overall scale of the starburst pattern.'
-        starburst_group.add_parameter(parm)
-
-        # ghost
-        ghost_group = flare_group.add_group(
-            'ghost', collapsible=True, style=CollapsibleBox.Style.BUTTON
-        )
-        self.groups[ghost_group.name] = ghost_group
-
-        # ghost aperture
-        ghost_aperture_group = ghost_group.add_group(
-            'aperture', collapsible=True, style=CollapsibleBox.Style.SIMPLE
-        )
-
-        parm = PathParameter(name='file')
-        parm.method = PathParameter.Method.OPEN_FILE
-        parm.dir_fallback = aperture_dir
-        ghost_aperture_group.add_parameter(parm, checkable=True)
-        parm.enabled_changed.connect(partial(self._ghost_aperture_file_enabled))
-
-        parm = FloatParameter(name='fstop')
-        parm.label = 'F-Stop'
-        parm.slider_min = 0
-        parm.slider_max = 32
-        ghost_aperture_group.add_parameter(parm)
-
-        parm = IntParameter(name='blades')
-        parm.slider_min = 1
-        parm.slider_max = 12
-        parm.line_min = 1
-        ghost_aperture_group.add_parameter(parm)
-
-        parm = FloatParameter(name='rotation')
-        parm.slider_min = -180
-        parm.slider_max = 180
-        # ghost_aperture_group.add_parameter(parm)
-
-        parm = FloatParameter(name='corner_radius')
-        parm.slider_min = 0
-        parm.slider_max = 1
-        # ghost_aperture_group.add_parameter(parm)
-
-        parm = FloatParameter(name='softness')
-        parm.slider_min = 0
-        parm.slider_max = 1
-        ghost_aperture_group.add_parameter(parm)
-
-        # parm = FloatParameter(name='dust_amount')
-        # ghost_aperture_group.add_parameter(parm)
-
-        # parm = FloatParameter(name='scratches_amount')
-        # ghost_aperture_group.add_parameter(parm)
-
-        # parm = FloatParameter(name='grating_amount')
-        # ghost_aperture_group.add_parameter(parm)
-
-        # ghost
-        parm = FloatParameter(name='fstop')
-        parm.slider_min = 0
-        parm.slider_max = 32
-        parm.tooltip = (
-            'F-Stop that controls the strength of the ringing pattern visible '
-            'on ghosts.'
-        )
-        ghost_group.add_parameter(parm)
+        starburst_group.add_parameter(parm, checkable=True)
 
     def _init_rendering_group(self) -> None:
         # renderer
@@ -611,6 +517,179 @@ class ProjectEditor(ParameterEditor):
         parm.slider_max = 100
         flare_group.add_parameter(parm, checkable=True)
 
+    def _init_aperture_group(self, parent: ParameterEditor):
+        # shape
+        shape_group = parent.add_group(
+            'shape', collapsible=True, style=CollapsibleBox.Style.SIMPLE
+        )
+
+        parm = SizeFParameter(name='size')
+        parm.slider_min = 0
+        parm.slider_max = 1
+        parm.keep_ratio = True
+        shape_group.add_parameter(parm)
+
+        parm = IntParameter(name='blades')
+        parm.line_min = 2
+        parm.slider_min = 2
+        parm.slider_max = 12
+        shape_group.add_parameter(parm)
+
+        parm = FloatParameter(name='roundness')
+        parm.slider_min = -0.1
+        parm.slider_max = 0.1
+        shape_group.add_parameter(parm)
+
+        parm = FloatParameter(name='rotation')
+        parm.slider_min = 0
+        parm.slider_max = 360
+        parm.tooltip = 'Rotation in degrees.'
+        shape_group.add_parameter(parm)
+
+        parm = FloatParameter(name='softness')
+        parm.slider_min = 0
+        parm.slider_max = 1
+        shape_group.add_parameter(parm)
+
+        # grating
+        grating_group = parent.add_group(
+            'grating', collapsible=True, style=CollapsibleBox.Style.SIMPLE
+        )
+
+        parm = FloatParameter(name='strength')
+        parm.slider_min = 0
+        parm.slider_max = 1
+        grating_group.add_parameter(parm)
+
+        parm = FloatParameter(name='density')
+        parm.slider_min = 0
+        parm.slider_max = 1
+        grating_group.add_parameter(parm)
+
+        parm = FloatParameter(name='length')
+        parm.slider_min = 0
+        parm.slider_max = 1
+        grating_group.add_parameter(parm)
+
+        parm = FloatParameter(name='width')
+        parm.slider_min = 0
+        parm.slider_max = 1
+        grating_group.add_parameter(parm)
+
+        parm = FloatParameter(name='softness')
+        parm.slider_min = 0
+        parm.slider_max = 1
+        grating_group.add_parameter(parm)
+
+        # scratches
+        scratches_group = parent.add_group(
+            'scratches', collapsible=True, style=CollapsibleBox.Style.SIMPLE
+        )
+
+        parm = FloatParameter(name='strength')
+        parm.slider_min = 0
+        parm.slider_max = 1
+        scratches_group.add_parameter(parm)
+
+        parm = FloatParameter(name='density')
+        parm.slider_min = 0
+        parm.slider_max = 1
+        scratches_group.add_parameter(parm)
+
+        parm = FloatParameter(name='length')
+        parm.slider_min = 0
+        parm.slider_max = 1
+        scratches_group.add_parameter(parm)
+
+        parm = FloatParameter(name='width')
+        parm.slider_min = 0
+        parm.slider_max = 1
+        scratches_group.add_parameter(parm)
+
+        parm = FloatParameter(name='rotation')
+        parm.slider_min = 0
+        parm.slider_max = 360
+        scratches_group.add_parameter(parm)
+
+        parm = FloatParameter(name='rotation_variation')
+        parm.label = 'Variation'
+        parm.slider_min = 0
+        parm.slider_max = 1
+        scratches_group.add_parameter(parm)
+
+        parm = FloatParameter(name='softness')
+        parm.slider_min = 0
+        parm.slider_max = 1
+        scratches_group.add_parameter(parm)
+
+        parm = SizeFParameter(name='parallax')
+        parm.line_min = 0
+        parm.slider_min = 0
+        parm.slider_max = 1
+        scratches_group.add_parameter(parm)
+
+        # dust
+        dust_group = parent.add_group(
+            'dust', collapsible=True, style=CollapsibleBox.Style.SIMPLE
+        )
+
+        parm = FloatParameter(name='strength')
+        parm.slider_min = 0
+        parm.slider_max = 1
+        dust_group.add_parameter(parm)
+
+        parm = FloatParameter(name='density')
+        parm.slider_min = 0
+        parm.slider_max = 1
+        dust_group.add_parameter(parm)
+
+        parm = FloatParameter(name='radius')
+        parm.slider_min = 0
+        parm.slider_max = 1
+        dust_group.add_parameter(parm)
+
+        parm = FloatParameter(name='softness')
+        parm.slider_min = 0
+        parm.slider_max = 1
+        dust_group.add_parameter(parm)
+
+        parm = SizeFParameter(name='parallax')
+        parm.line_min = 0
+        parm.slider_min = 0
+        parm.slider_max = 1
+        dust_group.add_parameter(parm)
+
+        # image
+        image_group = parent.add_group(
+            'image', collapsible=True, style=CollapsibleBox.Style.SIMPLE
+        )
+
+        parm = FloatParameter(name='strength')
+        parm.slider_min = 0
+        parm.slider_max = 1
+        image_group.add_parameter(parm)
+
+        parm = PathParameter(name='file')
+        parm.method = PathParameter.Method.OPEN_FILE
+        parm.dir_fallback = storage.decode_path('$APT')
+        parm.tooltip = (
+            "The path to the image file. Variables such as $APT can be used. "
+            "For more information see documentation. (To come...)"
+        )
+        image_group.add_parameter(parm)
+
+        parm = SizeFParameter(name='size')
+        parm.slider_min = 0
+        parm.slider_max = 1
+        parm.default = QtCore.QSize(1, 1)
+        parm.keep_ratio = True
+        image_group.add_parameter(parm)
+
+        parm = FloatParameter(name='threshold')
+        parm.slider_min = 0
+        parm.slider_max = 1
+        image_group.add_parameter(parm)
+
     def _init_actions(self) -> None:
         for name in ('flare', 'starburst', 'ghost'):
             group = self.groups[name]
@@ -732,14 +811,14 @@ class ProjectEditor(ParameterEditor):
     def _starburst_aperture_file_enabled(self, enabled: bool) -> None:
         widgets = self.widgets()
 
-        for name in ('fstop', 'blades', 'softness'):
+        for name in ('fstop', 'blades', 'softness', 'rotation', 'corner_radius'):
             widget = widgets['flare']['starburst']['aperture'].get(name)
             widget.setEnabled(not enabled)
 
     def _ghost_aperture_file_enabled(self, enabled: bool) -> None:
         widgets = self.widgets()
 
-        for name in ('fstop', 'blades', 'softness'):
+        for name in ('fstop', 'blades', 'softness', 'rotation', 'corner_radius'):
             widget = widgets['flare']['ghost']['aperture'].get(name)
             widget.setEnabled(not enabled)
 

@@ -36,6 +36,7 @@ class RenderElement(enum.Enum):
     GHOST_APERTURE = enum.auto()
     GHOST = enum.auto()
     FLARE = enum.auto()
+    FLARE_STARBURST = enum.auto()
     DIAGRAM = enum.auto()
 
 
@@ -79,11 +80,53 @@ class LensModel:
 
 @hashable_dataclass
 class Aperture:
-    file_enabled: bool = False
-    file: str = ''
-    fstop: float = 8
-    blades: int = 64
-    softness: float = 0
+    @hashable_dataclass
+    class Shape:
+        size: QtCore.QSizeF = deep_field(QtCore.QSizeF(0.75, 0.75))
+        blades: int = 6
+        roundness: float = 0
+        rotation: float = 0
+        softness: float = 0
+
+    @hashable_dataclass
+    class Grating:
+        strength: float = 0
+        density: float = 0.5
+        length: float = 0.5
+        width: float = 0.25
+        softness: float = 0
+
+    @hashable_dataclass
+    class Scratches:
+        strength: float = 0
+        density: float = 0.5
+        length: float = 0.5
+        width: float = 0.25
+        rotation: float = 0
+        rotation_variation: float = 0
+        softness: float = 0
+        parallax: QtCore.QSizeF = deep_field(QtCore.QSizeF(0, 0))
+
+    @hashable_dataclass
+    class Dust:
+        strength: float = 0
+        density: float = 0.5
+        radius: float = 0.5
+        softness: float = 0
+        parallax: QtCore.QSizeF = deep_field(QtCore.QSizeF(0, 0))
+
+    @hashable_dataclass
+    class ApertureImage:
+        strength: float = 0
+        file: str = ''
+        size: QtCore.QSizeF = deep_field(QtCore.QSizeF(0.75, 0.75))
+        threshold: float = 1
+
+    shape: Shape = field(default_factory=Shape)
+    grating: Grating = field(default_factory=Grating)
+    scratches: Scratches = field(default_factory=Scratches)
+    dust: Dust = field(default_factory=Dust)
+    image: ApertureImage = field(default_factory=ApertureImage)
 
 
 @hashable_dataclass
@@ -91,8 +134,7 @@ class Flare:
     @hashable_dataclass
     class Light:
         # light
-        # intensity: float = 1
-        # color: QtGui.QColor = deep_field(QtGui.QColor(1, 1, 1))
+        intensity: float = 1
         position: QtCore.QPointF = deep_field(QtCore.QPointF(0, 0))
 
         # image
@@ -104,7 +146,8 @@ class Flare:
     @hashable_dataclass
     class Lens:
         # lens
-        sensor_size: QtCore.QSize = deep_field(QtCore.QSize(36, 24))
+        sensor_size: QtCore.QSizeF = deep_field(QtCore.QSizeF(36, 24))
+        fstop: float = 0
         lens_model_path: str = ''
         glasses_path: str = ''
         abbe_nr_adjustment: float = 0
@@ -117,31 +160,26 @@ class Flare:
 
     @hashable_dataclass
     class Starburst:
-        # aperture
-        aperture: Aperture = field(default_factory=Aperture)
-
         # technical
         intensity: float = 1
-        lens_distance: float = 0.1
+        distance: float = 1
         blur: float = 0
         rotation: float = 0
-        rotation_weighting: float = 1
+        rotation_weight: float = 1
 
         # comp
-        fadeout: QtCore.QPointF = deep_field(QtCore.QPointF(0.75, 1))
-        scale: QtCore.QSizeF = deep_field(QtCore.QSizeF(1, 1))
+        vignetting_enabled: bool = False
+        vignetting: QtCore.QPointF = deep_field(QtCore.QPointF(0.75, 1))
 
     @hashable_dataclass
     class Ghost:
-        # aperture
-        aperture: Aperture = field(default_factory=Aperture)
-
-        # technical
         fstop: float = 0
 
     light: Light = field(default_factory=Light)
     lens: Lens = field(default_factory=Lens)
+    starburst_aperture: Aperture = field(default_factory=Aperture)
     starburst: Starburst = field(default_factory=Starburst)
+    ghost_aperture: Aperture = field(default_factory=Aperture)
     ghost: Ghost = field(default_factory=Ghost)
 
 
@@ -150,6 +188,7 @@ class Output:
     element: RenderElement = RenderElement.FLARE
     path: str = ''
     colorspace: str = 'ACES - ACEScg'
+    split_files: bool = True
     write: bool = False
     frame: int = 0
 

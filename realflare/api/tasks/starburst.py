@@ -5,7 +5,7 @@ import pyopencl as cl
 
 from realflare.api.data import Flare, Render, Project
 from realflare.api.tasks.opencl import OpenCL, LAMBDA_MID, LAMBDA_MIN, LAMBDA_MAX, Image
-from realflare.utils.ciexyz import CIEXYZ
+from realflare.utils.ciexyz2 import CIEXYZ
 from realflare.utils.timing import timer
 
 
@@ -19,10 +19,12 @@ class StarburstTask(OpenCL):
         self.source = f'__constant int LAMBDA_MIN = {LAMBDA_MIN};\n'
         self.source += f'__constant int LAMBDA_MAX = {LAMBDA_MAX};\n'
         self.source += f'__constant int LAMBDA_MID = {LAMBDA_MID};\n'
+        self.source += self.read_source_file('noise.cl')
+        self.source += self.read_source_file('geometry.cl')
         self.source += self.read_source_file('color.cl')
         self.source += self.read_source_file('starburst.cl')
         super().build()
-        self.kernel = cl.Kernel(self.program, 'sample_simple')
+        self.kernel = cl.Kernel(self.program, 'starburst')
 
     @lru_cache(1)
     def update_light_spectrum(self) -> Image:
@@ -36,36 +38,86 @@ class StarburstTask(OpenCL):
         image = Image(self.context, array=array)
         return image
 
-    @lru_cache(10)
-    def update_fourier_spectrum(self, aperture: Image, lens_distance: float) -> Image:
+    @lru_cache(1)
+    def update_fourier_spectrum(self, aperture: Image, distance: float) -> Image:
         # https://people.mpi-inf.mpg.de/~ritschel/Papers/TemporalGlare.pdf
         # [Ritschel et al. 2009] 4. Wave-Optics Simulation of Light-Scattering
         # To get diffraction pattern and get the incident radiance
         # Li = K * |F|**2
         # K = 1/(lambda * distance)**2
-        # F = Fourier transform
+        # F = fft(A * E)
+        # A = aperture
+        # E = complex exponential = e ^ (i * pi / (lambda * distance)) * (x^2 + y^2))
         # lambda = the wavelength of the light
         # distance = distance between pupil and retina
 
-        fft = np.fft.fft2(aperture.array)
-        fft = np.fft.fftshift(fft)
-
-        # The magnitude is sqrt(real**2 + imaginary**2)
-        # To calculate K we need the squared magnitude of F
-        # By avoiding sqrt we save computation power
-        power_spectrum = fft.real**2 + fft.imag**2
-
         # [Ritschel et al. 2009] 5. Implementation
         # The reference wavelength is chosen as the center of the visible spectrum
-        d = max(0.001, lens_distance)  # zero division error
-        k = 1 / (LAMBDA_MID * d) ** 2
+        wavelength = LAMBDA_MID * 1e-6  # nm to mm
 
-        array = np.float32(power_spectrum * k)
+        # zero division error
+        distance = max(1e-9, distance * 1e3)  # m to mm
 
-        image = Image(self.context, array=array, args=(aperture, lens_distance))
+        h, w = aperture.array.shape[:2]
+        x = np.linspace(-1, 1, w)
+        y = np.linspace(-1, 1, h)
+        xv, yv = np.meshgrid(x, y)
+        exp = np.exp(1j * np.pi / (wavelength * distance) * (xv**2 + yv**2))
+
+        fft = np.fft.fftshift(np.fft.fft2(aperture.array * exp))
+
+        # avoiding sqrt for optimization
+        # don't use K to preserve intensity
+        # k = 1 / pow(wavelength * distance, 2)
+        power_spectrum_2 = fft.real**2 + fft.imag**2
+
+        array = np.float32(power_spectrum_2)
+
+        image = Image(self.context, array=array, args=(aperture, distance))
         return image
 
-    def sample(self, starburst: Image) -> None:
+    @lru_cache(1)
+    def starburst(
+        self, config: Flare.Starburst, render: Render.Starburst, aperture: Image
+    ) -> Image:
+        # rebuild kernel
+        self.__init__(self.queue)
+
+        # args
+        resolution = render.resolution
+        samples = render.samples
+        vignetting = (
+            [config.vignetting.x(), config.vignetting.y()]
+            if config.vignetting_enabled
+            else [np.NAN, np.NAN]
+        )
+        blur = config.blur / 100
+        rotation = np.radians(config.rotation)
+        rotation_weight = config.rotation_weight
+        intensity = config.intensity * 1e-6
+
+        # clear_image is used to ensure cache from the host is used
+        aperture.clear_image()
+        fourier_spectrum = self.update_fourier_spectrum(aperture, config.distance)
+        fourier_spectrum.clear_image()
+
+        light_spectrum = self.update_light_spectrum()
+
+        # create output buffer
+        starburst = self.update_image(resolution, flags=cl.mem_flags.READ_WRITE)
+        starburst.args = (config, render, aperture)
+
+        # run program
+        self.kernel.set_arg(0, starburst.image)
+        self.kernel.set_arg(1, fourier_spectrum.image)
+        self.kernel.set_arg(2, light_spectrum.image)
+        self.kernel.set_arg(3, np.int32(samples))
+        self.kernel.set_arg(4, np.float32(blur))
+        self.kernel.set_arg(5, np.float32(rotation))
+        self.kernel.set_arg(6, np.float32(rotation_weight))
+        self.kernel.set_arg(7, np.float32(vignetting))
+        self.kernel.set_arg(8, np.float32(intensity))
+
         w, h = starburst.image.shape
         global_work_size = (w, h)
         local_work_size = None
@@ -75,44 +127,6 @@ class StarburstTask(OpenCL):
         cl.enqueue_copy(
             self.queue, starburst.array, starburst.image, origin=(0, 0), region=(w, h)
         )
-
-    @lru_cache(10)
-    def starburst(
-        self,
-        config: Flare.Starburst,
-        render: Render.Starburst,
-        aperture: Image,
-    ) -> Image:
-        # rebuild kernel
-        self.__init__(self.queue)
-
-        # args
-        resolution = render.resolution
-        samples = render.samples
-        fadeout = [config.fadeout.x(), config.fadeout.y()]
-
-        # clear_image is used to ensure cache from the host is used
-        aperture.clear_image()
-        fourier_spectrum = self.update_fourier_spectrum(aperture, config.lens_distance)
-        fourier_spectrum.clear_image()
-        light_spectrum = self.update_light_spectrum()
-
-        # create output buffer
-        starburst = self.update_image(resolution)
-        starburst.args = (config, render, aperture)
-
-        # run program
-        self.kernel.set_arg(0, starburst.image)
-        self.kernel.set_arg(1, fourier_spectrum.image)
-        self.kernel.set_arg(2, light_spectrum.image)
-        self.kernel.set_arg(3, np.int32(samples))
-        self.kernel.set_arg(4, np.float32(config.blur))
-        self.kernel.set_arg(5, np.float32(config.rotation))
-        self.kernel.set_arg(6, np.float32(config.rotation_weighting))
-        self.kernel.set_arg(7, np.float32(fadeout))
-        self.kernel.set_arg(8, np.float32(config.intensity))
-
-        self.sample(starburst)
 
         return starburst
 
