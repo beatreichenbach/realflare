@@ -1,10 +1,27 @@
+float fresnel(
+	const float theta0,
+	const float n1,
+	const float n2
+){
+	// https://en.wikipedia.org/wiki/Fresnel_equations
+
+	float theta1 = asin(sin(theta0) * n1 / n2);
+
+	float cosi = cos(theta0);
+	float cost = cos(theta1);
+    float rs = ((n1 * cosi) - (n2 * cost)) / ((n1 * cosi) + (n2 * cost));
+    float rp = ((n1 * cost) - (n2 * cosi)) / ((n1 * cost) + (n2 * cosi));
+    float r = (rs * rs + rp * rp) / 2;
+    return r;
+}
+
 float fresnel_ar(
-	float theta0,  // angle of incidence
-	float lambda,  // wavelength of ray
-	float d1,  // thickness of AR coating
-	float n0,  // refractive index of 1st medium
-	float n1,  // refractive index of coating layer
-	float n2  // refractive index of 2nd medium
+	const float theta0,  // angle of incidence
+	const float lambda,  // wavelength of ray
+	const float d1,  // thickness of AR coating
+	const float n0,  // refractive index of 1st medium
+	const float n1,  // refractive index of coating layer
+	const float n2  // refractive index of 2nd medium
 ){
 	// [Ritschel et al. 2009] Supplemental Material - Anti-reflective Coating
 
@@ -51,9 +68,9 @@ float fresnel_ar(
 // @param o refraction ratio (n1 / n2)
 // @return Void.
 float3 refract(
-	float3 i,
-	float3 n,
-	float o
+	const float3 i,
+	const float3 n,
+	const float o
 	)
 {
 	float sint2;  // sin(theta1)**2
@@ -77,8 +94,8 @@ float3 refract(
 // @param n normal vector
 // @return Void.
 float3 reflect(
-	float3 i,
-	float3 n
+	const float3 i,
+	const float3 n
 	)
 {
 	return i + 2.0f * dot(n, -i) * n;
@@ -88,14 +105,14 @@ float3 reflect(
 // Returns the refractive index based on the material and wavelength
 // https://en.wikipedia.org/wiki/Sellmeier_equation
 float dispersion(
-	float lambda,
-	float8 coefficients
+	const float lambda,
+	const float8 coefficients
 	)
 {
 	// lambda in nm
 	// sellmeier equation requires lambda in micrometer
-	lambda *= 1e-3;
-	float l2 = lambda * lambda;
+	float l = lambda * 1e-3;
+	float l2 = l * l;
 	float d0 = (coefficients.s0 * l2) / (l2 - coefficients.s1);
 	float d1 = (coefficients.s2 * l2) / (l2 - coefficients.s3);
 	float d2 = (coefficients.s4 * l2) / (l2 - coefficients.s5);
@@ -104,8 +121,8 @@ float dispersion(
 
 
 Intersection intersect(
-	Ray ray,
-	LensElement lens
+	const Ray ray,
+	const LensElement lens
 	)
 {
 	Intersection i;
@@ -139,28 +156,30 @@ Intersection intersect(
 			return i;
 		}
 
-		float m = sqrt(r * r - d * d);
-		float sgn = (lens.radius * ray.dir.z) > 0 ? -1 : 1;
-
-		i.pos = ray.pos + U1 - (m * ray.dir) * sgn;
-		i.normal = normalize(i.pos - C) * sgn;
-
 		// dot(A, B) = |A||B|cos(theta)
 		// theta = acos(dot(A, B) / |A||B|)
 		// if A and B are unit vectors, |A||B| = 1
 		// acos takes values from -1 to 1, otherwise nan
-		i.incident = acos(clamp(dot(-ray.dir, i.normal), -1.0f, 1.0f));
+		float sgn = (lens.radius * ray.dir.z) > 0 ? -1 : 1;
+		float m = sqrt(r * r - d * d);
+		float3 pos = ray.pos + U1 - (m * ray.dir) * sgn;
+		float3 normal = normalize(pos - C) * sgn;
+		float incident = acos(clamp(dot(-ray.dir, normal), -1.0f, 1.0f));
+
 		i.hit = true;
+		i.incident = incident;
+		i.pos = pos;
+		i.normal = normal;
 	}
 	return i;
 }
 
 
 Ray init_ray(
-	LensElement lens,
-	int grid_count,
-	float grid_length,
-	float4 initial_direction
+	const LensElement lens,
+	const int grid_count,
+	const float grid_length,
+	const float4 initial_direction
 )
 {
 	int ray_id = get_global_id(2);
@@ -198,16 +217,18 @@ Ray init_ray(
 
 __kernel void raytrace(
 	__global Ray *rays,
-	__constant LensElement *lenses,
-	int lenses_count,
+	__constant LensElement *lens_elements,
+	const int lenses_count,
 	__constant int2 *paths,
-	int grid_count,
-	float grid_length,
-	float4 direction,
-	__constant int *wavelengths
+	__constant int *wavelengths,
+	const int aperture_index,
+	const float coating_min_ior,
+	const int grid_count,
+	const float grid_length,
+	const float4 direction
 #if defined(STORE_INTERSECTIONS)
 	, __global Intersection *intersections,
-	int intersections_count
+	const int intersections_count
 #endif
 	)
 {
@@ -224,22 +245,22 @@ __kernel void raytrace(
 	float wavelength = (float) wavelengths[wavelength_id];
 
 	// initialize ray
-	Ray ray = init_ray(lenses[0], grid_count, grid_length, direction);
+	Ray ray = init_ray(lens_elements[0], grid_count, grid_length, direction);
 
 	// step increases everytime a ray bounces, there are always 3 steps
 	int step = 0;
 	int inter_id = 0;
 	int delta = 1;
 
-	bool disperse = !isnan(lenses[0].coefficients.x);
+	bool disperse = !isnan(lens_elements[0].coefficients.x);
 
 	size_t lens_id;
 	for (lens_id = 0; lens_id < lenses_count; inter_id++, lens_id += delta)
 	{
-		LensElement lens = lenses[lens_id];
+		LensElement lens_element = lens_elements[lens_id];
 
 		Intersection inter;
-		inter = intersect(ray, lens);
+		inter = intersect(ray, lens_element);
 		if(!inter.hit) {
 			break;
 		}
@@ -251,12 +272,12 @@ __kernel void raytrace(
 		// update ray direction and position
 		ray.pos = inter.pos;
 
-		if (lens.is_apt) {
-			ray.pos_apt = inter.pos.xy / lens.height;
+		if (lens_id == aperture_index) {
+			ray.pos_apt = inter.pos.xy / lens_element.height;
 			// skip refract/reflection for aperture
 			continue;
 		} else {
-			ray.rrel = max(ray.rrel, length(inter.pos.xy) / lens.height);
+			ray.rrel = max(ray.rrel, length(inter.pos.xy) / lens_element.height);
 		}
 
 		// no reflection / refraction on sensor plane
@@ -273,50 +294,51 @@ __kernel void raytrace(
 		// get previous index
 		int n_index = (ray.dir.z < 0) ? lens_id - 1 : lens_id + 1;
 		// if previous medium is outside lens system, set n1 = 1 (air)
-		float n1 = (0 <= n_index && n_index < lenses_count) ? lenses[n_index].ior : 1;
-		float n2 = lens.ior;
+		float n1 = (0 <= n_index && n_index < lenses_count) ? lens_elements[n_index].ior : 1;
+		float n2 = lens_element.ior;
 
 		// calculate dispersion on glass mediums (n>1)
 		if (disperse && n1 > 1) {
-			n1 = dispersion(wavelength, lenses[n_index].coefficients);
+			n1 = dispersion(wavelength, lens_elements[n_index].coefficients);
 		}
 		if (disperse && n2 > 1) {
-			n2 = dispersion(wavelength, lens.coefficients);
+			n2 = dispersion(wavelength, lens_element.coefficients);
 		}
 
 		if (do_reflect) {
 			ray.dir = reflect(ray.dir, inter.normal);
 
-			// optimal coating
-			// 1.38 = lowest achievable refractive index (MgF2)
-			// https://en.wikipedia.org/wiki/Anti-reflective_coating#Single-layer_interference
-			// However there are better coatings available with refractive indexes as low as 1.12
-			// refractive index of the coating
-			// float nc = max(sqrt(n1 * n2), n_min);
-			float nc = max(1.01f, lens.coating.y);
-
-			// the wavelength that the coating is optimized for in vacuum
-			float lambda = lens.coating.x;
-
-			// the optimal effective thickness of the coating
-			// https://en.wikipedia.org/wiki/Anti-reflective_coating#Interference_coatings
-			float d1 = lambda / (4.0f * nc);
-
 			// prevent divide by 0 errors
 			float theta = inter.incident + 1e-9;
 
-			// anti reflective coating
-			// Supplemental Material — Physically-Based Real-Time Lens Flare Rendering
-			float reflectance = fresnel_ar(
-				theta,
-				wavelength,
-				d1,
-				n1,
-				nc,
-				n2
-			);
+			float reflectance;
+
+			if (lens_element.coating > 0) {
+				// coating
+				// lowest achievable refractive index (MgF2): 1.38
+				// https://en.wikipedia.org/wiki/Anti-reflective_coating#Single-layer_interference
+				// However there are better coatings available with refractive indexes as low as 1.12
+				// refractive index of the coating
+
+				// the wavelength that the coating is optimized for in vacuum
+				float lambda = lens_element.coating;
+
+				// the optimal coating ior is sqrt(n), with two mediums sqrt(n1 * n2)
+				float nc = max(sqrt(n1 * n2), coating_min_ior);
+
+				// the optimal effective thickness of the coating
+				// https://en.wikipedia.org/wiki/Anti-reflective_coating#Interference_coatings
+				float d1 = lambda / (4.0f * nc);
+
+				// anti reflective coating
+				// Supplemental Material — Physically-Based Real-Time Lens Flare Rendering
+				reflectance = fresnel_ar(theta, wavelength, d1, n1, nc, n2);
+			} else {
+				reflectance = fresnel(theta, n1, n2);
+			}
+
+
 			if (reflectance > 0) {
-				// ray.reflectance *= clamp(reflectance, 0.0f, 1.0f);
 				ray.reflectance *= reflectance;
 			}
 		} else {

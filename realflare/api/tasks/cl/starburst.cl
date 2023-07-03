@@ -7,7 +7,9 @@ __kernel void starburst(
     const float rotation,
     const float rotation_weight,
     const float2 vignetting,
-    const float intensity
+    const float intensity,
+    const float2 offset,
+    const float2 size
 )
 {
 
@@ -20,16 +22,9 @@ __kernel void starburst(
 	float2 ndc = convert_ndc(p, dims);
 
 
-
-
-	// float2 size = convert_float2(starburst_dims) / convert_float2(dims);
-	float2 offset = (float2) (0.5f, -0.5f);
-
 	// transform
 	ndc = trans(ndc, offset);
-	// ndc = scale(ndc, size);
-
-
+	ndc = scale(ndc, size);
 
 	sampler_t sampler = CLK_NORMALIZED_COORDS_TRUE | CLK_ADDRESS_CLAMP | CLK_FILTER_LINEAR;
 	const int lambda_delta = LAMBDA_MAX - LAMBDA_MIN;

@@ -1,32 +1,40 @@
 from __future__ import annotations
+
+import logging
+import math
 import os
+from functools import lru_cache
+
+import numpy as np
 import yaml
+
+from realflare.api.data import Glass
+from realflare.storage import Storage
 
 # https://refractiveindex.info/
 # https://en.wikipedia.org/wiki/Sellmeier_equation
 # https://en.wikipedia.org/wiki/Abbe_number
 
-from realflare.api.data import Glass
+logger = logging.getLogger(__name__)
+storage = Storage()
 
 
-def vendors_from_path(path):
-    if not os.path.isdir(path):
-        return
-
-    glasses = []
-    for vendor in os.listdir(path):
-        dir_path = os.path.join(path, vendor)
-        if not os.path.isdir(dir_path):
-            continue
-        glasses.append(glasses_from_path(dir_path))
+def manufacturers() -> dict:
+    glasses_path = storage.path_vars['$GLASS']
+    glasses = {}
+    for item in os.listdir(glasses_path):
+        item_path = os.path.join(glasses_path, item)
+        if os.path.isdir(item_path):
+            glasses[item] = storage.encode_path(item_path)
     return glasses
 
 
-def glasses_from_path(dir_path):
-    if not os.path.isdir(dir_path):
-        return
-
+def glasses_from_path(dir_path: str) -> list[Glass]:
     glasses = []
+
+    if not os.path.isdir(dir_path):
+        return glasses
+
     for file_name in os.listdir(dir_path):
         file_path = os.path.join(dir_path, file_name)
         if not os.path.isfile(file_path):
@@ -54,46 +62,38 @@ def glasses_from_path(dir_path):
         except KeyError:
             continue
 
-        vendor = os.path.basename(dir_path)
+        manufacturer = os.path.basename(dir_path)
         name, ext = os.path.splitext(file_name)
-        g = Glass(name, vendor, nd, vd, coefficients)
+        g = Glass(name, manufacturer, nd, vd, coefficients)
 
         glasses.append(g)
     return glasses
 
 
+@lru_cache(10)
 def closest_glass(
-    glasses: list[Glass] | tuple[Glass], n: float, v: float, v_offset: float = 0
+    glasses: tuple[Glass, ...], n: float, v: float, v_offset: float = 0
 ) -> Glass | None:
-    """
-    Returns the glass for the given refractive index (n) and Abbe number (v)
-    Uses percentage to account for unit differences and euclidean distance to find closest match
-    """
-    # TODO: handle None returns
-    # can default return something that is essential n = 1 for all lambda?
-    if n == 0 or v == 0:
+    if n == 0 or v == 0 or not glasses:
         return
 
-    v += v_offset
-    differences = []
-    for glass in glasses:
-        n_diff = 1 - glass.n / n
-        v_diff = 1 - glass.v / v
-        differences.append(n_diff**2 + v_diff**2)
-    if not differences:
-        return
-    smallest_diff_index = differences.index(min(differences))
-    return glasses[smallest_diff_index]
+    glass_array = np.array([(glass.n, glass.v) for glass in glasses])
+    # use percentage to account for unit differences
+    differences = 1 - glass_array / np.array((n, v + v_offset))
+    # use euclidean distance to find the closest match
+    lengths = np.sum(np.power(differences, 2), axis=1)
+    index = int(np.argmin(lengths))
+
+    return glasses[index]
 
 
-def sellmeier(coefficients, wavelength):
-    import math
-
+def sellmeier(coefficients: list[float], wavelength: float) -> float:
     # sellmeier equation requires lambda in micrometer
     wavelength *= 1e-3
 
     l2 = wavelength * wavelength
-    d0 = (coefficients[0] * pow(wavelength, 2)) / (l2 - coefficients[1])
+    d0 = (coefficients[0] * l2) / (l2 - coefficients[1])
     d1 = (coefficients[2] * l2) / (l2 - coefficients[3])
     d2 = (coefficients[4] * l2) / (l2 - coefficients[5])
-    return math.sqrt(1 + d0 + d1 + d2)
+    refractive_index = math.sqrt(1 + d0 + d1 + d2)
+    return refractive_index

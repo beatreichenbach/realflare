@@ -1,8 +1,8 @@
 bool is_line(
-	float2 pos,
-	float2 point0,
-	float2 point1,
-	float width
+	const float2 pos,
+	const float2 point0,
+	const float2 point1,
+	const float width
 	)
 {
 	// check if pixel is inside line
@@ -20,9 +20,10 @@ bool is_line(
 
 __kernel void lenses(
 	write_only image2d_t buffer,
-	__global LensElement *lenses,
-	int lenses_count,
-	float scale
+	__constant LensElement *lens_elements,
+	const int lenses_count,
+	const int aperture_index,
+	const float scale
 )
 {
 	int px = get_global_id(0);
@@ -39,12 +40,12 @@ __kernel void lenses(
 
 	for (size_t i = 0; i < lenses_count; ++i)
 	{
-		float r = lenses[i].radius * scale;
-		float h = lenses[i].height * scale;
-		float c = lenses[i].center * scale;
+		float r = lens_elements[i].radius * scale;
+		float h = lens_elements[i].height * scale;
+		float c = lens_elements[i].center * scale;
 
 		if (r == 0 && fabs(y) < h && (int) x == (int) c) {
-			if (lenses[i].is_apt || i == lenses_count - 1 ) {
+			if (i == aperture_index || i == lenses_count - 1 ) {
 				// color aperture lens and sensor green
 				rgba.y = 1;
 			} else {
@@ -68,12 +69,11 @@ __kernel void lenses(
 
 
 __kernel void intersections (
-	write_only image2d_t image,
-	int ray_count,
+	read_write image2d_t image,
 	__global Intersection *intersections,
-	int intersections_count,
-	float scale,
-	read_only image2d_t image_in
+	const int intersections_count,
+	const int ray_count,
+	const float scale
 	)
 {
 	int px = get_global_id(0);
@@ -91,8 +91,7 @@ __kernel void intersections (
 	int wavelength_id = 0;
 	int wavelength_count = 1;
 
-	sampler_t sampler = CLK_FILTER_LINEAR | CLK_NORMALIZED_COORDS_FALSE | CLK_ADDRESS_CLAMP_TO_EDGE;
-	float4 rgba = read_imagef(image_in, sampler, (int2) (px, py));
+	float4 rgba = read_imagef(image, (int2) (px, py));
 
 	for (size_t ray_id = 0; ray_id < ray_count; ray_id++) {
 		int ray_index = ((path_id * ray_count + ray_id) * wavelength_count + wavelength_id);

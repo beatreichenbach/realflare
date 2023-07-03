@@ -1,10 +1,10 @@
 import enum
 from dataclasses import field
 
-from PySide2 import QtGui, QtCore
+from PySide2 import QtCore
 
-from realflare.api.tasks.opencl import Image
 from qt_extensions.typeutils import hashable_dataclass, deep_field
+from realflare.api.tasks.opencl import Image
 
 
 class RealflareError(ValueError):
@@ -142,6 +142,7 @@ class Flare:
         image_file: str = ''
         image_sample_resolution: int = 256
         image_samples: int = 8
+        show_image: bool = False
 
     @hashable_dataclass
     class Lens:
@@ -151,17 +152,16 @@ class Flare:
         lens_model_path: str = ''
         glasses_path: str = ''
         abbe_nr_adjustment: float = 0
+        coating: tuple[int, ...] = field(default_factory=tuple)
+        coating_range: QtCore.QPoint = deep_field(QtCore.QPoint(390, 730))
+        coating_min_ior: float = 1.38
         min_area: float = 0.01
-        coating_lens_elements: list[tuple[int, float]] = field(default_factory=list)
-        random_wavelength_range: QtCore.QPoint = deep_field(QtCore.QPoint(390, 700))
-        random_refractive_index_range: QtCore.QPointF = deep_field(
-            QtCore.QPointF(1.21, 1.38)
-        )
 
     @hashable_dataclass
     class Starburst:
         # technical
         intensity: float = 1
+        scale: QtCore.QSizeF = deep_field(QtCore.QSizeF(1, 1))
         distance: float = 1
         blur: float = 0
         rotation: float = 0
@@ -207,15 +207,6 @@ class Diagram:
 
 
 @hashable_dataclass
-class Debug:
-    show_image: bool = False
-    disable_starburst: bool = False
-    disable_ghosts: bool = False
-    debug_ghost_enabled: bool = False
-    debug_ghost: int = 0
-
-
-@hashable_dataclass
 class Render:
     @hashable_dataclass
     class Starburst:
@@ -237,6 +228,8 @@ class Render:
     grid_count: int = 33
     grid_length: float = 50
     cull_percentage: float = 0
+    debug_ghost_enabled: bool = False
+    debug_ghost: int = 0
 
     # starburst
     starburst: Starburst = field(default_factory=Starburst)
@@ -254,4 +247,3 @@ class Project:
     flare: Flare = field(default_factory=Flare)
     render: Render = field(default_factory=Render)
     diagram: Diagram = field(default_factory=Diagram)
-    debug: Debug = field(default_factory=Debug)

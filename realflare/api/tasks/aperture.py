@@ -1,6 +1,6 @@
 from __future__ import annotations
+
 import logging
-import os
 from functools import lru_cache
 
 import cv2
@@ -8,13 +8,11 @@ import numpy as np
 import pyopencl as cl
 from PySide2 import QtCore
 
-from qt_extensions.typeutils import cast_basic
-from realflare.api.data import Render, Aperture, RealflareError, Project
+from realflare.api.data import Aperture, RealflareError, Project
 from realflare.api.path import File
 from realflare.api.tasks.opencl import OpenCL, Image
 from realflare.storage import Storage
 from realflare.utils.timing import timer
-
 
 logger = logging.getLogger(__name__)
 storage = Storage()
@@ -59,8 +57,7 @@ class ApertureTask(OpenCL):
             threshold, array = cv2.threshold(array, threshold, 1, cv2.THRESH_BINARY)
 
         # return image
-        args = (filename,)
-        image = Image(self.context, array=array, args=args)
+        image = Image(self.context, array=array, args=filename)
         return image
 
     @lru_cache(1)
@@ -68,7 +65,8 @@ class ApertureTask(OpenCL):
         self,
         aperture: Aperture,
         resolution: QtCore.QSize,
-        light_position: tuple[float, float] | None = None,
+        scratches_parallax: tuple[float, float] = (0, 0),
+        dust_parallax: tuple[float, float] = (0, 0),
     ) -> Image:
         if self.rebuild:
             self.build()
@@ -77,17 +75,15 @@ class ApertureTask(OpenCL):
         aperture_image = self.update_image(
             resolution, cl.channel_order.INTENSITY, cl.mem_flags.READ_WRITE
         )
-        aperture_image.args = (aperture, resolution, light_position)
+        aperture_image.args = (aperture, resolution, scratches_parallax, dust_parallax)
 
         size = np.array((1, 1), cl.cltypes.float2)
         size['x'] = aperture.shape.size.width()
         size['y'] = aperture.shape.size.height()
         rotation = np.radians(aperture.shape.rotation)
-        if light_position is None:
-            light_position = (0, 0)
 
         # kernels
-        w, h = aperture_image.image.shape
+        w, h = resolution.width(), resolution.height()
         global_work_size = (w, h)
         local_work_size = None
 
@@ -124,9 +120,6 @@ class ApertureTask(OpenCL):
             rotation = np.radians(aperture.scratches.rotation)
             rotation_variation = aperture.scratches.rotation_variation
             width = aperture.scratches.width * 0.1
-            parallax = np.array((1, 1), cl.cltypes.float2)
-            parallax['x'] = aperture.scratches.parallax.width() * light_position[0]
-            parallax['y'] = aperture.scratches.parallax.height() * light_position[1]
             self.kernels['scratches'].set_arg(0, aperture_image.image)
             self.kernels['scratches'].set_arg(1, size)
             self.kernels['scratches'].set_arg(
@@ -137,7 +130,7 @@ class ApertureTask(OpenCL):
             self.kernels['scratches'].set_arg(5, np.float32(rotation))
             self.kernels['scratches'].set_arg(6, np.float32(rotation_variation))
             self.kernels['scratches'].set_arg(7, np.float32(width))
-            self.kernels['scratches'].set_arg(8, parallax)
+            self.kernels['scratches'].set_arg(8, np.float32(scratches_parallax))
             self.kernels['scratches'].set_arg(
                 9, np.float32(aperture.scratches.softness / 10)
             )
@@ -148,15 +141,12 @@ class ApertureTask(OpenCL):
         # dust
         if aperture.dust.strength > 0:
             radius = aperture.dust.radius * 0.1
-            parallax = np.array((1, 1), cl.cltypes.float2)
-            parallax['x'] = aperture.dust.parallax.width() * light_position[0]
-            parallax['y'] = aperture.dust.parallax.height() * light_position[1]
             self.kernels['dust'].set_arg(0, aperture_image.image)
             self.kernels['dust'].set_arg(1, size)
             self.kernels['dust'].set_arg(2, np.float32(aperture.dust.strength))
             self.kernels['dust'].set_arg(3, np.float32(aperture.dust.density))
             self.kernels['dust'].set_arg(4, np.float32(radius))
-            self.kernels['dust'].set_arg(5, parallax)
+            self.kernels['dust'].set_arg(5, np.float32(dust_parallax))
             self.kernels['dust'].set_arg(6, np.float32(aperture.dust.softness / 10))
             cl.enqueue_nd_range_kernel(
                 self.queue, self.kernels['dust'], global_work_size, local_work_size
@@ -200,8 +190,7 @@ class GhostApertureTask(ApertureTask):
     @timer
     def run(self, project: Project) -> Image:
         image = self.aperture(
-            project.flare.ghost_aperture,
-            project.render.ghost.resolution,
+            project.flare.ghost_aperture, project.render.ghost.resolution
         )
         return image
 
@@ -209,10 +198,22 @@ class GhostApertureTask(ApertureTask):
 class StarburstApertureTask(ApertureTask):
     @timer
     def run(self, project: Project) -> Image:
-        light_position = tuple(cast_basic(project.flare.light.position))
+        position = project.flare.light.position
+        parallax = project.flare.starburst_aperture.scratches.parallax
+        scratches_parallax = (
+            position.x() * parallax.width(),
+            position.y() * parallax.height(),
+        )
+        parallax = project.flare.starburst_aperture.dust.parallax
+        dust_parallax = (
+            position.x() * parallax.width(),
+            position.y() * parallax.height(),
+        )
+
         image = self.aperture(
             project.flare.starburst_aperture,
             project.render.starburst.resolution,
-            light_position,
+            scratches_parallax,
+            dust_parallax,
         )
         return image

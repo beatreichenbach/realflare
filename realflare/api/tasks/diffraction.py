@@ -124,7 +124,7 @@ class Widget(Viewer):
         parm = FloatParameter('distance')
         self.layout().addWidget(parm)
         parm.value_changed.connect(self.change)
-        parm.value = 1
+        parm.set__value(1)
 
     def change(self, value):
         rgb = self.field.get_colors(value)

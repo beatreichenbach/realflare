@@ -1,10 +1,7 @@
-// leave room for 1 bit batch header to store whether list is empty
-#define BATCH_PRIMITIVE_COUNT 255
-
 int edge_function_int(
-	int2 a,
-	int2 b,
-	int2 c
+	const int2 a,
+	const int2 b,
+	const int2 c
 	)
 {
 	// TODO: edge function can be optimized, see advanced section in link
@@ -14,17 +11,17 @@ int edge_function_int(
 }
 
 float edge_function_float(
-	float2 a,
-	float2 b,
-	float2 c
+	const float2 a,
+	const float2 b,
+	const float2 c
 	)
 {
 	return (a.x - b.x) * (c.y - a.y) - (a.y - b.y) * (c.x - a.x);
 }
 
 bool is_top_left(
-	int2 a,
-	int2 b
+	const int2 a,
+	const int2 b
 	)
 {
 	// https://fgiesen.wordpress.com/2013/02/08/triangle-rasterization-in-practice/
@@ -33,10 +30,10 @@ bool is_top_left(
 }
 
 bool intersect_tri(
-	int2 p,
-	int2 p0,
-	int2 p1,
-	int2 p2
+	const int2 p,
+	const int2 p0,
+	const int2 p1,
+	const int2 p2
 	)
 {
 	// don't render common edges twice, top-left rule
@@ -56,11 +53,11 @@ bool intersect_tri(
 }
 
 bool intersect_quad(
-	int2 p,
-	int2 p0,
-	int2 p1,
-	int2 p2,
-	int2 p3
+	const int2 p,
+	const int2 p0,
+	const int2 p1,
+	const int2 p2,
+	const int2 p3
 	)
 {
 	// don't render common edges twice, top-left rule
@@ -96,11 +93,11 @@ bool intersect_quad(
 }
 
 float4 compute_barycentric_quad(
-	int2 p,
-	int2 p0,
-	int2 p1,
-	int2 p2,
-	int2 p3
+	const int2 p,
+	const int2 p0,
+	const int2 p1,
+	const int2 p2,
+	const int2 p3
 	)
 {
 	// https://core.ac.uk/download/pdf/53544051.pdf
@@ -151,10 +148,10 @@ float4 compute_barycentric_quad(
 }
 
 float3 compute_barycentric_tri(
-	int2 p,
-	int2 p0,
-	int2 p1,
-	int2 p2
+	const int2 p,
+	const int2 p0,
+	const int2 p1,
+	const int2 p2
 	)
 {
 	int area = edge_function_int(p0, p1, p2);
@@ -167,10 +164,10 @@ float3 compute_barycentric_tri(
 }
 
 float debug_grid_tri(
-	int2 p,
-	int2 p0,
-	int2 p1,
-	int2 p2
+	const int2 p,
+	const int2 p0,
+	const int2 p1,
+	const int2 p2
 	)
 {
 	return (float) (
@@ -181,11 +178,11 @@ float debug_grid_tri(
 }
 
 float debug_grid_quad(
-	int2 p,
-	int2 p0,
-	int2 p1,
-	int2 p2,
-	int2 p3
+	const int2 p,
+	const int2 p0,
+	const int2 p1,
+	const int2 p2,
+	const int2 p3
 	)
 {
 	return (float) (
@@ -197,9 +194,9 @@ float debug_grid_quad(
 }
 
 int4 quad_neighbors(
-	int length,
-	int x,
-	int y
+	const int length,
+	const int x,
+	const int y
 	)
 {
     // length is the amount of rows of the vertex grid
@@ -235,15 +232,16 @@ int4 quad_vertexes(
 
 __kernel void prim_shader(
 	__global float4 *bounds,
-	__global float *areas,
+	__global float *intensities,
 	__global Ray *rays,
 	const int grid_count,
 	const int ray_count,
 	const int wavelength_count,
+	const float area_orig,
 	const float min_area
 	)
 {
-	// computes areas per primitive per wavelength and the bounding boxes per primitive for all wavelengths
+	// computes intensities per primitive per wavelength and the bounding boxes per primitive for all wavelengths
 
 	int path_id = get_global_id(0);
 	int path_count = get_global_size(0);
@@ -262,7 +260,7 @@ __kernel void prim_shader(
 		}
 
 		int ray_offset = (path_id * wavelength_count + wavelength_id) * ray_count;
-		int area_index = (path_id * quad_count + quad_id) * wavelength_count + wavelength_id;
+		int prim_index = (path_id * quad_count + quad_id) * wavelength_count + wavelength_id;
 
 		Ray r[4];
 		r[0] = rays[ray_offset + quads.x];
@@ -302,9 +300,10 @@ __kernel void prim_shader(
 			invalid_rrel++;
 		}
 
-		// store area
+		// store intensity
 		// prevent super bright edges with min area
-		areas[area_index] = max(area, min_area);
+		float area_actual = max(area, min_area);
+		intensities[prim_index] = area_actual > 0 ? area_orig / area_actual : 0;
 
 		// store bounds
 		float4 prim_bounds;
@@ -322,10 +321,9 @@ __kernel void prim_shader(
 
 __kernel void vertex_shader(
 	__global Vertex *vertexes,
-	__global float *areas,
+	__global float *intensities,
 	__global Ray *rays,
 	const int grid_count,
-	const float area_orig,
 	const float screen_transform,
 	const int2 resolution
 	)
@@ -363,9 +361,9 @@ __kernel void vertex_shader(
 		for(int i = 0; i < 4; ++i) {
 			if(neighbors[i] < 0 || neighbors[i] >= quad_count) continue;
 
-			int area_index = (path_id * quad_count + neighbors[i]) * wavelength_count + wavelength_id;
-			if (areas[area_index] > 0) {
-				intensity += area_orig / areas[area_index];
+			int prim_index = (path_id * quad_count + neighbors[i]) * wavelength_count + wavelength_id;
+			if (intensities[prim_index] > 0) {
+				intensity += intensities[prim_index];
 				++neighbor_count;
 			}
 		}
@@ -377,7 +375,6 @@ __kernel void vertex_shader(
 		v.pos = pos;
 
 		// uv
-		// v.uv = (r.pos_apt + 1) / 2;
 		v.uv = r.pos_apt;
 
 		// rrel
@@ -394,7 +391,6 @@ __kernel void binner(
 	const unsigned int bin_count,
 	__global float4* bounds_buffer,
 	const unsigned int primitive_count,
-	__global int* bin_distribution_counter,
 	const float screen_transform,
 	const int2 resolution
 	)
@@ -473,18 +469,18 @@ __kernel void binner(
 }
 
 float fragment_shader(
-	float4 weights,
-	Vertex v0,
-	Vertex v1,
-	Vertex v2,
-	Vertex v3,
+	const float4 weights,
+	const Vertex v0,
+	const Vertex v1,
+	const Vertex v2,
+	const Vertex v3,
 	__read_only image2d_t ghost,
-	float scale
+	const float scale
 	)
 {
 	// ghost texture
 	float2 uv = weights.x * v0.uv + weights.y * v1.uv + weights.z * v2.uv + weights.w * v3.uv;
-	uv = (uv * scale + 1.0f) / 2.0f;
+	uv = (uv / scale + 1.0f) / 2.0f;
 	sampler_t sampler_norm = CLK_FILTER_LINEAR | CLK_NORMALIZED_COORDS_TRUE | CLK_ADDRESS_CLAMP;
 	float ghost_intensity = read_imagef(ghost, sampler_norm, uv).x;
 
@@ -504,15 +500,15 @@ float fragment_shader(
 	intensity = ghost_intensity * rrel_intensity * area_intensity * coating_intensity;
 	// intensity = rrel_intensity * area_intensity * coating_intensity;
 	// intensity = area_intensity;
-	// intensity =  rrel_intensity;
+	// intensity =  area_intensity;
 
 	return intensity;
 }
 
 
 Vertex mix_vertex(
-	Vertex v1,
-	Vertex v2,
+	const Vertex v1,
+	const Vertex v2,
 	const float blend
 	)
 {
@@ -537,9 +533,8 @@ __kernel void rasterizer(
 	const int wavelength_sub_count,
 	const int grid_count,
 	const int sub_steps,
-	__constant uchar *sub_offsets,
 	const float intensity,
-	const float scale
+	const float ghost_scale
 )
 {
 	int x = get_global_id(0);
@@ -547,13 +542,10 @@ __kernel void rasterizer(
 
 	int2 dims = get_image_dim(image);
 
-	// write_imagef(image, (int2)(0, 0), (float4) (get_global_size(0), get_global_size(1), 0, 0));
 	if (x >= dims.x || y >= dims.y) return;
 	int2 p = (int2) (x, y) * sub_steps;
 	int2 p_center = p + sub_steps / 2;
 
-	// int round up
-	// https://stackoverflow.com/questions/17944/how-to-round-up-the-result-of-integer-division/96921#96921
 	int2 bin_dims = (dims + BIN_SIZE - (int2) (1, 1)) / BIN_SIZE;
 	int bin_index = (y / BIN_SIZE) * bin_dims.x + (x / BIN_SIZE);
 	int quad_count = (grid_count - 1) * (grid_count - 1);
@@ -635,7 +627,7 @@ __kernel void rasterizer(
 					size_t hits = 0;
 					for(char s = 0; s < sub_steps; s++) {
 						// offset sample position based on n-rook pattern
-						int2 sample_pos = p + (int2) (s, sub_offsets[s]);
+						int2 sample_pos = p + (int2) (s, sub_offsets[sub_steps - 1 + s]);
 						if (intersect_quad(sample_pos, v_pos[0], v_pos[1], v_pos[2], v_pos[3])) {
 							hits++;
 						}
@@ -643,7 +635,7 @@ __kernel void rasterizer(
 					float fragment = 0;
 					if (hits > 0) {
 						float4 weights = compute_barycentric_quad(p_center, v_pos[0], v_pos[1], v_pos[2], v_pos[3]);
-						fragment += fragment_shader(weights, v[0], v[1], v[2], v[3], ghost, scale) * hits;
+						fragment += fragment_shader(weights, v[0], v[1], v[2], v[3], ghost, ghost_scale) * hits;
 					}
 
 					if(wavelength_count > 1) {

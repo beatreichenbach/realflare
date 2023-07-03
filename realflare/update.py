@@ -11,14 +11,17 @@ from realflare.utils.processing import Process, popen
 
 class UpdateProcess(Process):
     def run(self) -> None:
-        args = [
-            sys.executable,
-            '-m',
-            'pip',
-            'install',
-            '--upgrade',
-            'realflare@https://github.com/beatreichenbach/realflare/archive/refs/heads/main.zip',
-        ]
+        try:
+            # nuke integration
+            import realflare_setup
+
+            setup = realflare_setup.Setup()
+            executable = setup.executable
+        except ImportError:
+            executable = sys.executable
+
+        url = 'https://github.com/beatreichenbach/realflare/archive/refs/heads/main.zip'
+        args = [executable, '-m', 'pip', 'install', '--upgrade', f'realflare@{url}']
         self.popen(args)
 
 
@@ -40,7 +43,6 @@ class UpdateDialog(LogViewer):
             fmt='{message}',
             datefmt='%I:%M:%S%p',
             style='{',
-            defaults={'color': ''},
         )
         self.set_levels((logging.ERROR, logging.WARNING, logging.INFO, logging.DEBUG))
 

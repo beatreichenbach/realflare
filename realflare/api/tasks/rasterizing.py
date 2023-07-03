@@ -1,16 +1,14 @@
 from __future__ import annotations
-from collections.abc import Iterable
+
+import logging
 from functools import lru_cache
 
 import numpy as np
 import pyopencl as cl
 from PySide2 import QtCore
 
-from qt_extensions.typeutils import cast_basic
+from qt_extensions.typeutils import basic
 from realflare.api.data import Render, Project
-from realflare.utils.timing import timer
-from realflare.utils.ciexyz import CIEXYZ
-
 from realflare.api.tasks.opencl import (
     OpenCL,
     ray_dtype,
@@ -20,6 +18,10 @@ from realflare.api.tasks.opencl import (
     Buffer,
     Image,
 )
+from realflare.utils.ciexyz import CIEXYZ
+from realflare.utils.timing import timer
+
+logger = logging.getLogger(__name__)
 
 BATCH_PRIMITIVE_COUNT = 255
 
@@ -36,7 +38,6 @@ def triangle_vertexes(n) -> list[tuple[int, int, int]]:
                 v2 = v1 + 1 + k * n
                 # v3 = v2 + n * (1 - k) - k
                 v3 = v2 - 1 if k else v2 + n
-
                 indexes.append((v1, v2, v3))
     return indexes
 
@@ -67,11 +68,26 @@ class RasterizingTask(OpenCL):
 
     def build(self, *args, **kwargs) -> None:
         self.source = ''
+        self.source += f'#define BATCH_PRIMITIVE_COUNT {BATCH_PRIMITIVE_COUNT}\n'
+
         self.register_dtype('Ray', ray_dtype)
         self.register_dtype('Vertex', vertex_dtype)
-        self.source += f'__constant int BIN_SIZE = {self.bin_size};\n'
-        self.source += f'__constant int LAMBDA_MIN = {LAMBDA_MIN};\n'
-        self.source += f'__constant int LAMBDA_MAX = {LAMBDA_MAX};\n'
+
+        # sample offsets for y coordinate based on n-rook pattern.
+        # https://learn.microsoft.com/en-us/windows/win32/api/d3d11/ne-d3d11-d3d11_standard_multisample_quality_levels
+        sub_offsets = []
+        sub_offsets.extend([0])
+        sub_offsets.extend([1, 0])
+        sub_offsets.extend([1, 2, 0, 3])
+        sub_offsets.extend([4, 1, 6, 2, 5, 0, 3, 7])
+        # append all values into an array
+        array_str = ', '.join(map(str, sub_offsets))
+        self.source += (
+            f'const uchar sub_offsets[{len(sub_offsets)}] = {{{array_str}}};\n'
+        )
+        self.source += f'const int BIN_SIZE = {self.bin_size};\n'
+        self.source += f'const int LAMBDA_MIN = {LAMBDA_MIN};\n'
+        self.source += f'const int LAMBDA_MAX = {LAMBDA_MAX};\n'
         self.source += self.read_source_file('color.cl')
         self.source += self.read_source_file('rasterizing.cl')
 
@@ -91,8 +107,8 @@ class RasterizingTask(OpenCL):
         # private_mem_size = self.kernels['rasterizer'].get_work_group_info(
         #     cl.kernel_work_group_info.PRIVATE_MEM_SIZE, device
         # )
-        # logging.debug(f'private_mem_size: {private_mem_size}')
-        # logging.debug(f'kernel_work_group_size: {kernel_work_group_size}')
+        # logger.debug(f'{private_mem_size:=}')
+        # logger.debug(f'{kernel_work_group_size:=}')
 
     @lru_cache(1)
     def update_quads(self, grid_count: int) -> Buffer:
@@ -107,22 +123,24 @@ class RasterizingTask(OpenCL):
         return buffer
 
     @lru_cache(1)
-    def update_areas(self, prims_shape: tuple[int, ...]) -> Buffer:
-        areas = np.zeros(prims_shape, cl.cltypes.float)
+    def update_intensities(self, prims_shape: tuple[int, ...]) -> Buffer:
+        intensities = np.zeros(prims_shape, cl.cltypes.float)
         flags = cl.mem_flags.READ_WRITE | cl.mem_flags.COPY_HOST_PTR
-        areas_cl = cl.Buffer(self.context, flags, hostbuf=areas)
+        intensities_cl = cl.Buffer(self.context, flags, hostbuf=intensities)
 
-        buffer = Buffer(self.context, array=areas, buffer=areas_cl, args=prims_shape)
+        buffer = Buffer(self.context, array=intensities, buffer=intensities_cl)
         return buffer
 
+    @lru_cache(1)
     def update_bounds(self, prims_shape: tuple[int, ...]) -> Buffer:
         # no caching to reset
         bounds = np.zeros(prims_shape, cl.cltypes.float4)
         flags = cl.mem_flags.READ_WRITE | cl.mem_flags.COPY_HOST_PTR
         bounds_cl = cl.Buffer(self.context, flags, hostbuf=bounds)
-        buffer = Buffer(self.context, array=bounds, buffer=bounds_cl, args=prims_shape)
+        buffer = Buffer(self.context, array=bounds, buffer=bounds_cl)
         return buffer
 
+    @lru_cache(1)
     def update_vertexes(self, vertex_shape: tuple[int, ...]) -> Buffer:
         # no caching to reset
         vertexes = np.zeros(vertex_shape, self.dtypes['Vertex'])
@@ -137,7 +155,7 @@ class RasterizingTask(OpenCL):
         return area_orig
 
     @lru_cache(10)
-    def update_sensor(
+    def update_screen_transform(
         self, resolution: QtCore.QSize, sensor_size: tuple[float, float]
     ) -> float:
         sensor_length = np.linalg.norm((sensor_size[0], sensor_size[1])) / 2
@@ -156,41 +174,13 @@ class RasterizingTask(OpenCL):
         image = Image(self.context, array=array)
         return image
 
-    @lru_cache(4)
-    def update_sub_offsets(self, sub_steps: int) -> Buffer:
-        # sample offsets for y coordinate based on n-rook pattern.
-        # https://learn.microsoft.com/en-us/windows/win32/api/d3d11/ne-d3d11-d3d11_standard_multisample_quality_levels
-        # x, y for enumerate(offsets)
-        sub_offsets_dict = {
-            1: [0],
-            2: [1, 0],
-            4: [1, 2, 0, 3],
-            8: [4, 1, 6, 2, 5, 0, 3, 7],
-        }
-        sub_offsets = np.array(sub_offsets_dict[sub_steps], cl.cltypes.char)
-        buffer = Buffer(self.context, array=sub_offsets, args=sub_steps)
-        return buffer
-
     @lru_cache(10)
-    def update_bin_dims(self, bin_size: int, resolution: QtCore.QSize) -> np.ndarray:
-        array = np.array((1, 1), cl.cltypes.int2)
-        array['x'] = np.ceil(resolution.width() / bin_size)
-        array['y'] = np.ceil(resolution.height() / bin_size)
-        return array
-
-    @lru_cache(10)
-    def update_resolution(self, resolution: QtCore.QSize) -> np.ndarray:
-        array = np.array((1, 1), cl.cltypes.int2)
-        array['x'] = resolution.width()
-        array['y'] = resolution.height()
-        return array
-
-    @lru_cache(1)
-    def update_counter(self) -> cl.Buffer:
-        flags = cl.mem_flags.READ_WRITE
-        size = np.int32(1).nbytes
-        bin_distribution_counter_cl = cl.Buffer(self.context, flags=flags, size=size)
-        return bin_distribution_counter_cl
+    def update_bin_dims(
+        self, bin_size: int, resolution: QtCore.QSize
+    ) -> tuple[int, int]:
+        x = np.ceil(resolution.width() / bin_size)
+        y = np.ceil(resolution.height() / bin_size)
+        return x, y
 
     @lru_cache(1)
     def update_bin_queues(self, bin_count: int, batch_count: int) -> Buffer:
@@ -198,25 +188,24 @@ class RasterizingTask(OpenCL):
 
         # add 1 for header (list empty)
         queue_size = bin_count * (batch_count * (BATCH_PRIMITIVE_COUNT + 1))
-        # size = wavelength_count * queue_size
-        size = queue_size
-        # logging.debug(f'bin_queues.size: {size}')
 
         flags = cl.mem_flags.READ_WRITE
-        bin_queues_cl = cl.Buffer(self.context, flags=flags, size=size)
-        # logging.debug(f'bin_queues_cl_size: {size}')
+        bin_queues_cl = cl.Buffer(self.context, flags=flags, size=queue_size)
 
         # need a buffer to store bit mask, int64 = 64 bits
-        # bin_queues = np.zeros((wavelength_count, int(queue_size / 64)), np.int64)
         bin_queues = np.zeros(int(queue_size / 64), np.int64)
-        # logging.debug(f'bin_queues_size: {bin_queues.nbytes}')
+
+        # logger.debug(f'{queue_size:=}')
+        # bin_queues_bytes = bin_queues.nbytes
+        # logger.debug(f'{bin_queues_bytes:=}')
 
         buffer = Buffer(self.context, array=bin_queues, buffer=bin_queues_cl)
         return buffer
 
     @timer
-    def prim_shader(self, shape: tuple[int, ...]) -> cl.Event:
-        global_work_size = shape
+    @lru_cache(1)
+    def prim_shader(self, bounds: Buffer, intensities: Buffer) -> cl.Event:
+        global_work_size = bounds.shape
         local_work_size = None
         prim_event = cl.enqueue_nd_range_kernel(
             self.queue, self.kernels['prim_shader'], global_work_size, local_work_size
@@ -225,7 +214,8 @@ class RasterizingTask(OpenCL):
         return prim_event
 
     @timer
-    def vertex_shader(self, vertexes: Buffer, wait_for: Iterable[cl.Event]) -> cl.Event:
+    @lru_cache(1)
+    def vertex_shader(self, vertexes: Buffer) -> cl.Event:
         global_work_size = vertexes.array.shape
         local_work_size = None
         vertex_event = cl.enqueue_nd_range_kernel(
@@ -233,15 +223,13 @@ class RasterizingTask(OpenCL):
             self.kernels['vertex_shader'],
             global_work_size,
             local_work_size,
-            wait_for=wait_for,
         )
         vertex_event.wait()
         return vertex_event
 
     @timer
-    def binner(
-        self, wavelength_count: int, batch_count: int, wait_for: Iterable[cl.Event]
-    ) -> cl.Event:
+    @lru_cache(1)
+    def binner(self, bin_queus: Buffer, batch_count: int) -> cl.Event:
         device = self.queue.get_info(cl.command_queue_info.DEVICE)
         # compute_units = device.get_info(cl.device_info.MAX_COMPUTE_UNITS)
         work_group_size = device.get_info(cl.device_info.MAX_WORK_GROUP_SIZE)
@@ -253,34 +241,29 @@ class RasterizingTask(OpenCL):
             self.kernels['binner'],
             global_work_size,
             local_work_size,
-            wait_for=wait_for,
         )
         binner_event.wait()
         return binner_event
 
     @timer
-    def rasterizer(
-        self, flare_image: Image, bin_count: int, wait_for: Iterable[cl.Event]
-    ) -> cl.Event:
+    @lru_cache(1)
+    def rasterizer(self, flare_image: Image) -> cl.Event:
         h, w = flare_image.array.shape[:2]
+
+        # clear image
+        black = np.zeros((4,), np.float32)
+        clear_event = cl.enqueue_fill_image(
+            self.queue, flare_image.image, black, origin=(0, 0), region=(w, h)
+        )
+
         global_work_size = (w, h)
         local_work_size = None
-        # global_work_size = (int(np.ceil(w / 8) * 8), int(np.ceil(h / 8) * 8))
-        # local_work_size = (8, 8)
-
-        # device = self.queue.get_info(cl.command_queue_info.DEVICE)
-        # # compute_units = device.get_info(cl.device_info.MAX_COMPUTE_UNITS)
-        # work_group_size = device.get_info(cl.device_info.MAX_WORK_GROUP_SIZE)
-        # work_group_size = 256
-        # global_work_size = (bin_count * work_group_size, )
-        # local_work_size = (work_group_size, )
-
         event = cl.enqueue_nd_range_kernel(
             self.queue,
             self.kernels['rasterizer'],
             global_work_size,
             local_work_size,
-            wait_for=wait_for,
+            wait_for=[clear_event],
         )
 
         cl.enqueue_copy(
@@ -292,6 +275,15 @@ class RasterizingTask(OpenCL):
         )
         return event
 
+    @lru_cache(1)
+    def update_image(
+        self,
+        resolution: QtCore.QSize,
+        channel_order: cl.channel_order = cl.channel_order.RGBA,
+        flags: cl.mem_flags = cl.mem_flags.WRITE_ONLY,
+    ) -> Image:
+        return super().update_image(resolution, channel_order, flags)
+
     def rasterize(
         self,
         render: Render,
@@ -302,8 +294,6 @@ class RasterizingTask(OpenCL):
         intensity: float,
         fstop: float,
     ) -> Image:
-        resolution = render.resolution
-
         # rebuild kernel
         bin_size_changed = render.bin_size != self.bin_size
         if bin_size_changed:
@@ -312,15 +302,8 @@ class RasterizingTask(OpenCL):
             self.build()
 
         # image
-        flare_image = self.update_image(resolution, flags=cl.mem_flags.READ_WRITE)
-        flare_image.args = (
-            rays,
-            ghost,
-            render,
-            min_area,
-            intensity,
-            sensor_size,
-            fstop,
+        flare_image = self.update_image(
+            render.resolution, flags=cl.mem_flags.READ_WRITE
         )
 
         if rays is None:
@@ -328,117 +311,86 @@ class RasterizingTask(OpenCL):
 
         # prim shader
         path_count, wavelength_count, ray_count = rays.array.shape
-        # quads = self.update_quads(render.grid_count)
-        # quad_count = quads.array.size
         quad_count = (render.grid_count - 1) ** 2
         # swapping wavelength and path axis. rasterization requires grouping by wavelength
-        areas_shape = (path_count, quad_count, wavelength_count)
+        intensities_shape = (path_count, quad_count, wavelength_count)
         bounds_shape = (path_count, quad_count)
 
-        areas = self.update_areas(areas_shape)
-        areas.args = (rays, render, min_area)
-        bounds = self.update_bounds(bounds_shape)
-        bounds.args = (rays, render)
         area_orig = self.update_area_orig(render.grid_count, render.grid_length)
         rel_min_area = min_area * area_orig
+        bounds = self.update_bounds(bounds_shape)
+        bounds.args = (rays, rel_min_area)
+        intensities = self.update_intensities(intensities_shape)
+        intensities.args = (rays, area_orig, rel_min_area)
 
         self.kernels['prim_shader'].set_arg(0, bounds.buffer)
-        self.kernels['prim_shader'].set_arg(1, areas.buffer)
+        self.kernels['prim_shader'].set_arg(1, intensities.buffer)
         self.kernels['prim_shader'].set_arg(2, rays.buffer)
         self.kernels['prim_shader'].set_arg(3, np.int32(render.grid_count))
         self.kernels['prim_shader'].set_arg(4, np.int32(ray_count))
         self.kernels['prim_shader'].set_arg(5, np.int32(wavelength_count))
-        self.kernels['prim_shader'].set_arg(6, np.float32(rel_min_area))
+        self.kernels['prim_shader'].set_arg(6, np.float32(area_orig))
+        self.kernels['prim_shader'].set_arg(7, np.float32(rel_min_area))
 
-        prim_event = self.prim_shader(bounds_shape)
-        # cl.enqueue_copy(self.queue, areas, areas_cl)
+        self.prim_shader(bounds, intensities)
         # cl.enqueue_copy(self.queue, bounds, bounds_cl)
-        # logging.debug(f'bounds {[0, 518]}: {bounds[0, 518]}')
-        # logging.debug(f'bounds {[0, 519]}: {bounds[0, 519]}')
+        # logger.debug(f'{bounds[0, 518]:=}')
 
         # vertex shader
         vertex_shape = (path_count, ray_count, wavelength_count)
+        resolution = render.resolution.width(), render.resolution.height()
+        screen_transform = self.update_screen_transform(render.resolution, sensor_size)
         vertexes = self.update_vertexes(vertex_shape)
-        vertexes.args = (rays, render, min_area, sensor_size)
-        resolution_buffer = self.update_resolution(resolution)
-        screen_transform = self.update_sensor(resolution, sensor_size)
+        vertexes.args = (rays, intensities, screen_transform, resolution)
 
         self.kernels['vertex_shader'].set_arg(0, vertexes.buffer)
-        self.kernels['vertex_shader'].set_arg(1, areas.buffer)
+        self.kernels['vertex_shader'].set_arg(1, intensities.buffer)
         self.kernels['vertex_shader'].set_arg(2, rays.buffer)
         self.kernels['vertex_shader'].set_arg(3, np.int32(render.grid_count))
-        self.kernels['vertex_shader'].set_arg(4, np.float32(area_orig))
-        self.kernels['vertex_shader'].set_arg(5, np.float32(screen_transform))
-        self.kernels['vertex_shader'].set_arg(6, resolution_buffer)
+        self.kernels['vertex_shader'].set_arg(4, np.float32(screen_transform))
+        self.kernels['vertex_shader'].set_arg(5, np.int32(resolution))
 
-        wait_for = [prim_event]
-        vertex_event = self.vertex_shader(vertexes, wait_for)
+        self.vertex_shader(vertexes)
         # cl.enqueue_copy(self.queue, vertexes.array, vertexes.buffer)
-        # logging.debug(f'vertex_shape: {vertex_shape}')
-        # logging.debug(f'vertexes: {vertexes}')
-        # logging.debug(f'vertex 120: {vertexes[0, 120, 0]}')
-        # logging.debug(f'vertex 120: {vertexes[0, 120, 1]}')
-        # logging.debug(f'vertexes.nbytes: {vertexes.nbytes}')
+        # logger.debug(f'{vertexes[0, 120, 0]:=}')
 
         # binner
-        bin_dims = self.update_bin_dims(render.bin_size, resolution)
-        bin_distribution_counter_cl = self.update_counter()
-        bin_count = int(bin_dims['x'] * bin_dims['y'])
-        # logging.debug(f'bin_dims: {array}')
-        # logging.debug(f'bin_count: {bin_count}')
-        # primitive_count = prims_shape[1] * prims_shape[2]
+        bin_dims = self.update_bin_dims(render.bin_size, render.resolution)
+        bin_count = int(bin_dims[0] * bin_dims[1])
         primitive_count = bounds.array.size
-        # logging.debug(f'primitive_count: {primitive_count}')
         batch_count = int(np.ceil(primitive_count / BATCH_PRIMITIVE_COUNT))
-        # logging.debug(f'batch_count: {batch_count}')
         bin_queues = self.update_bin_queues(bin_count, batch_count)
-        bin_queues.args = (rays, render)
+        bin_queues.args = (bin_dims, bounds)
+        # logger.debug(f'{bin_count:=}')
+        # logger.debug(f'{primitive_count:=}')
+        # logger.debug(f'{batch_count:=}')
 
-        # TODO: check convert int/float, as those conversions can be slow
         self.kernels['binner'].set_arg(0, bin_queues.buffer)
-        self.kernels['binner'].set_arg(1, bin_dims)
+        self.kernels['binner'].set_arg(1, np.int32(bin_dims))
         self.kernels['binner'].set_arg(2, np.int32(bin_count))
         self.kernels['binner'].set_arg(3, bounds.buffer)
         self.kernels['binner'].set_arg(4, np.int32(primitive_count))
-        self.kernels['binner'].set_arg(5, bin_distribution_counter_cl)
-        self.kernels['binner'].set_arg(6, np.float32(screen_transform))
-        self.kernels['binner'].set_arg(7, resolution_buffer)
+        self.kernels['binner'].set_arg(5, np.float32(screen_transform))
+        self.kernels['binner'].set_arg(6, np.int32(resolution))
 
-        wait_for = [vertex_event]
-        bin_event = self.binner(wavelength_count, batch_count, wait_for)
-
-        # return flare_image
-        # cl.enqueue_copy(self.queue, bin_queues.array, bin_queues.buffer)
-        # bin_queues_shape = (bin_dims['y'], bin_dims['x'], -1)
-        # logging.debug(f'bin_queues_shape: {bin_queues_shape}')
-        # bin_queues = np.reshape(bin_queues.array, bin_queues_shape)
-        # for y in range(bin_queues_shape[0]):
-        #     for x in range(bin_queues_shape[1]):
-        #         if x != 0 or y != 15:
-        #             continue
-        #         for i in bin_queues[y, x]:
-        #             logging.debug(f'bin_queues {[y, x]}: {np.binary_repr(i, width=64)}, {i}')
+        self.binner(bin_queues, batch_count)
 
         # rasterizer
         light_spectrum = self.update_light_spectrum()
         sub_steps = render.anti_aliasing
-        sub_offsets = self.update_sub_offsets(sub_steps)
         wavelength_sub_count = (
             render.wavelength_sub_count if wavelength_count > 1 else 1
         )
-        try:
-            scale = 1 - 32 / fstop
-        except ZeroDivisionError:
-            scale = 1
-
-        # device = self.queue.get_info(cl.command_queue_info.DEVICE)
-        # logging.debug(f'COMPILE_WORK_GROUP_SIZE: {self.kernels["rasterizer"].get_work_group_info(cl.kernel_work_group_info.COMPILE_WORK_GROUP_SIZE, device)}')
-        # logging.debug(f'LOCAL_MEM_SIZE: {self.kernels["rasterizer"].get_work_group_info(cl.kernel_work_group_info.LOCAL_MEM_SIZE, device)}')
-        # logging.debug(f'PREFERRED_WORK_GROUP_SIZE_MULTIPLE: {self.kernels["rasterizer"].get_work_group_info(cl.kernel_work_group_info.PREFERRED_WORK_GROUP_SIZE_MULTIPLE, device)}')
-        # logging.debug(f'PRIVATE_MEM_SIZE: {self.kernels["rasterizer"].get_work_group_info(cl.kernel_work_group_info.PRIVATE_MEM_SIZE, device)}')
-        # logging.debug(f'WORK_GROUP_SIZE: {self.kernels["rasterizer"].get_work_group_info(cl.kernel_work_group_info.WORK_GROUP_SIZE, device)}')
-
-        # TODO: can if statements be removed? (wavelength_count != 1). Less branching is better
+        ghost_scale = 1 - fstop / 32
+        flare_image.args = (
+            ghost,
+            vertexes,
+            bin_queues,
+            wavelength_sub_count,
+            sub_steps,
+            intensity,
+            ghost_scale,
+        )
 
         self.kernels['rasterizer'].set_arg(0, flare_image.image)
         self.kernels['rasterizer'].set_arg(1, ghost.image)
@@ -451,19 +403,10 @@ class RasterizingTask(OpenCL):
         self.kernels['rasterizer'].set_arg(8, np.int32(wavelength_sub_count))
         self.kernels['rasterizer'].set_arg(9, np.int32(render.grid_count))
         self.kernels['rasterizer'].set_arg(10, np.int32(sub_steps))
-        self.kernels['rasterizer'].set_arg(11, sub_offsets.buffer)
-        self.kernels['rasterizer'].set_arg(12, np.float32(intensity * 1e3))
-        self.kernels['rasterizer'].set_arg(13, np.float32(scale))
+        self.kernels['rasterizer'].set_arg(11, np.float32(intensity * 1e3))
+        self.kernels['rasterizer'].set_arg(12, np.float32(ghost_scale))
 
-        # clear image
-        w, h = resolution.width(), resolution.height()
-        black = np.zeros((4,), np.float32)
-        clear_event = cl.enqueue_fill_image(
-            self.queue, flare_image.image, black, origin=(0, 0), region=(w, h)
-        )
-
-        wait_for = [vertex_event, clear_event, bin_event]
-        self.rasterizer(flare_image, bin_count, wait_for)
+        self.rasterizer(flare_image)
 
         # return image
         return flare_image
@@ -474,7 +417,7 @@ class RasterizingTask(OpenCL):
         rays: Buffer,
         ghost: Image,
     ) -> Image:
-        sensor_size = tuple(cast_basic(project.flare.lens.sensor_size))
+        sensor_size = tuple(basic(project.flare.lens.sensor_size))
         output = self.rasterize(
             project.render,
             rays,

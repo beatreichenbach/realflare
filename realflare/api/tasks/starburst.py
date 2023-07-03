@@ -1,12 +1,16 @@
+import logging
 from functools import lru_cache
 
 import numpy as np
 import pyopencl as cl
+from PySide2 import QtCore
 
-from realflare.api.data import Flare, Render, Project
+from realflare.api.data import Flare, Project
 from realflare.api.tasks.opencl import OpenCL, LAMBDA_MID, LAMBDA_MIN, LAMBDA_MAX, Image
-from realflare.utils.ciexyz2 import CIEXYZ
+from realflare.utils.ciexyz import CIEXYZ
 from realflare.utils.timing import timer
+
+logger = logging.getLogger(__name__)
 
 
 class StarburstTask(OpenCL):
@@ -78,26 +82,29 @@ class StarburstTask(OpenCL):
 
     @lru_cache(1)
     def starburst(
-        self, config: Flare.Starburst, render: Render.Starburst, aperture: Image
+        self,
+        config: Flare.Starburst,
+        resolution: QtCore.QSize,
+        samples: int,
+        aperture: Image,
+        offset: tuple[float, float],
+        scale: tuple[float, float],
     ) -> Image:
-        # rebuild kernel
-        self.__init__(self.queue)
+        if self.rebuild:
+            self.build()
 
         # args
-        resolution = render.resolution
-        samples = render.samples
-        vignetting = (
-            [config.vignetting.x(), config.vignetting.y()]
-            if config.vignetting_enabled
-            else [np.NAN, np.NAN]
-        )
+        if config.vignetting_enabled:
+            vignetting = (config.vignetting.x(), config.vignetting.y())
+        else:
+            vignetting = (np.NAN, np.NAN)
         blur = config.blur / 100
         rotation = np.radians(config.rotation)
         rotation_weight = config.rotation_weight
         intensity = config.intensity * 1e-6
+        scale = (scale[0], scale[1] * resolution.width() / resolution.height())
+        offset = (offset[0], -offset[1])
 
-        # clear_image is used to ensure cache from the host is used
-        aperture.clear_image()
         fourier_spectrum = self.update_fourier_spectrum(aperture, config.distance)
         fourier_spectrum.clear_image()
 
@@ -105,7 +112,20 @@ class StarburstTask(OpenCL):
 
         # create output buffer
         starburst = self.update_image(resolution, flags=cl.mem_flags.READ_WRITE)
-        starburst.args = (config, render, aperture)
+        starburst.args = (
+            resolution,
+            fourier_spectrum,
+            samples,
+            blur,
+            rotation,
+            rotation_weight,
+            vignetting,
+            intensity,
+            offset,
+            scale,
+        )
+
+        aperture.clear_image()
 
         # run program
         self.kernel.set_arg(0, starburst.image)
@@ -117,8 +137,10 @@ class StarburstTask(OpenCL):
         self.kernel.set_arg(6, np.float32(rotation_weight))
         self.kernel.set_arg(7, np.float32(vignetting))
         self.kernel.set_arg(8, np.float32(intensity))
+        self.kernel.set_arg(9, np.float32(offset))
+        self.kernel.set_arg(10, np.float32(scale))
 
-        w, h = starburst.image.shape
+        w, h = resolution.width(), resolution.height()
         global_work_size = (w, h)
         local_work_size = None
         cl.enqueue_nd_range_kernel(
@@ -132,6 +154,15 @@ class StarburstTask(OpenCL):
 
     @timer
     def run(self, project: Project, aperture: Image) -> Image:
-        return self.starburst(
-            project.flare.starburst, project.render.starburst, aperture
+        flare = project.flare
+        position = flare.light.position.x(), flare.light.position.y()
+        scale = flare.starburst.scale.width(), flare.starburst.scale.height()
+        image = self.starburst(
+            flare.starburst,
+            project.render.resolution,
+            project.render.starburst.samples,
+            aperture,
+            position,
+            scale,
         )
+        return image

@@ -1,6 +1,6 @@
 // https://github.com/ampas/aces-dev/blob/master/transforms/ctl/README-MATRIX.md
 
-float4 xyz_to_ap1(float4 rgba)
+float4 xyz_to_ap1(const float4 rgba)
 {
 	float4 output = 0;
 	output.x =  1.6410233797 * rgba.x + -0.3248032942 * rgba.y + -0.2364246952 * rgba.z;

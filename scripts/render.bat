@@ -2,6 +2,6 @@
 pushd "%~dp0"
 set REALFLARE_DEV=
 
-..\venv\Scripts\python.exe -m realflare --frame-start 1 --frame-end 2 --project ..\benchmark\nikon_ai_50_135mm\project.json --arg "flare.light_position [-2.5,0.5] [2.5,1.0]" --output render.$F4.exr
+..\venv39\Scripts\python.exe -m realflare --frame-start 1 --frame-end 2 --project ..\benchmark\nikon_ai_50_135mm\project.json --animation ..\benchmark\nikon_ai_50_135mm\project.animation.json --output ..\render\render.%%04d.exr --element FLARE_STARBURST
 popd .
 cmd /k

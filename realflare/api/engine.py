@@ -8,13 +8,12 @@ from typing import Callable
 import cv2
 import numpy as np
 import pyopencl as cl
-from pyopencl import tools
 from PySide2 import QtCore
+from pyopencl import tools
 
 from realflare.api.data import Project, RenderElement, RenderImage, RealflareError
 from realflare.api.tasks import opencl
 from realflare.api.tasks.aperture import GhostApertureTask, StarburstApertureTask
-from realflare.api.tasks.compositing import CompositingTask
 from realflare.api.tasks.diagram import DiagramTask
 from realflare.api.tasks.ghost import GhostTask
 from realflare.api.tasks.opencl import Image
@@ -41,7 +40,7 @@ class Engine(QtCore.QObject):
         logger.debug(f'engine initialized on device: {self.queue.device.name}')
 
         self._emit_cache = {}
-        self.elements = []
+        self._elements = []
         self._init_renderers()
         self._init_tasks()
 
@@ -52,7 +51,7 @@ class Engine(QtCore.QObject):
         self.renderers[RenderElement.STARBURST] = self.starburst
         self.renderers[RenderElement.GHOST] = self.ghost
         self.renderers[RenderElement.FLARE] = self.flare
-        self.renderers[RenderElement.FLARE_STARBURST] = self.composite
+        self.renderers[RenderElement.FLARE_STARBURST] = self.flare_starburst
         self.renderers[RenderElement.DIAGRAM] = self.diagram
 
     def _init_tasks(self) -> None:
@@ -63,10 +62,12 @@ class Engine(QtCore.QObject):
         self.intersection_task = IntersectionsTask(self.queue)
         self.raytracing_task = RaytracingTask(self.queue)
         self.rasterizing_task = RasterizingTask(self.queue)
-        self.compositing_task = CompositingTask(self.queue)
         self.diagram_task = DiagramTask(self.queue)
         self.preprocess_task = PreprocessTask(self.queue)
         self.image_sampling_task = ImageSamplingTask(self.queue)
+
+    def elements(self) -> list[RenderElement]:
+        return self._elements
 
     def starburst_aperture(self, project: Project) -> Image:
         image = self.starburst_aperture_task.run(project)
@@ -90,7 +91,7 @@ class Engine(QtCore.QObject):
         ghost = self.ghost(project)
         sample_data = self.image_sampling_task.run(project)
 
-        if project.debug.show_image:
+        if project.flare.light.show_image:
             image = Image(self.queue.context, array=sample_data)
             image.args = (project.flare.light, project.render.resolution)
             return image
@@ -102,7 +103,7 @@ class Engine(QtCore.QObject):
         image_shape = (
             project.render.resolution.height(),
             project.render.resolution.width(),
-            3,
+            4,
         )
         image_array = np.zeros(image_shape, np.float32)
 
@@ -130,7 +131,7 @@ class Engine(QtCore.QObject):
                 rays = self.raytracing_task.run(project, path_indexes)
                 flare = self.rasterizing_task.run(project, rays, ghost)
                 args = flare.args
-                flare_array = flare.array[:, :, :3]
+                flare_array = flare.array[:, :, :4]
                 image_array += values[0] * flare_array
                 flare_array = np.flip(flare_array, 0)
                 image_array += values[1] * flare_array
@@ -146,8 +147,8 @@ class Engine(QtCore.QObject):
 
     def flare(self, project: Project) -> Image:
         # pre processing
-        if project.debug.debug_ghost_enabled:
-            path_indexes = (project.debug.debug_ghost,)
+        if project.render.debug_ghost_enabled:
+            path_indexes = (project.render.debug_ghost,)
         else:
             path_indexes = self.preprocess_task.run(project)
 
@@ -161,33 +162,41 @@ class Engine(QtCore.QObject):
 
         return image
 
+    def flare_starburst(self, project: Project) -> Image:
+        flare = self.flare(project)
+        array = flare.array
+        args = flare.args
+
+        if project.flare.light.image_file_enabled:
+            logger.warning('Starburst is not yet supported for image based flares.')
+        else:
+            starburst = self.starburst(project)
+            array += flare.array + starburst.array
+            args += starburst.args
+
+        image = Image(self.queue.context, array=array, args=args)
+        return image
+
     def diagram(self, project: Project) -> Image:
         path_indexes = (project.diagram.debug_ghost,)
         intersections = self.intersection_task.run(project, path_indexes)
         image = self.diagram_task.run(project, intersections)
         return image
 
-    def composite(self, project: Project) -> Image:
-        starburst = self.starburst(project)
-        flare = self.flare(project)
-
-        array = flare.array + starburst.array
-        image = Image(self.queue.context, array=array, args=starburst.args + flare.args)
-        return image
-
     @timer
     def render(self, project: Project) -> bool:
         self.progress_changed.emit(0)
         try:
-            for element, renderer in self.renderers.items():
-                if element in self.elements:
+            for element in self._elements:
+                renderer = self.renderers.get(element)
+                if renderer:
                     image = renderer(project)
                     self.emit_image(image, element)
                     self.write_image(image, element, project)
         except RealflareError as e:
             logger.error(e)
         except cl.Error as e:
-            logger.debug(e)
+            logger.exception(e)
             logger.error(
                 'Render failed. This is most likely because the GPU ran out of memory. '
                 'Consider lowering the settings and restarting the engine.'
@@ -203,7 +212,7 @@ class Engine(QtCore.QObject):
         return True
 
     def set_elements(self, elements: list[RenderElement]) -> None:
-        self.elements = elements
+        self._elements = elements
         # clear cache to force updates to viewers
         self._emit_cache = {}
 

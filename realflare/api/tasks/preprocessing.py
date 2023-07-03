@@ -6,12 +6,12 @@ import numpy as np
 import pyopencl as cl
 from PySide2 import QtCore
 
-from realflare.api.data import Project, RealflareError
+from qt_extensions.typeutils import HashableDict
+from realflare.api import lens as api_lens
+from realflare.api.data import Project, RealflareError, LensModel
 from realflare.api.path import File
 from realflare.api.tasks.opencl import OpenCL, Buffer
 from realflare.api.tasks.raytracing import RaytracingTask
-from qt_extensions.typeutils import HashableDict
-
 from realflare.storage import Storage
 from realflare.utils.timing import timer
 
@@ -24,7 +24,6 @@ class PreprocessTask(OpenCL):
         super().__init__(queue)
         self.raytracing_task = RaytracingTask(queue)
 
-    @lru_cache(1)
     def update_areas(self, rays: Buffer) -> HashableDict[int, float]:
         # generate a dict of areas where key=path_index and area is the area
         # of the top left quad
@@ -39,31 +38,68 @@ class PreprocessTask(OpenCL):
         return areas
 
     @lru_cache(1)
-    def update_path_indexes(
-        self, areas: HashableDict[int, float], percentage: float
-    ) -> tuple[int]:
+    def preprocess(
+        self,
+        lens_model: LensModel,
+        sensor_size: tuple[float, float],
+        glasses_path: str,
+        abbe_nr_adjustment: float,
+        coating: tuple[int, ...],
+        coating_min_ior: float,
+        grid_length: float,
+        cull_percentage: float,
+    ) -> tuple[int, ...]:
+        # args
+        grid_count = 3
+        grid_length = grid_length * 0.01
+        resolution = QtCore.QSize(100, 100)
+        light_position = (0, 0)
+        wavelength_count = 1
+        path_indexes = tuple()
+
+        rays = self.raytracing_task.raytrace(
+            lens_model=lens_model,
+            sensor_size=sensor_size,
+            glasses_path=glasses_path,
+            abbe_nr_adjustment=abbe_nr_adjustment,
+            coating=coating,
+            coating_min_ior=coating_min_ior,
+            grid_count=grid_count,
+            grid_length=grid_length,
+            light_position=light_position,
+            resolution=resolution,
+            wavelength_count=wavelength_count,
+            path_indexes=path_indexes,
+        )
+
+        if rays is None:
+            return tuple()
+
+        areas = self.update_areas(rays)
+
+        # cull path_indexes up to cull_percentage
         sorted_areas = sorted(areas.items(), key=lambda item: item[1])
-        index_to_keep = int(len(sorted_areas) * (1 - percentage))
+        index_to_keep = int(len(sorted_areas) * (1 - cull_percentage))
         path_indexes = tuple(int(k) for k, v in sorted_areas[:index_to_keep])
+
         return path_indexes
 
     @timer
-    def run(self, project: Project) -> tuple[int]:
-        grid_length = project.render.grid_length
-        rays = self.raytracing_task.raytrace(
-            light_position=(0, 0),
-            lens=project.flare.lens,
-            grid_count=3,
-            grid_length=grid_length * 0.01,
-            resolution=QtCore.QSize(100, 100),
-            wavelength_count=1,
-            path_indexes=tuple(),
+    def run(self, project: Project) -> tuple[int, ...]:
+        lens = project.flare.lens
+        sensor_size = lens.sensor_size.width(), lens.sensor_size.height()
+        lens_model = api_lens.model_from_path(lens.lens_model_path)
+
+        path_indexes = self.preprocess(
+            lens_model=lens_model,
+            sensor_size=sensor_size,
+            glasses_path=lens.glasses_path,
+            abbe_nr_adjustment=lens.abbe_nr_adjustment,
+            coating=lens.coating,
+            coating_min_ior=lens.coating_min_ior,
+            grid_length=project.render.grid_length,
+            cull_percentage=project.render.cull_percentage,
         )
-        if rays is None:
-            return tuple()
-        areas = self.update_areas(rays)
-        cull_percentage = project.render.cull_percentage
-        path_indexes = self.update_path_indexes(areas, cull_percentage)
         return path_indexes
 
 
@@ -119,7 +155,9 @@ class ImageSamplingTask(OpenCL):
         masked_array[~mask] = np.zeros((3,), np.float32)
         masked_array = masked_array.reshape(array.shape)
 
-        return masked_array
+        rgba = np.dstack((masked_array, np.zeros(masked_array.shape[:-1])))
+
+        return rgba
 
     @timer
     def run(self, project: Project) -> np.ndarray:

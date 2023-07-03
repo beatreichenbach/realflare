@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from importlib.resources import files
 import os
 import typing
+from importlib.resources import files
 
 import numpy as np
 import pyopencl as cl
@@ -24,21 +24,19 @@ intersection_dtype = np.dtype(
     ]
 )
 
+# coefficients: ior, wavelength
 lens_element_dtype = np.dtype(
     [
         ('radius', cl.cltypes.float),
-        ('distance', cl.cltypes.float),
         ('ior', cl.cltypes.float),
         ('height', cl.cltypes.float),
         ('center', cl.cltypes.float),
-        ('is_apt', cl.cltypes.int),
-        ('coating', cl.cltypes.float2),
+        ('coating', cl.cltypes.int),
         ('coefficients', cl.cltypes.float8),
     ]
 )
 
-# rrel: the biggest relative distance away from the optical axis relative to
-# the lens (larger than 1 means the ray left the system)
+# rrel: relative distance from optical axis
 # pos_apt: the xy position at which the ray moved through the aperture
 ray_dtype = np.dtype(
     [
@@ -50,6 +48,8 @@ ray_dtype = np.dtype(
     ]
 )
 
+# pos: screen space coordinates
+# intensity: energy preserving based on area
 vertex_dtype = np.dtype(
     [
         ('pos', cl.cltypes.float2),

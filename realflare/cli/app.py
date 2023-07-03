@@ -41,6 +41,65 @@ def apply_animation(obj: Any, animation: dict, index: int):
             apply_animation(child, value, index)
 
 
+def render(
+    project_path: str,
+    animation_path: str = '',
+    output: str = '',
+    colorspace: str = '',
+    element: str = '',
+    frame_start: int = 1,
+    frame_end: int = 1,
+) -> None:
+    # set up project
+    if not project_path or not os.path.isfile(project_path):
+        raise ValueError(f'project path not valid: {project_path}')
+    try:
+        data = storage.read_data(project_path)
+    except ValueError as e:
+        logger.debug(e)
+        raise ValueError(f'project is not valid: {project_path}')
+    project = cast(Project, data)
+
+    # update project
+    project.output.write = True
+    if output:
+        project.output.path = output
+    if colorspace:
+        project.output.colorspace = colorspace
+    if element and element in RenderElement.__members__:
+        project.output.element = RenderElement[element]
+
+    # animation
+    animation = None
+    if animation_path:
+        try:
+            animation = storage.read_data(animation_path)
+        except ValueError as e:
+            logger.debug(e)
+            raise ValueError(f'animation is not valid: {animation_path}')
+
+    # start application
+    # QtCore.QCoreApplication()
+
+    # start engine
+    device = project.render.device
+    try:
+        engine = Engine(device)
+    except (cl.Error, ValueError) as e:
+        raise ValueError from e
+
+    engine.set_elements([project.output.element])
+
+    # set values per frame and
+    for i, frame in enumerate(range(frame_start, frame_end + 1)):
+        project.output.frame = frame
+        if animation:
+            apply_animation(project, animation, i)
+        result = engine.render(project)
+        if not result:
+            raise ValueError('an error occurred while rendering')
+
+
 def exec_(parser: ArgumentParser) -> None:
     args = parser.parse_args(sys.argv[1:])
 
@@ -75,7 +134,7 @@ def exec_(parser: ArgumentParser) -> None:
             animation = storage.read_data(args.animation)
         except ValueError as e:
             logger.debug(e)
-            parser.error(f'project is not valid: {args.project}')
+            parser.error(f'animation is not valid: {args.animation}')
             return
 
     # start application
