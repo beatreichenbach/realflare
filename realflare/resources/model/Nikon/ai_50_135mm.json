@@ -10,14 +10,14 @@
     {
       "radius": 95.858,
       "distance": 1.7,
-      "refractive_index": 1.80518,
+      "refractive_index": 1.805,
       "abbe_nr": 25.4,
       "height": 26.0
     },
     {
       "radius": 49.02,
       "distance": 8.0,
-      "refractive_index": 1.6779,
+      "refractive_index": 1.678,
       "abbe_nr": 55.6,
       "height": 26.0
     },
@@ -31,13 +31,13 @@
     {
       "radius": 75.769,
       "distance": 5.0,
-      "refractive_index": 1.66672,
+      "refractive_index": 1.667,
       "abbe_nr": 48.4,
       "height": 25.0
     },
     {
       "radius": 691.304,
-      "distance": 24.277,
+      "distance": 2.959,
       "refractive_index": 1.0,
       "abbe_nr": 0.0,
       "height": 25.0
@@ -45,7 +45,7 @@
     {
       "radius": -708.168,
       "distance": 1.25,
-      "refractive_index": 1.6968,
+      "refractive_index": 1.697,
       "abbe_nr": 55.6,
       "height": 15.0
     },
@@ -59,7 +59,7 @@
     {
       "radius": -175.109,
       "distance": 1.15,
-      "refractive_index": 1.78797,
+      "refractive_index": 1.788,
       "abbe_nr": 47.5,
       "height": 13.0
     },
@@ -73,13 +73,13 @@
     {
       "radius": 35.758,
       "distance": 3.1,
-      "refractive_index": 1.80518,
+      "refractive_index": 1.805,
       "abbe_nr": 25.4,
       "height": 13.0
     },
     {
       "radius": 165.776,
-      "distance": 6.833,
+      "distance": 27.727,
       "refractive_index": 1.0,
       "abbe_nr": 0.0,
       "height": 13.0
@@ -87,22 +87,22 @@
     {
       "radius": -51.423,
       "distance": 1.15,
-      "refractive_index": 1.67025,
+      "refractive_index": 1.67,
       "abbe_nr": 57.6,
       "height": 13.0
     },
     {
       "radius": 81.327,
       "distance": 2.95,
-      "refractive_index": 1.0,
-      "abbe_nr": 0.0,
+      "refractive_index": 1.672,
+      "abbe_nr": 38.9,
       "height": 13.0
     },
     {
       "radius": -169.527,
-      "distance": 9.418,
-      "refractive_index": 1.67163,
-      "abbe_nr": 38.9,
+      "distance": 8.846,
+      "refractive_index": 1.0,
+      "abbe_nr": 0.0,
       "height": 13.0
     },
     {
@@ -129,14 +129,14 @@
     {
       "radius": 50.356,
       "distance": 5.0,
-      "refractive_index": 1.56384,
+      "refractive_index": 1.564,
       "abbe_nr": 60.8,
       "height": 13.0
     },
     {
       "radius": -70.071,
       "distance": 1.1,
-      "refractive_index": 1.79631,
+      "refractive_index": 1.796,
       "abbe_nr": 41.0,
       "height": 13.0
     },
@@ -150,7 +150,7 @@
     {
       "radius": 25.187,
       "distance": 5.6,
-      "refractive_index": 1.51823,
+      "refractive_index": 1.518,
       "abbe_nr": 59.0,
       "height": 13.0
     },
@@ -164,7 +164,7 @@
     {
       "radius": 262.417,
       "distance": 2.0,
-      "refractive_index": 1.79504,
+      "refractive_index": 1.795,
       "abbe_nr": 28.6,
       "height": 13.0
     },
@@ -178,7 +178,7 @@
     {
       "radius": 111.689,
       "distance": 3.0,
-      "refractive_index": 1.5168,
+      "refractive_index": 1.517,
       "abbe_nr": 64.1,
       "height": 13.0
     },
@@ -192,7 +192,7 @@
     {
       "radius": -18.386,
       "distance": 2.0,
-      "refractive_index": 1.67003,
+      "refractive_index": 1.67,
       "abbe_nr": 47.1,
       "height": 14.0
     },
@@ -206,13 +206,13 @@
     {
       "radius": 941.473,
       "distance": 4.55,
-      "refractive_index": 1.70154,
+      "refractive_index": 1.702,
       "abbe_nr": 41.0,
       "height": 16.0
     },
     {
       "radius": -72.586,
-      "distance": 39.997,
+      "distance": 14.0,
       "refractive_index": 1.0,
       "abbe_nr": 0.0,
       "height": 16.0
