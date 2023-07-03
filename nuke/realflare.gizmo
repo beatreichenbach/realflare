@@ -1,108 +1,168 @@
 Gizmo {
-  inputs 0
-  name Realflare
-  selected true
-  addUserKnob {20 realflare l Realflare}
-  addUserKnob {20 project_group l project n 1}
-  project_group 0
-  addUserKnob {2 project}
-  addUserKnob {2 animation}
-  addUserKnob {20 endGroup_2 n -1}
-  addUserKnob {20 output_group l output n 1}
-  addUserKnob {3 frame_start l "frame range"}
+ name Realflare
+ knobChanged "knob = nuke.thisKnob()\nif knob.name() == 'use_image':\n    nuke.thisNode().knob('image').setEnabled(knob.value())"
+ tile_color 0x4ebbffff
+ label "\[file tail \[value project]]"
 
-  addUserKnob {2 output_path l output}
-  addUserKnob {1 colorspace}
-  addUserKnob {4 element M {GHOST_APERTURE GHOST STARBURST_APERTURE STARBURST FLARE FLARE_STARBURST DIAGRAM "" ""}}
-  element FLARE_STARBURST
-  addUserKnob {6 split_layers l "split layers" +STARTLINE}
-  addUserKnob {20 endGroup_1 n -1}
-  addUserKnob {20 light_group l light n 1}
-  light_group 0
-  addUserKnob {12 position}
-  position {1056 528}
-  addUserKnob {6 use_image l "use image" +STARTLINE}
-  addUserKnob {2 image}
-  addUserKnob {20 endGroup n -1}
-  addUserKnob {26 ""}
-  frame_start {{root.first_frame}}
-  addUserKnob {3 frame_end l "" -STARTLINE}
-  frame_end {{root.last_frame}}
-  addUserKnob {22 render l Render +STARTLINE}
-  addUserKnob {22 open l Open -STARTLINE}
+ addUserKnob {20 realflare_tab l Realflare}
+ addUserKnob {2 project}
+ addUserKnob {22 open l Open T "import realflare_utils\nfrom importlib import reload\nreload(realflare_utils)\nrealflare_utils.open_app()" +STARTLINE}
+
+ addUserKnob {26 ""}
+
+ addUserKnob {12 position}
+ position {960 480}
+ addUserKnob {6 use_image l "use image" +STARTLINE}
+ addUserKnob {2 image +DISABLED}
+
+ addUserKnob {26 ""}
+
+ addUserKnob {2 file}
+ addUserKnob {1 render_colorspace l "colorspace"}
+ render_colorspace "ACES - ACEScg"
+ addUserKnob {4 element M {GHOST_APERTURE GHOST STARBURST_APERTURE STARBURST FLARE FLARE_STARBURST DIAGRAM "" ""}}
+ element FLARE_STARBURST
+ addUserKnob {6 split_layers l "split layers" +STARTLINE}
+ split_layers true
+
+ addUserKnob {26 ""}
+
+ addUserKnob {3 frame_start l "frame range"}
+ frame_start 1
+ addUserKnob {3 frame_end l "" -STARTLINE}
+ frame_end 100
+ addUserKnob {22 render l Render T "import realflare_utils\nfrom importlib import reload\nreload(realflare_utils)\nrealflare_utils.render()" +STARTLINE}
+ addUserKnob {22 reload l Reload -STARTLINE T "import realflare_utils\nfrom importlib import reload\nreload(realflare_utils)\nrealflare_utils.reload()"}
+
+ addUserKnob {20 read_tab l Read}
+ addUserKnob {41 first l "Frame Range" T read.first}
+ addUserKnob {41 before l "" -STARTLINE T read.before}
+ addUserKnob {41 last l "" -STARTLINE T read.last}
+ addUserKnob {41 after l "" -STARTLINE T read.after}
+ addUserKnob {6 lock_frame_range l "lock frame range" -STARTLINE}
+ addUserKnob {41 on_error l "Missing Frames" T read.on_error}
+ addUserKnob {41 colorspace l "Input Transform" T read.colorspace}
+ addUserKnob {6 lock_colorspace l "lock colorspace" -STARTLINE}
 }
  Read {
   inputs 0
   file_type exr
-  first {{parent.frame_start}}
-  last {{parent.frame_end}}
-  origfirst {{parent.frame_start}}
-  origlast {{parent.frame_end}}
-  on_error black
+  file "\[file dirname \[knob parent.file]]/\[join \[linsert \[split \[file tail \[knob parent.file]] .] 1 starburst] .]"
+  first {{read.first}}
+  before {{read.before}}
+  last {{read.last}}
+  after {{read.after}}
+  on_error {{read.on_error}}
+  colorspace {{read.colorspace}}
   name read_starburst
-  xpos 290
-  ypos 14
+  xpos -150
+  ypos -65
  }
-set N2266a800 [stack 0]
-push $N2266a800
+set N1a383000 [stack 0]
  Read {
   inputs 0
   file_type exr
-  first {{parent.frame_start}}
-  last {{parent.frame_end}}
-  origfirst {{parent.frame_start}}
-  origlast {{parent.frame_end}}
-  on_error black
+  file "\[file dirname \[knob parent.file]]/\[join \[linsert \[split \[file tail \[knob parent.file]] .] 1 flare] .]"
+  first {{read.first}}
+  before {{read.before}}
+  last {{read.last}}
+  after {{read.after}}
+  on_error {{read.on_error}}
+  colorspace {{read.colorspace}}
   name read_flare
-  xpos 180
-  ypos 14
+  xpos -40
+  ypos -65
  }
-add_layer {flare flare.red flare.green flare.blue flare.alpha}
- Shuffle {
-  out flare
-  name shuffle_flare
-  xpos 180
-  ypos 134
- }
-add_layer {starburst starburst.red starburst.green starburst.blue starburst.alpha}
- ShuffleCopy {
-  inputs 2
-  in none
-  alpha alpha2
-  out starburst
-  name shuffle_starburst
-  xpos 180
-  ypos 206
- }
+set N1a383800 [stack 0]
  Merge2 {
   inputs 2
   operation plus
   name Merge1
-  xpos 180
-  ypos 278
+  xpos -40
+  ypos 134
+ }
+push $N1a383000
+push $N1a383800
+ Input {
+  inputs 0
+  name Input1
+  xpos 290
+  ypos -226
+ }
+set N1bf48400 [stack 0]
+ Dot {
+  name Dot2
+  xpos 104
+  ypos -150
+ }
+add_layer {flare flare.red flare.green flare.blue flare.alpha}
+ ShuffleCopy {
+  inputs 2
+  in2 none
+  red red
+  green green
+  blue blue
+  out flare
+  name shuffle_flare
+  xpos 70
+  ypos 38
+ }
+add_layer {starburst starburst.red starburst.green starburst.blue starburst.alpha}
+ ShuffleCopy {
+  inputs 2
+  in2 none
+  red red
+  green green
+  blue blue
+  out starburst
+  name shuffle_starburst
+  xpos 70
+  ypos 86
+ }
+ Merge2 {
+  inputs 2
+  operation plus
+  Achannels rgb
+  name merge_plus2
+  xpos 70
+  ypos 134
  }
  Read {
   inputs 0
   file_type exr
-  first {{parent.frame_start}}
-  last {{parent.frame_end}}
-  origfirst {{parent.frame_start}}
-  origlast {{parent.frame_end}}
+  file "\[value parent.file]"
+  before black
+  origset true
   on_error black
+  colorspace compositing_linear
   name read
-  xpos 70
-  ypos 7
+  xpos 400
+  ypos -65
+ }
+push $N1bf48400
+ Dot {
+  name Dot1
+  xpos 544
+  ypos -150
+ }
+ Merge2 {
+  inputs 2
+  operation plus
+  Achannels rgb
+  name merge_plus
+  xpos 510
+  ypos 134
  }
  Switch {
   inputs 2
-  which {{parent.split_layers}}
+  which {{"parent.split_layers && parent.element==5"}}
   name switch_layers
-  xpos 70
-  ypos 374
+  xpos 290
+  ypos 326
  }
  Output {
   name Output1
-  xpos 70
-  ypos 470
+  xpos 290
+  ypos 398
  }
 end_group
