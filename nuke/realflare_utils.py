@@ -24,14 +24,6 @@ except ImportError:
     lib_path = lib_path.replace('\\', '/')
     if lib_path not in nuke.pluginPath():
         nuke.pluginAddPath(lib_path)
-    lib_path = r'D:\files\dev\027_flare\realflare'
-    lib_path = lib_path.replace('\\', '/')
-    if lib_path not in nuke.pluginPath():
-        nuke.pluginAddPath(lib_path)
-    lib_path = r'D:\files\dev\027_flare\qt-extensions'
-    lib_path = lib_path.replace('\\', '/')
-    if lib_path not in nuke.pluginPath():
-        nuke.pluginAddPath(lib_path)
 
 from realflare.gui import app as gui_app
 from realflare.storage import Storage
