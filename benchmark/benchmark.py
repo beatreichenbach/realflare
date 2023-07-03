@@ -2,17 +2,17 @@ import logging
 import os
 import platform
 import re
+import statistics
 import subprocess
 import sys
 from importlib.metadata import version
 
 import PyOpenColorIO
 import pyopencl as cl
-
-from realflare.api.tasks import opencl
 from markdownTable import markdownTable
 
 import realflare
+from realflare.api.tasks import opencl
 
 
 def markdown_table(data: dict, headers: tuple[str, str]) -> str:
@@ -34,7 +34,7 @@ def markdown_table(data: dict, headers: tuple[str, str]) -> str:
     return table
 
 
-def build_report(project_path: str, args: list, output: str):
+def build_report(project_path: str, animation_path: str, command: str, output: str):
     # hardware
     queue = opencl.command_queue()
     device = queue.device
@@ -74,33 +74,37 @@ def build_report(project_path: str, args: list, output: str):
     package_path = os.path.dirname(os.path.dirname(__file__))
     relative_sys_path = os.path.relpath(sys.executable, package_path)
     relative_project_path = os.path.relpath(project_path, package_path)
-    command = ' '.join(args)
     command = command.replace(sys.executable, relative_sys_path)
     command = command.replace(project_path, relative_project_path)
-    command = f'`{command}`'
+    command = command.replace(animation_path, relative_project_path)
 
-    # score
-    score = {}
+    # aggregate times
+    times = {}
     pattern = re.compile(r'([\w.]+):\s*(\d+(?:\.\d+)?ms)$')
     for line in output.split('\n'):
+        print(line)
         match = pattern.search(line.strip())
         if match:
             func = match.group(1)
             time = match.group(2)
-            if func == 'Engine.render':
-                func = f'**{func}**'
-                time = f'**{time}**'
-            score[func] = time
 
+            values = times.get(func, [])
+            try:
+                values.append(float(time.strip('ms')))
+            except ValueError:
+                continue
+            times[func] = values
+
+    # average score
+    score = {}
+    for func, values in times.items():
+        time = statistics.mean(values)
+        time = f'{time:.02f}ms'
+        if func == 'Engine.render':
+            func = f'**{func}**'
+            time = f'**{time}**'
+        score[func] = time
     score_table = markdown_table(score, ('Function', 'Time'))
-
-    fields = {
-        'version': f'v{realflare_version}',
-        'hardware_table': hardware_table,
-        'software_table': software_table,
-        'command': command,
-        'score_table': score_table,
-    }
 
     # read template
     template_path = os.path.join(os.path.dirname(__file__), 'report_template.md')
@@ -108,6 +112,13 @@ def build_report(project_path: str, args: list, output: str):
         report = f.read()
 
     # create text
+    fields = {
+        'version': f'v{realflare_version}',
+        'hardware_table': hardware_table,
+        'software_table': software_table,
+        'command': f'`{command}`',
+        'score_table': score_table,
+    }
     for key, value in fields.items():
         placeholder = f'<!--{key}-->'
         report = report.replace(placeholder, value)
@@ -127,23 +138,20 @@ def run(name: str = 'nikon_ai_50_135mm') -> None:
     if 'REALFLARE_REBUILD' in env:
         del env['REALFLARE_REBUILD']
 
-    project_path = os.path.join(os.path.dirname(__file__), name, 'project.json')
+    project_dir = os.path.join(os.path.dirname(__file__), name)
+    project_path = os.path.join(project_dir, 'project.json')
+    animation_path = os.path.join(project_dir, 'project.animation.json')
 
-    command = [
-        sys.executable,
-        '-m',
-        'realflare',
-        '--project',
-        project_path,
-        '--log',
-        str(logging.INFO),
-    ]
+    command = (
+        f'"{sys.executable}" -m realflare '
+        f'--project "{project_path}" --animation "{animation_path}" '
+        f'--frame-start 1 --frame-end 2 --log {logging.INFO}'
+    )
+    output = subprocess.check_output(
+        command, env=env, shell=True, stderr=subprocess.STDOUT
+    )
 
-    print(' '.join(command))
-
-    output = subprocess.check_output(command, env=env, stderr=subprocess.STDOUT)
-
-    build_report(project_path, command, output.decode('utf-8'))
+    build_report(project_path, animation_path, command, output.decode('utf-8'))
 
 
 if __name__ == '__main__':
