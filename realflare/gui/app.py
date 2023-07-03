@@ -29,7 +29,7 @@ from realflare.gui.presetbrowser import PresetBrowser
 
 from qt_extensions.mainwindow import DockWindow, DockWidgetState, SplitterState
 from qt_extensions import theme
-from qt_extensions.typeutils import cast, cast_basic
+from qt_extensions.typeutils import cast, basic
 
 # NOTE: A quick tip: If all you want to do every 10ms is to draw a new point on a graph
 #  (or some similar gui display), then draw to a QImage instead.
@@ -40,9 +40,6 @@ from qt_extensions.typeutils import cast, cast_basic
 #  Or you could do the same thing with an array of points, etc.
 
 # TODO: cast can raise TypeError or ValueError
-
-# TODO: should widget.value cast the value to the right type?
-#  (yes but consider using set_value in the future)
 
 logger = logging.getLogger(__name__)
 storage = Storage()
@@ -338,7 +335,7 @@ class MainWindow(DockWindow):
         storage.add_recent_path(self.project_path)
         self._update_recent_menu()
 
-        data = cast_basic(self.project)
+        data = basic(self.project)
         try:
             storage.write_data(data, self.project_path)
         except OSError:
@@ -427,6 +424,7 @@ class MainWindow(DockWindow):
         self._api_thread.quit()
         clear_cache()
         self._init_engine()
+        self.refresh()
 
     def request_render(
         self,
@@ -435,7 +433,7 @@ class MainWindow(DockWindow):
         # try starting a render, if the engine is rendering,
         # store the project in the queue instead
         if project is not None:
-            # NOTE: so far the only reason for deepcopy is render_to_disk.
+            # TODO: so far the only reason for deepcopy is render_to_disk.
             #  If that function wouldn't require setting a temporary setting
             #  it could stay mutable...
 
@@ -511,7 +509,11 @@ class MainWindow(DockWindow):
     def _position_changed(self, viewer: ElementViewer, position: QtCore.QPoint) -> None:
         # set the position of the light in the editor when clicking on a viewer
 
-        if viewer.element != RenderElement.FLARE:
+        if viewer.element not in (
+            RenderElement.FLARE,
+            RenderElement.STARBURST,
+            RenderElement.FLARE_STARBURST,
+        ):
             return
 
         # update project
@@ -525,12 +527,16 @@ class MainWindow(DockWindow):
                 widgets = widget.widgets()
                 position_parameter = widgets['flare']['light']['position']
                 position_parameter.blockSignals(True)
-                position_parameter.value = self.project.flare.light.position
+                position_parameter.set_value(self.project.flare.light.position)
                 position_parameter.blockSignals(False)
                 break
 
     def _project_editor_changed(self, editor: ProjectEditor) -> None:
-        self.project = editor.project()
+        try:
+            self.project = editor.project()
+        except TypeError as e:
+            logger.exception(e)
+            self.project = None
         self._test_changes()
 
         # device
@@ -654,7 +660,7 @@ def sentry_request_permission():
     sentry.init()
 
 
-def exec_():
+def init_app() -> QtWidgets.QApplication:
     # application
     app = QtWidgets.QApplication(sys.argv)
     app.setApplicationName('realflare')
@@ -667,9 +673,16 @@ def exec_():
     # theme
     theme.apply_theme(theme.monokai)
 
+    return app
+
+
+def init_window(project: str = '') -> MainWindow:
     # sentry
     if storage.settings.sentry is None:
         sentry_request_permission()
+
+    if project:
+        storage.add_recent_path(project)
 
     # main window
     window = MainWindow()
@@ -678,20 +691,13 @@ def exec_():
     # render
     window.refresh()
 
+    return window
+
+
+def exec_():
+    app = init_app()
+    init_window()
     return app.exec_()
-
-
-def show():
-    # sentry
-    if storage.settings.sentry is None:
-        sentry_request_permission()
-
-    # main window
-    window = MainWindow()
-    window.show()
-
-    # render
-    window.refresh()
 
 
 if __name__ == '__main__':

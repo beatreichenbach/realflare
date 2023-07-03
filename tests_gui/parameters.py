@@ -6,7 +6,7 @@ from PySide2 import QtWidgets
 from realflare.api import data
 from realflare.gui.parameters import ProjectEditor
 from qt_extensions import theme
-from qt_extensions.typeutils import cast_basic, cast
+from qt_extensions.typeutils import basic, cast
 
 
 def main():
@@ -19,7 +19,7 @@ def main():
 
     project = editor.project()
     project.flare.lens.lens_model_path = r'$RES/model/Leica/35mm_1_4.json'
-    project_string = json.dumps(cast_basic(project), indent=4)
+    project_string = json.dumps(basic(project), indent=4)
     project = cast(data.Project, json.loads(project_string))
     editor.set_project(project)
 

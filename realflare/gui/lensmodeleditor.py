@@ -12,7 +12,6 @@ from qt_extensions.filebrowser import FileBrowser, FileElement
 
 from realflare.api.data import LensModel
 from realflare.storage import Storage
-from qt_extensions.box import CollapsibleBox
 from qt_extensions.elementbrowser import Field
 from qt_extensions.helper import unique_path
 from qt_extensions.icons import MaterialIcon
@@ -22,9 +21,10 @@ from qt_extensions.parameters import (
     IntParameter,
     FloatParameter,
     StringParameter,
+    ParameterBox,
     ParameterEditor,
 )
-from qt_extensions.typeutils import cast, cast_basic
+from qt_extensions.typeutils import cast, basic
 
 
 logger = logging.getLogger(__name__)
@@ -40,6 +40,13 @@ class ContentWidget(QtWidgets.QWidget):
         self.layout().setContentsMargins(QtCore.QMargins())
         self.layout().setSpacing(0)
 
+    def sizeHint(self) -> QtCore.QSize:
+        size = super().sizeHint()
+        for widget in self.widgets:
+            size.setWidth(max(size.width(), widget.sizeHint().width()))
+            size.setHeight(max(size.height(), widget.sizeHint().height()))
+        return size
+
     def add_widget(self, widget: QtWidgets.QWidget) -> None:
         if widget not in self.widgets:
             self.widgets.append(widget)
@@ -53,40 +60,36 @@ class ContentWidget(QtWidgets.QWidget):
             self.show_widget()
 
     def show_widget(self, widget: QtWidgets.QWidget | None = None) -> None:
-        for widget_ in self.widgets:
-            widget_.hide()
+        for w in self.widgets:
+            w.hide()
 
         if widget in self.widgets:
             widget.show()
-
-    def sizeHint(self) -> QtCore.QSize:
-        size = super().sizeHint()
-        for widget in self.widgets:
-            size.setWidth(max(size.width(), widget.sizeHint().width()))
-            size.setHeight(max(size.height(), widget.sizeHint().height()))
-        return size
 
 
 class GroupEditor(ParameterEditor):
     def __init__(self, parent: QtWidgets.QWidget | None = None) -> None:
         super().__init__(parent)
 
-        group = self.add_group('Group', style=CollapsibleBox.Style.SIMPLE)
-        group.create_hierarchy = False
+        box = self.add_group('Group')
+        box.set_box_style(ParameterBox.SIMPLE)
+        box.set_collapsible(False)
+        form = box.form
+        form.create_hierarchy = False
         parm = StringParameter('name')
 
         regex = QtCore.QRegularExpression(r'[\w\d\.-]+')
         parm.text.setValidator(QtGui.QRegularExpressionValidator(regex, parm))
 
-        group.add_parameter(parm)
+        form.add_parameter(parm)
+
+    def group_name(self) -> str:
+        return self.values().get('name', '')
 
     def update_editor(self, name: str) -> None:
         self.blockSignals(True)
         self.set_values({'name': name})
         self.blockSignals(False)
-
-    def group_name(self) -> str:
-        return self.values().get('name', '')
 
 
 class LensModelEditor(ParameterEditor):
@@ -97,86 +100,88 @@ class LensModelEditor(ParameterEditor):
 
     def _init_editor(self) -> None:
         # lens model
-        model_group = self.add_group('model', style=CollapsibleBox.Style.SIMPLE)
-        model_group.create_hierarchy = False
+        box = self.add_group('model')
+        box.set_box_style(ParameterBox.SIMPLE)
+        form = box.form
+        form.create_hierarchy = False
 
         # model
         parm = StringParameter('name')
-        parm.tooltip = 'The name of the lens. Only for reference.'
-        self.name_parameter = model_group.add_parameter(parm)
+        parm.set_tooltip('The name of the lens. For reference.')
+        self.name_parameter = form.add_parameter(parm)
 
         parm = IntParameter('year')
-        parm.slider_visible = False
-        parm.line_min = 0
-        parm.line_max = 9999
-        parm.tooltip = 'The year of the lens / patent. Only for reference.'
-        model_group.add_parameter(parm)
+        parm.set_slider_visible(False)
+        parm.set_line_min(0)
+        parm.set_line_max(9999)
+        parm.set_tooltip('The year of the lens / patent. For reference.')
+        form.add_parameter(parm)
 
         parm = StringParameter('patent_number')
-        parm.tooltip = (
-            'Patent number if the lens is based on a patent. Only for reference.'
+        parm.set_tooltip(
+            'Patent number if the lens is based on a patent. For reference.'
         )
-        model_group.add_parameter(parm)
+        form.add_parameter(parm)
 
         parm = StringParameter('notes')
-        parm.tooltip = 'Additional information for the lens. Only for reference.'
-        parm.area = True
-        model_group.add_parameter(parm)
+        parm.set_tooltip('Additional information for the lens. For reference.')
+        parm.set_area(True)
+        form.add_parameter(parm)
 
         # specs
-        specs_group = self.add_group(
-            'specs', collapsible=False, style=CollapsibleBox.Style.SIMPLE
-        )
-        specs_group.create_hierarchy = False
+        box = self.add_group('specs')
+        box.set_box_style(ParameterBox.SIMPLE)
+        form = box.form
+        form.create_hierarchy = False
 
         # expand collapsible boxes
-        for group in self.boxes().values():
+        for group in self.groups().values():
             for box in group.keys():
                 box.collapsed = False
 
         parm = FloatParameter('focal_length')
-        parm.slider_min = 10
-        parm.slider_max = 100
-        parm.slider_visible = False
-        parm.tooltip = (
+        parm.set_slider_min(10)
+        parm.set_slider_max(100)
+        parm.set_slider_visible(False)
+        parm.set_tooltip(
             'Focal Length in mm of the lens. Used for mapping the light source '
             'to the ray direction.'
         )
-        specs_group.add_parameter(parm)
+        form.add_parameter(parm)
 
         parm = FloatParameter('fstop')
-        parm.label = 'Minimum F-Stop'
-        parm.slider_min = 1
-        parm.slider_max = 32
-        parm.slider_visible = False
-        parm.tooltip = 'Minimum possible F-Stop of the lens. Not currently used.'
-        specs_group.add_parameter(parm)
+        parm.set_label('Minimum F-Stop')
+        parm.set_slider_min(1)
+        parm.set_slider_max(32)
+        parm.set_slider_visible(False)
+        parm.set_tooltip('Minimum possible F-Stop of the lens. Not currently used.')
+        form.add_parameter(parm)
 
         parm = IntParameter('aperture_index')
-        parm.line_min = 0
-        parm.slider_visible = False
-        parm.tooltip = (
+        parm.set_line_min(0)
+        parm.set_slider_visible(False)
+        parm.set_tooltip(
             'The number of the entry in the lens elements that is the aperture. '
             'Make sure to include a lens element with radius 0, refractive index 1 '
             'and correct height for the aperture. The height is currently not '
             'automatically calculated.'
         )
-        specs_group.add_parameter(parm)
+        form.add_parameter(parm)
 
         parm = TabDataParameter('lens_elements')
         fields = dataclasses.fields(LensModel.LensElement)
-        parm.headers = [field.name for field in fields]
-        parm.types = [field.type for field in fields]
-        parm.tooltip = (
+        parm.set_headers([field.name for field in fields])
+        parm.set_types([field.type for field in fields])
+        parm.set_tooltip(
             'A list of all the lens elements including the aperture. '
             'In patents the usual labels are: radius \'r\', distance \'d\', '
             'refractive index \'n\', abbe number \'v\'. The height is rarely given '
             'and can be dialed in by comparing the diagram with the render.'
         )
-        specs_group.add_parameter(parm)
+        form.add_parameter(parm)
 
         # init defaults
-        values = cast_basic(LensModel())
+        values = basic(LensModel())
         self.set_values(values, attr='default')
 
     def lens_model_config(self) -> LensModel:
@@ -185,7 +190,7 @@ class LensModelEditor(ParameterEditor):
         return config
 
     def update_editor(self, config: LensModel) -> None:
-        values = cast_basic(config)
+        values = basic(config)
 
         self.blockSignals(True)
         self.set_values(values)
@@ -379,7 +384,7 @@ class LensModelDialog(QtWidgets.QWidget):
             except OSError:
                 pass
 
-        data = cast_basic(lens_model)
+        data = basic(lens_model)
         try:
             storage.write_data(data, path)
         except ValueError:

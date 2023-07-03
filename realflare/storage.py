@@ -9,7 +9,7 @@ from dataclasses import dataclass, field
 from importlib.resources import files
 from typing import Any, Union
 
-from qt_extensions.typeutils import cast, cast_basic
+from qt_extensions.typeutils import cast, basic
 
 import realflare
 
@@ -149,7 +149,7 @@ class Storage(JSONStorage, metaclass=Singleton):
         shutil.copytree(package_resource_path, resource_path)
 
     def save_settings(self) -> bool:
-        data = cast_basic(self.settings)
+        data = basic(self.settings)
         try:
             self.write_data(data, self._settings_path)
         except ValueError:
@@ -157,7 +157,7 @@ class Storage(JSONStorage, metaclass=Singleton):
         return True
 
     def save_state(self) -> bool:
-        data = cast_basic(self.state)
+        data = basic(self.state)
         try:
             self.write_data(data, self._state_path)
         except ValueError:

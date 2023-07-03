@@ -6,13 +6,14 @@ from PySide2 import QtWidgets, QtGui, QtCore
 from qt_extensions.button import Button
 from qt_extensions.messagebox import MessageBox
 from qt_extensions.parameters import (
+    BoolParameter,
+    ParameterBox,
     PathParameter,
     ParameterEditor,
-    BoolParameter,
     StringParameter,
 )
 from qt_extensions.box import CollapsibleBox
-from qt_extensions.typeutils import cast_basic, cast
+from qt_extensions.typeutils import basic, cast
 
 from realflare.storage import Storage, Settings
 from realflare.utils import ocio
@@ -29,49 +30,49 @@ class SettingsEditor(ParameterEditor):
 
     def _init_editor(self) -> None:
         # color
-        color_group = self.add_group(
-            'Color', collapsible=True, style=CollapsibleBox.Style.BUTTON
-        )
-        color_group.create_hierarchy = False
+        box = self.add_group('Color')
+        box.set_box_style(ParameterBox.BUTTON)
+        form = box.form
+        form.create_hierarchy = False
 
         parm = PathParameter('ocio')
-        parm.label = 'OCIO Config'
-        parm.method = PathParameter.Method.SAVE_FILE
-        parm.tooltip = (
+        parm.set_label('OCIO Config')
+        parm.set_method(PathParameter.SAVE_FILE)
+        parm.set_tooltip(
             'Path to the config.ocio file. '
             'Currently a ACES config is required. '
             'If no path is set here, the system will fall back to '
             'the environment variable \'OCIO\''
         )
-        color_group.add_parameter(parm)
+        form.add_parameter(parm)
 
         parm = StringParameter('view_colorspace')
-        parm.menu = ocio.view_names()
-        color_group.add_parameter(parm)
+        parm.set_menu(ocio.view_names())
+        form.add_parameter(parm)
 
         # logging
-        logging_group = self.add_group(
-            'Logging', collapsible=True, style=CollapsibleBox.Style.BUTTON
-        )
-        logging_group.create_hierarchy = False
+        box = self.add_group('Logging')
+        box.set_box_style(ParameterBox.BUTTON)
+        form = box.form
+        form.create_hierarchy = False
 
         parm = BoolParameter('clear_log_on_render')
-        parm.tooltip = 'Clear the log on every render.'
-        logging_group.add_parameter(parm)
+        parm.set_tooltip('Clear the log on every render.')
+        form.add_parameter(parm)
 
         # crash reporting
-        crash_group = self.add_group(
-            'Crash Reporting', collapsible=True, style=CollapsibleBox.Style.BUTTON
-        )
-        crash_group.create_hierarchy = False
+        box = self.add_group('Crash Reporting')
+        box.set_box_style(ParameterBox.BUTTON)
+        form = box.form
+        form.create_hierarchy = False
 
         parm = BoolParameter('sentry')
-        parm.label = 'Automated Crash Reporting'
-        parm.tooltip = (
+        parm.set_label('Automated Crash Reporting')
+        parm.set_tooltip(
             'Automatically upload crash reports using Sentry.io. '
             'Crash reports don\'t include any personal information.'
         )
-        crash_group.add_parameter(parm)
+        form.add_parameter(parm)
 
     def settings(self) -> Settings:
         values = self.values()
@@ -79,7 +80,7 @@ class SettingsEditor(ParameterEditor):
         return settings
 
     def set_settings(self, settings: Settings, attr: str = 'value') -> None:
-        settings_dict = cast_basic(settings)
+        settings_dict = basic(settings)
         if settings_dict['sentry'] is None:
             settings_dict['sentry'] = True
         self.blockSignals(True)

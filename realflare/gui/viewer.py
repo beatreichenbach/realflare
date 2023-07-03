@@ -31,9 +31,9 @@ class ElementViewer(Viewer):
             return helper.title(text)
 
         self.element_parm = EnumParameter('element')
-        self.element_parm.enum = RenderElement
-        self.element_parm.default = self._element
-        self.element_parm.formatter = formatter
+        self.element_parm.set_enum(RenderElement)
+        self.element_parm.set_default(self._element)
+        self.element_parm.set_formatter(formatter)
         self.element_parm.value_changed.connect(self._change_element)
 
         exposure_action = self.toolbar.find_action('exposure_toggle')
@@ -49,7 +49,7 @@ class ElementViewer(Viewer):
 
     @element.setter
     def element(self, value: RenderElement) -> None:
-        self.element_parm.value = value
+        self.element_parm.set_value(value)
 
     def state(self) -> dict:
         state = super().state()
