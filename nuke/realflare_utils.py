@@ -19,8 +19,7 @@ except ImportError:
         setup.run()
         task.setProgress(100)
         del task
-    # lib_path = setup.lib_path
-    lib_path = r'D:\files\dev\027_flare\realflare\nuke\venv\Lib\site-packages'
+    lib_path = setup.lib_path
     lib_path = lib_path.replace('\\', '/')
     if lib_path not in nuke.pluginPath():
         nuke.pluginAddPath(lib_path)

@@ -164,7 +164,7 @@ class Engine(QtCore.QObject):
 
     def flare_starburst(self, project: Project) -> Image:
         flare = self.flare(project)
-        array = flare.array
+        array = flare.array.copy()
         args = flare.args
 
         if project.flare.light.image_file_enabled:
