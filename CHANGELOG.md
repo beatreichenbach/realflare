@@ -1,5 +1,17 @@
 <!--next-version-placeholder-->
 
+## v0.6.0 (2023-07-02)
+### Feature
+
+* **nuke:** Add plugin ([`b22dbe4`](https://github.com/beatreichenbach/realflare/commit/b22dbe4af29f65cb7b306d905843d089dd12187e))
+* **api:** Optimizations/cleanup/caching ([`82fa1e1`](https://github.com/beatreichenbach/realflare/commit/82fa1e180d4b84d8cd62d7c591112991f93efce6))
+
+### Fix
+
+* **nuke:** Update menu ([`1fe3538`](https://github.com/beatreichenbach/realflare/commit/1fe353816728f0f13b94894851c119a975015bd5))
+* **nuke:** Add zip and clean plugin ([`529ad6b`](https://github.com/beatreichenbach/realflare/commit/529ad6b4deac3393c6d7de636d71480bc9b783dd))
+* **benchmark:** Update ([`a33fe1f`](https://github.com/beatreichenbach/realflare/commit/a33fe1fe262e2549b412c371bf455f20c70bb6f6))
+
 ## v0.5.0 (2023-06-19)
 ### Feature
 
