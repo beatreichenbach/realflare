@@ -143,6 +143,7 @@ def exec_(parser: ArgumentParser) -> None:
     # start engine
     device = project.render.device
     try:
+        logger.debug(f'attempting to start engine on device: {device}')
         engine = Engine(device)
     except (cl.Error, ValueError) as e:
         parser.error(e)

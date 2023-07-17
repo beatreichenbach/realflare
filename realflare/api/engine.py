@@ -123,15 +123,14 @@ class Engine(QtCore.QObject):
                     continue
 
                 # get position of center of sample
-                position = QtCore.QPointF(
-                    (x + 0.5) / half_width - 1,
-                    1 - (y + 0.5) / half_height,
-                )
-                project.flare.light.position = position
+                project.flare.light.position.setX((x + 0.5) / half_width - 1)
+                project.flare.light.position.setY(1 - (y + 0.5) / half_height)
+
                 rays = self.raytracing_task.run(project, path_indexes)
                 flare = self.rasterizing_task.run(project, rays, ghost)
+
                 args = flare.args
-                flare_array = flare.array[:, :, :4]
+                flare_array = flare.array.copy()
                 image_array += values[0] * flare_array
                 flare_array = np.flip(flare_array, 0)
                 image_array += values[1] * flare_array
@@ -139,6 +138,8 @@ class Engine(QtCore.QObject):
                 image_array += values[2] * flare_array
                 flare_array = np.flip(flare_array, 0)
                 image_array += values[3] * flare_array
+
+        # normalize
         image_array /= width * height
 
         image = Image(self.queue.context, array=image_array)
