@@ -1,5 +1,6 @@
 import glob
 import os.path
+import platform
 import re
 import subprocess
 
@@ -109,7 +110,6 @@ def run(
 ) -> None:
     setup = Setup()
     executable = setup.executable
-    executable = r'D:\files\dev\027_flare\realflare\venv310\Scripts\python.exe'
     cmd = (
         f'"{executable}" -m realflare '
         f'--project "{project_path}" --animation "{animation_path}" '
@@ -117,7 +117,12 @@ def run(
         f'--frame-start {frame_start} --frame-end {frame_end} --log 20'
     )
     print(cmd)
-    subprocess.run(cmd, creationflags=subprocess.CREATE_NEW_CONSOLE)
+
+    kwargs = {}
+    if platform.system() == 'Windows':
+        kwargs['creationflags'] = subprocess.CREATE_NEW_CONSOLE
+
+    subprocess.run(cmd, **kwargs)
 
 
 def render():
