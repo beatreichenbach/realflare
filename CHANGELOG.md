@@ -1,5 +1,11 @@
 <!--next-version-placeholder-->
 
+## v0.6.1 (2023-07-17)
+### Fix
+
+* **nuke:** Remove dev path and add os specific flags ([`d914cb4`](https://github.com/beatreichenbach/realflare/commit/d914cb49cd1472dbca5b00b8234894571decbb49))
+* **opencl:** Define constants with __constant ([`93eaff4`](https://github.com/beatreichenbach/realflare/commit/93eaff4de521152bbff08c9cace06174ae53d8d2))
+
 ## v0.6.0 (2023-07-02)
 ### Feature
 
