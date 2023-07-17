@@ -83,11 +83,11 @@ class RasterizingTask(OpenCL):
         # append all values into an array
         array_str = ', '.join(map(str, sub_offsets))
         self.source += (
-            f'const uchar sub_offsets[{len(sub_offsets)}] = {{{array_str}}};\n'
+            f'__constant uchar sub_offsets[{len(sub_offsets)}] = {{{array_str}}};\n'
         )
-        self.source += f'const int BIN_SIZE = {self.bin_size};\n'
-        self.source += f'const int LAMBDA_MIN = {LAMBDA_MIN};\n'
-        self.source += f'const int LAMBDA_MAX = {LAMBDA_MAX};\n'
+        self.source += f'__constant int BIN_SIZE = {self.bin_size};\n'
+        self.source += f'__constant int LAMBDA_MIN = {LAMBDA_MIN};\n'
+        self.source += f'__constant int LAMBDA_MAX = {LAMBDA_MAX};\n'
         self.source += self.read_source_file('color.cl')
         self.source += self.read_source_file('rasterizing.cl')
 

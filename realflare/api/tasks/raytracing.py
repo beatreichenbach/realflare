@@ -259,8 +259,8 @@ class IntersectionsTask(RaytracingTask):
         self.register_dtype('LensElement', lens_element_dtype)
         self.register_dtype('Intersection', intersection_dtype)
         self.source += '#define STORE_INTERSECTIONS\n'
-        self.source += f'const int LAMBDA_MIN = {LAMBDA_MIN};\n'
-        self.source += f'const int LAMBDA_MAX = {LAMBDA_MAX};\n'
+        self.source += f'__constant int LAMBDA_MIN = {LAMBDA_MIN};\n'
+        self.source += f'__constant int LAMBDA_MAX = {LAMBDA_MAX};\n'
         self.source += self.read_source_file('raytracing.cl')
         OpenCL.build(self, *args, **kwargs)
         self.kernel = cl.Kernel(self.program, 'raytrace')
