@@ -1,5 +1,10 @@
 <!--next-version-placeholder-->
 
+## v0.6.2 (2023-08-16)
+### Fix
+
+* **nuke:** Add platform specific paths ([`39de801`](https://github.com/beatreichenbach/realflare/commit/39de8010c5dcee5671bce47b8a300df47cd69322))
+
 ## v0.6.1 (2023-07-17)
 ### Fix
 
