@@ -10,7 +10,7 @@ from realflare_setup import Setup
 
 try:
     import realflare
-except ImportError:
+except (ModuleNotFoundError, ImportError):
     setup = Setup()
     # install realflare first time
     if not os.path.exists(setup.venv_path):
@@ -90,7 +90,7 @@ def frame_range_from_path(file_path: str) -> tuple[int, int]:
                 frame_range[i] = int(''.join(characters))
             except ValueError:
                 pass
-    return tuple(frame_range)
+    return (frame_range[0], frame_range[1])
 
 
 def reload() -> None:

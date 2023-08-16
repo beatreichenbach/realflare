@@ -2,7 +2,7 @@ import logging
 import os
 import platform
 import subprocess
-
+import sys
 
 logger = logging.getLogger('realflare')
 
@@ -11,21 +11,33 @@ class Setup:
     url = 'https://github.com/beatreichenbach/realflare/archive/refs/heads/main.zip'
 
     def __init__(self, venv_path: str = ''):
+        # venv path
         if not venv_path:
             venv_path = os.path.join(os.path.dirname(__file__), 'venv')
-
-        # venv
         self.venv_path = venv_path
-        lib_dir = 'Lib' if platform.system() == 'Windows' else 'lib'
-        self.lib_path = os.path.join(self.venv_path, lib_dir, 'site-packages')
 
-        # executable
-        bin_dir = 'Scripts' if platform.system() == 'Windows' else 'bin'
-        self.executable = os.path.join(self.venv_path, bin_dir, 'python')
+        if platform.system() == 'Windows':
+            # lib
+            self.lib_path = os.path.join(venv_path, 'Lib', 'site-packages')
+            # executable
+            self.executable = os.path.join(venv_path, 'Scripts', 'python.exe')
+        else:
+            major, minor = sys.version_info[:2]
+            lib_dir = os.path.join('lib', f'python{major:d}.{minor:d}')
+            # lib
+            self.lib_path = os.path.join(venv_path, lib_dir, 'site-packages')
+            # executable
+            self.executable = os.path.join(venv_path, 'bin', 'python3')
 
     def venv(self) -> None:
         logger.info('Installing virtual environment ...')
-        subprocess.run(f'python -m venv {self.venv_path}', shell=True)
+
+        executable = os.path.join(
+            os.path.dirname(sys.executable), os.path.basename(self.executable)
+        )
+        subprocess.run(f'{executable} -m venv {self.venv_path}', shell=True)
+        subprocess.run(f'{self.executable} -m ensurepip', shell=True)
+        subprocess.run(f'{self.executable} -m pip install --upgrade pip', shell=True)
 
     def install(self) -> None:
         logger.info('Installing pip packages ...')
@@ -57,6 +69,7 @@ class Setup:
             return
 
     def run(self):
+        logger.setLevel(logging.INFO)
         try:
             self.venv()
             self.install()
@@ -64,6 +77,7 @@ class Setup:
         except subprocess.CalledProcessError as e:
             logger.exception(e)
             logger.error('Installation failed')
+        logger.setLevel(logging.WARNING)
 
 
 if __name__ == '__main__':

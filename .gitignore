@@ -140,3 +140,4 @@ coverage
 # Project specific
 todo.md
 _version.py
+nuke_stubs
