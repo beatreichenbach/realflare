@@ -31,15 +31,6 @@ from qt_extensions.mainwindow import DockWindow, DockWidgetState, SplitterState
 from qt_extensions import theme
 from qt_extensions.typeutils import cast, basic
 
-# NOTE: A quick tip: If all you want to do every 10ms is to draw a new point on a graph
-#  (or some similar gui display), then draw to a QImage instead.
-#  A QImage is not a gui object, so your worker thread can paint to it.
-#  Then in main thread run a timer that calls update() at the update frequency you want.
-#  A quarter to half second should be fine for most purposes.
-#  In the repaint, just draw the QImage.
-#  Or you could do the same thing with an array of points, etc.
-
-# TODO: cast can raise TypeError or ValueError
 
 logger = logging.getLogger(__name__)
 storage = Storage()
@@ -140,6 +131,7 @@ class MainWindow(DockWindow):
         try:
             self.engine = Engine(self.project.render.device)
         except (cl.Error, ValueError) as e:
+            self.engine = None
             logger.error(e)
             logger.error('failed to start the engine')
             return

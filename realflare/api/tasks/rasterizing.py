@@ -150,6 +150,7 @@ class RasterizingTask(OpenCL):
 
     @lru_cache(10)
     def update_area_orig(self, grid_count, grid_length) -> float:
+        grid_count = max(1, grid_count)
         quad_length = grid_length / (grid_count - 1)
         area_orig = quad_length**2
         return area_orig
@@ -159,7 +160,10 @@ class RasterizingTask(OpenCL):
         self, resolution: QtCore.QSize, sensor_size: tuple[float, float]
     ) -> float:
         sensor_length = np.linalg.norm((sensor_size[0], sensor_size[1])) / 2
-        screen_transform = resolution.width() / sensor_length
+        try:
+            screen_transform = resolution.width() / sensor_length
+        except ZeroDivisionError:
+            screen_transform = 0
         return screen_transform
 
     @lru_cache(1)
@@ -178,6 +182,7 @@ class RasterizingTask(OpenCL):
     def update_bin_dims(
         self, bin_size: int, resolution: QtCore.QSize
     ) -> tuple[int, int]:
+        bin_size = max(bin_size, 1)
         x = np.ceil(resolution.width() / bin_size)
         y = np.ceil(resolution.height() / bin_size)
         return x, y
@@ -204,7 +209,9 @@ class RasterizingTask(OpenCL):
 
     @timer
     @lru_cache(1)
-    def prim_shader(self, bounds: Buffer, intensities: Buffer) -> cl.Event:
+    def prim_shader(self, bounds: Buffer, _intensities: Buffer) -> cl.Event:
+        # intensities used for lru_cache
+
         global_work_size = bounds.shape
         local_work_size = None
         prim_event = cl.enqueue_nd_range_kernel(
@@ -229,7 +236,9 @@ class RasterizingTask(OpenCL):
 
     @timer
     @lru_cache(1)
-    def binner(self, bin_queus: Buffer, batch_count: int) -> cl.Event:
+    def binner(self, _bin_queues: Buffer, batch_count: int) -> cl.Event:
+        # bin_queues used for lru_cache
+
         device = self.queue.get_info(cl.command_queue_info.DEVICE)
         # compute_units = device.get_info(cl.device_info.MAX_COMPUTE_UNITS)
         work_group_size = device.get_info(cl.device_info.MAX_WORK_GROUP_SIZE)

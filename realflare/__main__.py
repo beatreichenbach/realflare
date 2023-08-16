@@ -75,7 +75,10 @@ def main() -> None:
     if args.gui:
         gui_app.exec_()
     else:
-        cli_app.exec_(parser)
+        try:
+            cli_app.exec_(args)
+        except Exception as e:
+            parser.error(str(e))
 
 
 if __name__ == '__main__':
