@@ -83,7 +83,8 @@ def render(
     device = project.render.device
     try:
         logger.debug(f'attempting to start engine on device: {device}')
-        engine = Engine(device)
+        engine = Engine()
+        engine.init(device)
     except (cl.Error, ValueError) as e:
         raise RealflareError('failed to start engine') from e
 

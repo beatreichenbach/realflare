@@ -6,22 +6,23 @@ authors = [
     {name = "Beat Reichenbach"}
 ]
 dependencies = [
-    "qt-extensions @ https://github.com/beatreichenbach/qt-extensions/archive/refs/heads/main.zip",
+    "qt-extensions",
     "PySide2",
     "PyYAML",
-    "numpy",
+    "numpy<2",
     "opencv-python-headless",
     "pyopencl",
     "opencolorio",
     "sentry-sdk",
     "python-slugify[unidecode]"
 ]
-requires-python = ">=3.9"
+requires-python = ">=3.9,<3.11"
 license = {text = "MIT"}
 readme = "README.md"
 
 [project.optional-dependencies]
 dev = [
+    "black",
     "mkdocs-material",
     "python-semantic-release",
     "py-markdown-table"
@@ -42,10 +43,16 @@ log_cli = true
 log_cli_level = "DEBUG"
 
 [tool.semantic_release]
-version_variable = "realflare/__init__.py:__version__"
-branch = "main"
-upload_to_pypi = false
-upload_to_repository = false
-upload_to_release = false
-version_toml = "pyproject.toml:project.version"
+version_toml = [
+    "pyproject.toml:project.version"
+]
+version_variables = [
+    "realflare/__init__.py:__version__"
+]
 #build_command = "python -m build --sdist --wheel"
+
+[tool.semantic_release.remote]
+ignore_token_for_push = true
+
+[tool.black]
+skip-string-normalization = true

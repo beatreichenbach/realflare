@@ -33,16 +33,22 @@ class Engine(QtCore.QObject):
     image_rendered: QtCore.Signal = QtCore.Signal(RenderImage)
     progress_changed: QtCore.Signal = QtCore.Signal(float)
 
-    def __init__(self, device: str = '', parent: QtCore.QObject | None = None) -> None:
+    def __init__(self, parent: QtCore.QObject | None = None) -> None:
         super().__init__(parent)
-
-        self.queue = opencl.command_queue(device)
-        logger.debug(f'engine initialized on device: {self.queue.device.name}')
 
         self._emit_cache = {}
         self._elements = []
+
+        self.queue = None
+
+    def init(self, device: str = '') -> None:
+        """Initializes the engine. This needs to happen in a different function to
+        create all objects in the right thread."""
+        self.queue = opencl.command_queue(device)
+        logger.debug(f'Engine initialized on device: {self.queue.device.name}')
         self._init_renderers()
         self._init_tasks()
+
 
     def _init_renderers(self) -> None:
         self.renderers: dict[RenderElement, Callable] = OrderedDict()
