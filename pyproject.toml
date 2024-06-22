@@ -1,7 +1,7 @@
 [project]
 name = "realflare"
 description = "Physically-Based Lens Flare Tool"
-version = "0.6.2"
+version = "0.6.3"
 authors = [
     {name = "Beat Reichenbach"}
 ]
