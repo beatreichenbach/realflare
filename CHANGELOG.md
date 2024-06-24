@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## v0.6.4 (2024-06-23)
+
+### Fix
+
+* fix: don&#39;t restart thread ([`7a189d4`](https://github.com/beatreichenbach/realflare/commit/7a189d4bac38080c574007f0f33cf517e93daa03))
+
 ## v0.6.3 (2024-06-22)
 
 ### Fix
