@@ -41,16 +41,19 @@ class Engine(QtCore.QObject):
 
         self.queue = None
 
-    def init(self, device: str = '') -> None:
+    def _init(self, device: str = '') -> None:
         """Initializes the engine. This needs to happen in a different function to
         create all objects in the right thread."""
-        self.queue = opencl.command_queue(device)
+
+        try:
+            self.queue = opencl.command_queue(device)
+        except (cl.Error, ValueError) as e:
+            logger.error(e)
+            logger.error('failed to start the engine')
+            return
+
         logger.debug(f'Engine initialized on device: {self.queue.device.name}')
-        self._init_renderers()
-        self._init_tasks()
 
-
-    def _init_renderers(self) -> None:
         self.renderers: dict[RenderElement, Callable] = OrderedDict()
         self.renderers[RenderElement.STARBURST_APERTURE] = self.starburst_aperture
         self.renderers[RenderElement.GHOST_APERTURE] = self.ghost_aperture
@@ -60,7 +63,6 @@ class Engine(QtCore.QObject):
         self.renderers[RenderElement.FLARE_STARBURST] = self.flare_starburst
         self.renderers[RenderElement.DIAGRAM] = self.diagram
 
-    def _init_tasks(self) -> None:
         self.ghost_aperture_task = GhostApertureTask(self.queue)
         self.starburst_aperture_task = StarburstApertureTask(self.queue)
         self.ghost_task = GhostTask(self.queue)
@@ -192,6 +194,8 @@ class Engine(QtCore.QObject):
 
     @timer
     def render(self, project: Project) -> bool:
+        if self.queue is None:
+            self._init(project.render.device)
         self.progress_changed.emit(0)
         try:
             for element in self._elements:

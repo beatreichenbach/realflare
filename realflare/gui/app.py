@@ -10,27 +10,23 @@ from functools import partial
 from importlib.metadata import version
 from importlib.resources import files
 
-import pyopencl as cl
 from PySide2 import QtCore, QtGui, QtWidgets
-
+from qt_extensions import theme
 from qt_extensions.icons import MaterialIcon
 from qt_extensions.logger import LogCache, LogBar, LogViewer
-from qt_extensions.messagebox import MessageBox
-from realflare.gui.lensmodeleditor import LensModelDialog
-from realflare.gui.parameters import ProjectEditor
-from realflare.gui.settings import SettingsDialog
-from realflare.update import UpdateDialog
-from realflare.api.data import Project, RenderElement, RenderImage
-from realflare.api.engine import Engine, clear_cache
-from realflare.gui.viewer import ElementViewer
-from realflare.storage import Storage
-
-from realflare.gui.presetbrowser import PresetBrowser
-
 from qt_extensions.mainwindow import DockWindow, DockWidgetState, SplitterState
-from qt_extensions import theme
+from qt_extensions.messagebox import MessageBox
 from qt_extensions.typeutils import cast, basic
 
+from realflare.api.data import Project, RenderElement, RenderImage
+from realflare.api.engine import Engine, clear_cache
+from realflare.gui.lensmodeleditor import LensModelDialog
+from realflare.gui.parameters import ProjectEditor
+from realflare.gui.presetbrowser import PresetBrowser
+from realflare.gui.settings import SettingsDialog
+from realflare.gui.viewer import ElementViewer
+from realflare.storage import Storage
+from realflare.update import UpdateDialog
 
 logger = logging.getLogger(__name__)
 storage = Storage()
@@ -40,7 +36,6 @@ class MainWindow(DockWindow):
     render_requested: QtCore.Signal = QtCore.Signal(Project)
     stop_requested: QtCore.Signal = QtCore.Signal()
     elements_changed: QtCore.Signal = QtCore.Signal(list)
-    engine_started: QtCore.Signal = QtCore.Signal(str)
 
     default_window_state = {
         'widgets': [
@@ -129,19 +124,9 @@ class MainWindow(DockWindow):
         self._api_thread = QtCore.QThread()
         self.rendering = False
 
-        try:
-            self.engine = Engine()
-        except (cl.Error, ValueError) as e:
-            self.engine = None
-            logger.error(e)
-            logger.error('failed to start the engine')
-            return
-
+        self.engine = Engine()
         self.engine.moveToThread(self._api_thread)
         self._api_thread.start()
-
-        self.engine_started.connect(self.engine.init)
-        self.engine_started.emit(self.project.render.device)
 
         self.engine.image_rendered.connect(self._image_rendered)
         self.engine.progress_changed.connect(self._progress_changed)
@@ -417,9 +402,8 @@ class MainWindow(DockWindow):
         self.set_window_state(self.default_window_state)
 
     def restart(self):
-        self._api_thread.quit()
         clear_cache()
-        self._init_engine()
+        self.engine.queue = None
         self.refresh()
 
     def request_render(
@@ -438,6 +422,7 @@ class MainWindow(DockWindow):
         if self.rendering:
             self.stop_requested.emit()
         elif self._project_queue is not None and self._api_thread.isRunning():
+            logger.debug(f'Render requested')
             self.rendering = True
             self.render_requested.emit(self._project_queue)
             self._project_queue = None
