@@ -54,7 +54,7 @@ build-backend = "setuptools.build_meta"
 include = ["flare*"]
 
 [tool.setuptools.package-data]
-flare = ["py.typed"]
+flare = ["py.typed", "**/*.cl", "**/*.png", "**/*.ocio"]
 
 [tool.semantic_release]
 version_toml = ["pyproject.toml:project.version"]
