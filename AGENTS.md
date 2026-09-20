@@ -64,7 +64,8 @@ self-explanatory classes, must NOT have a docstring.
 ## Verification
 
 After a change, format the touched files with ruff, e.g.
-`uv run ruff format flare/core`.
+`uv run ruff format flare/core`. Ruff format does not sort imports,
+so also run `uv run ruff check --select I --fix flare/core`.
 Then run the scoped type check for the touched package,
 e.g. `uv run ty check flare/core`. Do not run unrelated suites
 unless asked.
