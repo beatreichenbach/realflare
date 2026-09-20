@@ -2,7 +2,7 @@ import pytest
 from pydantic import ValidationError
 from qtpy import QtCore, QtWidgets
 
-from flare.widgets.dock_window import DockWindow, WindowState
+from flare.widgets.dock_window import StateDockWindow, WindowState
 
 
 class WidgetA(QtWidgets.QWidget):
@@ -33,16 +33,21 @@ def _splitter(states: list[dict], sizes: list[int]) -> dict:
     }
 
 
-def _window() -> DockWindow:
-    window = DockWindow()
+def _window() -> StateDockWindow:
+    window = StateDockWindow()
     window.register_widget(WidgetA, name='A', unique=True)
     window.register_widget(WidgetB, name='B')
     return window
 
 
+def _set_state(window: StateDockWindow, data: dict) -> None:
+    window.set_window_state(WindowState.model_validate(data))
+
+
 def test_state_round_trip(qapp: QtWidgets.QApplication) -> None:
     window = _window()
-    window.set_state(
+    _set_state(
+        window,
         {
             'states': [
                 _splitter(
@@ -50,10 +55,10 @@ def test_state_round_trip(qapp: QtWidgets.QApplication) -> None:
                     [200, 200],
                 ),
             ],
-        }
+        },
     )
 
-    state = window.state()
+    state = window.window_state().model_dump()
     docks = state['states'][0]['states']
     titles = [title for dock in docks for title, _ in dock['widgets']]
     assert 'A' in titles
@@ -62,7 +67,8 @@ def test_state_round_trip(qapp: QtWidgets.QApplication) -> None:
 
 def test_unique_widget_not_duplicated(qapp: QtWidgets.QApplication) -> None:
     window = _window()
-    window.set_state(
+    _set_state(
+        window,
         {
             'states': [
                 _splitter(
@@ -70,7 +76,7 @@ def test_unique_widget_not_duplicated(qapp: QtWidgets.QApplication) -> None:
                     [200, 200],
                 ),
             ],
-        }
+        },
     )
 
     count = sum(isinstance(widget, WidgetA) for widget in window._widgets.values())
@@ -100,7 +106,7 @@ def test_close_closes_floating_docks(qapp: QtWidgets.QApplication) -> None:
 def test_invalid_kind_raises(qapp: QtWidgets.QApplication) -> None:
     window = _window()
     with pytest.raises(ValidationError):
-        window.set_state({'states': [{'kind': 'nope'}]})
+        _set_state(window, {'states': [{'kind': 'nope'}]})
 
 
 def test_window_state_round_trip() -> None:

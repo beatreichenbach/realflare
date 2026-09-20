@@ -16,7 +16,7 @@ from flare.engine.engine import Render
 from flare.gui.widgets.base import StateWidget
 from flare.gui.widgets.project_editor import ProjectEditor
 from flare.gui.widgets.viewer import LayerViewer
-from flare.widgets import DockWindow
+from flare.widgets import StateDockWindow, WindowState
 
 from .worker import Worker
 
@@ -25,7 +25,7 @@ logger = logging.getLogger(__name__)
 QueuedConnection = QtCore.Qt.ConnectionType.QueuedConnection
 
 
-class FlareDockWindow(DockWindow):
+class FlareDockWindow(StateDockWindow):
     render_requested = QtCore.Signal(api.Project)
     stop_requested = QtCore.Signal()
     layers_changed = QtCore.Signal(tuple)
@@ -234,7 +234,7 @@ class FlareDockWindow(DockWindow):
         """Save the state of the window."""
 
         state = State(
-            main_window=self.state(),
+            main_window=self.window_state().model_dump(),
             widgets=self._widget_states(),
         )
         StateManager.set(state)
@@ -243,7 +243,7 @@ class FlareDockWindow(DockWindow):
         """Load the state of the window."""
 
         state = StateManager.get()
-        self.set_state(state.main_window)
+        self.set_window_state(WindowState.model_validate(state.main_window))
         self._set_widget_states(state.widgets)
         if state.recent_paths:
             path = state.recent_paths[0]

@@ -4,6 +4,9 @@ from .dock_window import (
     DockWidgetState,
     DockWindow,
     SplitterState,
+    StateDockWindow,
+    TabState,
+    WindowState,
 )
 from .messagebox import MessageBox
 from .viewer import (
@@ -19,5 +22,8 @@ __all__ = [
     'MessageBox',
     'OpenGLView',
     'SplitterState',
+    'StateDockWindow',
+    'TabState',
     'Viewer',
+    'WindowState',
 ]

@@ -7,10 +7,38 @@ from qtpy import QtCore, QtGui, QtWidgets
 
 from .splitter import Splitter
 from .tab_bar import DockTabBar
-from .utils import area_orientation, set_window_opacity, supports_window_opacity
 
 if TYPE_CHECKING:
     from .dock_window import DockWindow
+
+# Platform plugins that implement window opacity. Others, such as wayland and
+# offscreen, print a warning and ignore the request.
+OPACITY_PLATFORMS = ('cocoa', 'windows', 'xcb')
+
+
+def supports_window_opacity() -> bool:
+    """Return whether the platform supports window opacity."""
+
+    return QtGui.QGuiApplication.platformName() in OPACITY_PLATFORMS
+
+
+def set_window_opacity(widget: QtWidgets.QWidget, opacity: float) -> None:
+    """Set the opacity of a window where the platform supports it."""
+
+    if supports_window_opacity():
+        widget.setWindowOpacity(opacity)
+
+
+def area_orientation(area: QtCore.Qt.DockWidgetArea) -> QtCore.Qt.Orientation:
+    """Return an Orientation based on the DockWidgetArea."""
+
+    if area in (
+        QtCore.Qt.DockWidgetArea.LeftDockWidgetArea,
+        QtCore.Qt.DockWidgetArea.RightDockWidgetArea,
+    ):
+        return QtCore.Qt.Orientation.Horizontal
+    else:
+        return QtCore.Qt.Orientation.Vertical
 
 
 class DockWidget(QtWidgets.QTabWidget):
@@ -69,6 +97,8 @@ class DockWidget(QtWidgets.QTabWidget):
         self.move(x, y)
 
     def set_floating(self) -> None:
+        """Make the widget a floating tool window."""
+
         self.setWindowFlag(QtCore.Qt.WindowType.Tool, True)
 
     def try_delete(self) -> None:
@@ -168,6 +198,8 @@ class DockWidget(QtWidgets.QTabWidget):
         return container, index
 
     def close_tab(self, index: int) -> None:
+        """Close the tab at an index and delete its widget."""
+
         widget = self.widget(index)
         self.removeTab(index)
         # Since widgets are stored in window._widgets, trigger garbage collection
@@ -175,6 +207,8 @@ class DockWidget(QtWidgets.QTabWidget):
             widget.deleteLater()
 
     def detach(self, index: int, interactive: bool = False) -> None:
+        """Detach the tab at an index into a new floating window."""
+
         if index not in range(self.count()) or not self.detachable:
             return
 
@@ -205,10 +239,14 @@ class DockWidget(QtWidgets.QTabWidget):
         self._drag_widget.activateWindow()
 
     def update_window_title(self, index: int) -> None:
+        """Update a floating window's title to the current tab."""
+
         if self.window() != self.dock_window:
             self.window().setWindowTitle(self.tabText(index))
 
     def dock_rects(self) -> dict[QtCore.Qt.DockWidgetArea, QtCore.QRect]:
+        """Return the rect of each dock area, or nothing when hidden."""
+
         if not self._hidden:
             rects = {area: self._dock_rect(area) for area in self.dock_areas}
         else:
@@ -216,9 +254,13 @@ class DockWidget(QtWidgets.QTabWidget):
         return rects
 
     def dock_preview_rect(self, area: QtCore.Qt.DockWidgetArea) -> QtCore.QRect:
+        """Return the preview rect for a dock area while dragging."""
+
         return self._dock_rect(area, 0.5)
 
     def widgets(self) -> OrderedDict[str, QtWidgets.QWidget]:
+        """Return a mapping of tab titles to their widgets."""
+
         widgets = OrderedDict()
         for i in range(self.count()):
             widgets[self.tabText(i)] = self.widget(i)

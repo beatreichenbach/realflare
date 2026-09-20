@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import dataclasses
 import logging
 from collections import OrderedDict
 
@@ -7,14 +8,19 @@ from qtpy import QtCore, QtGui, QtWidgets
 
 from flare import utils
 
-from . import layout
 from .dock_widget import DockWidget
-from .registration import RegisteredWidget, WidgetSource
 from .splitter import Splitter
-from .state import WindowState
-from .utils import focus_widget
 
 logger = logging.getLogger(__name__)
+
+WidgetSource = str | type[QtWidgets.QWidget]
+
+
+@dataclasses.dataclass()
+class RegisteredWidget:
+    cls: type[QtWidgets.QWidget]
+    name: str
+    unique: bool = False
 
 
 class DockWindow(QtWidgets.QWidget):
@@ -168,12 +174,6 @@ class DockWindow(QtWidgets.QWidget):
         children = reversed(children)
         return tuple(children)
 
-    def state(self) -> dict:
-        return layout.capture(self).model_dump()
-
-    def set_state(self, state: dict) -> None:
-        layout.restore(self, WindowState.model_validate(state))
-
     def _add_widget(self, widget: QtWidgets.QWidget, title: str) -> str:
         """Add a widget to this window and return its unique title."""
 
@@ -227,3 +227,23 @@ class DockWindow(QtWidgets.QWidget):
         for widget in widgets:
             rects[widget] = widget.dock_rects()
         return rects
+
+
+def focus_widget(widget: QtWidgets.QWidget) -> None:
+    """Focus and bring a widget to the front."""
+
+    # Switch to the tab
+    parent = widget.parent()
+    while parent is not None:
+        if isinstance(parent, QtWidgets.QTabWidget):
+            index = parent.indexOf(widget)
+            parent.setCurrentIndex(index)
+            break
+        parent = parent.parent()
+
+    # Bring the window to the front
+    window = widget.window()
+    if window.windowState() & QtCore.Qt.WindowState.WindowMinimized:
+        window.setWindowState(QtCore.Qt.WindowState.WindowActive)
+    window.raise_()  # for macOS
+    window.activateWindow()  # for Windows

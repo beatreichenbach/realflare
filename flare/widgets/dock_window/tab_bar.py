@@ -5,6 +5,8 @@ from qtpy import QtCore, QtGui, QtWidgets
 
 
 class DockTabBar(QtWidgets.QTabBar):
+    """A tab bar with close buttons that emits signals when a tab is dragged out."""
+
     detach_started: QtCore.Signal = QtCore.Signal(int)
     detach_moved: QtCore.Signal = QtCore.Signal()
     detach_finished: QtCore.Signal = QtCore.Signal()

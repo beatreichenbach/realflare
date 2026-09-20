@@ -1,24 +1,27 @@
 from .dock_widget import DockWidget
-from .dock_window import DockWindow
-from .registration import RegisteredWidget, WidgetSource
+from .dock_window import DockWindow, RegisteredWidget, WidgetSource
 from .state import (
-    BaseNodeState,
+    BaseWidgetState,
     DockWidgetState,
-    NodeState,
     SplitterState,
+    StateDockWindow,
+    TabState,
+    WidgetState,
     WindowState,
 )
 from .tab_bar import DockTabBar
 
 __all__ = [
-    'BaseNodeState',
+    'BaseWidgetState',
     'DockTabBar',
     'DockWidget',
     'DockWidgetState',
     'DockWindow',
-    'NodeState',
     'RegisteredWidget',
     'SplitterState',
+    'StateDockWindow',
+    'TabState',
     'WidgetSource',
+    'WidgetState',
     'WindowState',
 ]

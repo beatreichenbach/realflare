@@ -2,7 +2,7 @@ from qtpy import QtWidgets
 
 import tests
 from flare.utils.gui import application
-from flare.widgets import DockWindow
+from flare.widgets import DockWidgetState, StateDockWindow, TabState, WindowState
 
 
 class Widget(QtWidgets.QWidget): ...
@@ -10,22 +10,21 @@ class Widget(QtWidgets.QWidget): ...
 
 def main() -> None:
     with application():
-        window = DockWindow()
+        window = StateDockWindow()
         name = 'Widget'
         window.register_widget(Widget, name)
-        window.set_state(
-            {
-                'states': [
-                    {
-                        'kind': 'dock',
-                        'current_index': 0,
-                        'widgets': [[name, 'Widget']],
-                        'detachable': True,
-                        'auto_delete': False,
-                        'is_center_widget': True,
-                    },
-                ],
-            }
+        window.set_window_state(
+            WindowState(
+                states=(
+                    DockWidgetState(
+                        current_index=0,
+                        widgets=(TabState(name, 'Widget'),),
+                        detachable=True,
+                        auto_delete=False,
+                        is_center_widget=True,
+                    ),
+                ),
+            )
         )
         window.show()
 
