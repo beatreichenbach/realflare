@@ -1,0 +1,49 @@
+#version 430 core
+
+layout(local_size_x = 512, local_size_y = 1, local_size_z = 1) in;
+
+struct DrawElementsIndirectCommand {
+    uint count;
+    uint instanceCount;
+    uint firstIndex;
+    uint baseVertex;
+    uint baseInstance;
+};
+
+struct Ghost {
+    uint ray_offset;
+    uint ray_count;
+    uint tri_offset;
+    uint tri_count;
+};
+
+uniform Params {
+    uint wavelength_count;
+    uint wavelength_sub_count;
+    float area_orig;
+    float min_area;
+};
+
+layout(std430) buffer Ghosts {
+    Ghost ghosts[];
+};
+layout(std430) buffer Counts {
+    uint counts[];
+};
+layout(std430) buffer Commands {
+    DrawElementsIndirectCommand commands[];
+};
+
+void main() {
+    uint ghost_id = gl_GlobalInvocationID.x;
+    uint index_offset = ghosts[ghost_id].tri_offset * 3u;
+
+    // All wavelengths including the first and last.
+    uint instanceCount = (wavelength_count - 1) * wavelength_sub_count + 1;
+
+    commands[ghost_id].count = counts[ghost_id];
+    commands[ghost_id].instanceCount = max(wavelength_count, instanceCount);
+    commands[ghost_id].firstIndex = index_offset;
+    commands[ghost_id].baseVertex = 0u;
+    commands[ghost_id].baseInstance = 0u;
+}

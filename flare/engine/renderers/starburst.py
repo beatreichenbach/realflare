@@ -1,0 +1,44 @@
+from qtpy import QtGui
+
+from flare import api
+from ..base import Array
+from flare.utils import profiling
+from .aperture import StarburstApertureRenderer
+from ..base import Renderer
+from ..tasks import StarburstTask
+
+
+class StarburstRenderer(Renderer):
+    def __init__(
+        self,
+        context: QtGui.QOpenGLContext,
+        aperture_renderer: StarburstApertureRenderer,
+        starburst_task: StarburstTask,
+    ) -> None:
+        super().__init__(context)
+        self.aperture_renderer = aperture_renderer
+        self.starburst_task = starburst_task
+
+    @profiling.timer
+    def run(self, project: api.Project) -> Array:
+        aperture = self.aperture_renderer.run(project)
+
+        sensor_size = (
+            project.flare.camera.sensor_size.width(),
+            project.flare.camera.sensor_size.height(),
+        )
+        position = project.flare.light.position.x(), project.flare.light.position.y()
+        if project.starburst.camera.fstop_enabled:
+            fstop = project.starburst.camera.fstop
+        else:
+            fstop = project.flare.camera.fstop
+
+        image = self.starburst_task.run(
+            aperture=aperture,
+            config=project.starburst,
+            sensor_size=sensor_size,
+            position=position,
+            fstop=fstop,
+            resolution=project.flare.render.resolution,
+        )
+        return image

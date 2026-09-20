@@ -1,0 +1,66 @@
+[project]
+name = "flare"
+description = "Physically-based lens flare rendering using spectral raytracing on the GPU."
+version = "0.0.1"
+authors = [
+    { name = "Beat Reichenbach", email = "beatreichenbach@users.noreply.github.com" },
+]
+readme = "README.md"
+license = "GPL-3.0-or-later"
+requires-python = ">=3.9"
+dependencies = [
+    "PyOpenGL>=3.1,<4",
+    "PySide6",
+    "PyYAML>=6.0,<7",
+    "numpy>=2.2,<3",
+    "opencolorio>=2.4,<3",
+    "platformdirs>=4.0,<5",
+    "pydantic>=2.9.0,<3",
+    "qt-logging>=0.1,<1",
+    "qt-material-icons>=0.2,<1",
+    "qt-parameters>=1.1,<2",
+    "qt-pydantic>=0.1,<1",
+    "qt-themes>=0.2,<1",
+    "qtpy>=2.0,<3",
+    "requests>=2.34,<3",
+    "rich>=15,<16",
+    "typer>=0.12,<1",
+    "imageio[freeimage,pillow]>=2.37,<3"
+]
+
+[project.optional-dependencies]
+dev = [
+    "ruff>=0.16,<1",
+    "python-semantic-release>=10.6,<11",
+    "types-nuke>=13.0"
+]
+openexr = [
+    "OpenEXR>=3.4,<4"
+]
+
+[project.urls]
+Repository = "https://github.com/beatreichenbach/realflare"
+
+[project.scripts]
+flare = "flare.__main__:app"
+
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["flare*"]
+
+[tool.semantic_release]
+version_toml = ["pyproject.toml:project.version"]
+version_variables = ["flare/__init__.py:__version__"]
+
+[tool.semantic_release.remote]
+ignore_token_for_push = true
+
+[tool.ruff.format]
+quote-style = "single"
+
+[tool.pytest.ini_options]
+log_cli = true
+log_level = "INFO"

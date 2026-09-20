@@ -1,0 +1,49 @@
+Gizmo {
+ name Realflare
+ label render
+ selected true
+ addUserKnob {20 Flare}
+ addUserKnob {2 project}
+ addUserKnob {22 launch l Launch T "import flare_utils\nflare_utils.launch()\n" +STARTLINE}
+ addUserKnob {26 ""}
+ addUserKnob {4 layer M {"Ghost Aperture" "Starburst Aperture" Ghost Starburst Flare Comp}}
+ layer Flare
+ addUserKnob {7 intensity}
+ intensity 1
+ addUserKnob {12 position}
+ addUserKnob {3 width l "resolution"}
+ width {{width}}
+ addUserKnob {3 height l "" -STARTLINE}
+ height {{height}}
+ addUserKnob {26 ""}
+ addUserKnob {2 file}
+ addUserKnob {3 frame_start l "frame range"}
+ frame_start {{root.first_frame}}
+ addUserKnob {3 frame_end l "" -STARTLINE}
+ frame_end {{root.last_frame}}
+ addUserKnob {22 render l Render T "import flare_utils\nflare_utils.render()\n" +STARTLINE}
+ addUserKnob {26 ""}
+ addUserKnob {41 on_error l "Missing Frames" T Read1.on_error}
+ addUserKnob {22 reload l Reload -STARTLINE T "import flare_utils\nflare_utils.reload()\n"}
+}
+ Input {
+  inputs 0
+  name Input1
+  xpos 0
+ }
+ Read {
+  inputs 0
+  file_type exr
+  file "\[value parent.file]"
+  on_error black
+  version 1
+  name Read1
+  xpos 0
+  ypos 40
+ }
+ Output {
+  name Output1
+  xpos 0
+  ypos 160
+ }
+end_group

@@ -1,0 +1,88 @@
+#version 430 core
+
+layout(local_size_x = 512, local_size_y = 1, local_size_z = 1) in;
+
+struct Ray {
+    vec3 pos;
+    float rrel;
+    vec3 dir;
+    float reflectance;
+    vec2 pos_apt;
+    uint _pad[2];
+};
+
+uniform Params {
+    uint ray_count;
+    uint tri_count;
+    float area_orig;
+    float _pad;
+};
+
+layout(std430) buffer Rays {
+    Ray rays[];
+};
+layout(std430) buffer Mesh {
+    uvec4 mesh[];
+};
+layout(std430) buffer Areas {
+    float areas[];
+};
+layout(std430) buffer Intensities {
+    float intensities[];
+};
+
+float edge_function(vec2 a, vec2 b, vec2 c){
+    return (a.x - b.x) * (c.y - a.y) - (a.y - b.y) * (c.x - a.x);
+}
+
+void main() {
+    uint tri_id = gl_GlobalInvocationID.x;
+    uint ghost_id = gl_GlobalInvocationID.y;
+
+    uint ray_offset = ray_count * ghost_id;
+    uint tri_offset = tri_count * ghost_id;
+    uint tri_index = tri_offset + tri_id;
+
+    if (tri_id >= tri_count) {
+        return;
+    }
+
+    Ray r[3];
+    r[0] = rays[ray_offset + mesh[tri_id].x];
+    r[1] = rays[ray_offset + mesh[tri_id].y];
+    r[2] = rays[ray_offset + mesh[tri_id].z];
+
+    // At least one ray is invalid
+    if (isinf(r[0].reflectance) || isinf(r[1].reflectance) || isinf(r[2].reflectance)) {
+        return;
+    }
+
+    // All rays are outside the housing.
+    if (r[0].rrel > 1.0 && r[1].rrel > 1.0 && r[2].rrel > 1.0) {
+        return;
+    }
+
+    // All rays are outside a full frame sensor
+//    float sensor_radius = 45.0 / 2.0;
+//    if (
+//        length(r[0].pos.xy) > sensor_radius &&
+//        length(r[1].pos.xy) > sensor_radius &&
+//        length(r[2].pos.xy) > sensor_radius
+//    ) {
+//        return;
+//    }
+
+    float area = abs(edge_function(r[0].pos.xy, r[1].pos.xy, r[2].pos.xy)) / 2.0;
+
+    // Ignore really small triangles
+    if (area < 1e-6) {
+        return;
+    }
+
+    areas[tri_index] = area;
+
+    float reflectance = (r[0].reflectance + r[1].reflectance + r[2].reflectance) / 3.0;
+    float area_intensity = area_orig / area;
+    float intensity = reflectance * area_intensity;
+    intensities[tri_index] = intensity;
+}
