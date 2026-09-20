@@ -1,9 +1,7 @@
 import json
 import logging
 import os.path
-from typing import Annotated
 
-import typer
 from qtpy import QtCore, QtWidgets
 
 from flare import api
@@ -13,27 +11,28 @@ from flare.engine.engine import Engine
 logger = logging.getLogger(__name__)
 
 
-def render(
-    project_path: Annotated[str, typer.Option('--project', '-p')],
-    animation_path: Annotated[str, typer.Option('--animation', '-a')],
-    output: Annotated[str, typer.Option('--output', '-o')],
-) -> None:
+def run_render(project_path: str, animation_path: str, output: str) -> None:
+    """
+    Render the frames of an animation to disk.
+
+    :raises FileNotFoundError: If the project or animation file does not exist.
+    :raises ValueError: If the project cannot be loaded.
+    """
+
     QtWidgets.QApplication()
 
     if not os.path.exists(project_path):
-        logger.error(f'The project file does not exist: {project_path}')
-        raise typer.Exit()
+        raise FileNotFoundError(f'the project file does not exist: {project_path}')
 
     if not os.path.exists(animation_path):
-        logger.error(f'The animation file does not exist: {animation_path}')
-        raise typer.Exit()
+        raise FileNotFoundError(f'the animation file does not exist: {animation_path}')
 
-    with open(animation_path, 'r') as file:
+    with open(animation_path) as file:
         animation = json.load(file)
 
     project = api.ProjectManager.open(project_path)
     if project is None:
-        raise typer.Exit()
+        raise ValueError(f'could not load project: {project_path}')
 
     try:
         layer_name = animation['layer']
@@ -55,8 +54,7 @@ def render(
 
     frames = positions.keys()
     total_frames = len(frames)
-    processed_frames = 0
-    for frame in frames:
+    for i, frame in enumerate(frames):
         position = positions[frame]
         project.output.path = PathParser.format_path(output, int(frame))
         project.flare.light.position = QtCore.QPointF(*position)
@@ -69,5 +67,5 @@ def render(
         engine.output(image_render, project)
 
         # Update Progress
-        processed_frames += 1
+        processed_frames = i + 1
         logger.info(f'Rendered Frame {frame} ({processed_frames} / {total_frames})')

@@ -1,11 +1,4 @@
-from .log import (
-    init_logging,
-    init_rich,
-)
+from .log import init_logging, init_rich
+from .text import title, unique_name
 
-from .gui import application
-
-from .text import (
-    title,
-    unique_name,
-)
+__all__ = ['init_logging', 'init_rich', 'title', 'unique_name']

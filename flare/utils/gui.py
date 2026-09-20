@@ -1,9 +1,9 @@
 import contextlib
 import sys
-from typing import Generator
+from collections.abc import Generator
+from importlib.resources import files
 
 import qt_themes
-from importlib.resources import files
 from qtpy import QtCore, QtGui, QtWidgets
 
 

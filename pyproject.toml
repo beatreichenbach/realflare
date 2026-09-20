@@ -44,7 +44,7 @@ openexr = [
 ]
 
 [project.scripts]
-flare = "flare.__main__:app"
+flare = "flare.cli.main:app"
 
 [build-system]
 requires = ["setuptools>=68"]

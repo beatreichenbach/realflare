@@ -1,2 +1,3 @@
-from .render import render
-from .gui import gui
+from .main import app
+
+__all__ = ['app']
