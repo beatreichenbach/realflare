@@ -8,15 +8,18 @@ self-explanatory classes, must NOT have a docstring.
 
 ### Formatting
 
-1. Always leave a blank line after a docstring before code.
-2. Single-line docstrings stay on one line:
+1. Keep lines at 88 characters or less, including docstrings and comments.
+   Unless otherwise specified in pyproject.toml, use the ruff default.
+   Fill up to the max length where it makes sense.
+2. Always leave a blank line after a docstring before code.
+3. Single-line docstrings stay on one line:
    ```python
    def get_renderer(layer: Layer) -> Renderer:
        """Return the renderer for a layer."""
 
        ...
    ```
-3. Multi-line docstrings: first and last lines contain only `"""`:
+4. Multi-line docstrings: first and last lines contain only `"""`:
    ```python
    def fresnel_diffraction(
        aperture: np.ndarray, wavelength: float, distance: float, size: float
