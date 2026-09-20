@@ -20,8 +20,8 @@ Physically-based lens flare rendering using spectral raytracing on the GPU.
 ### Quick Install (Linux)
 
 ```bash
-git clone https://github.com/beatreichenbach/flare.git
-cd flare
+git clone https://github.com/beatreichenbach/realflare.git
+cd realflare
 chmod +x scripts/install.sh
 ./scripts/install.sh
 ```
@@ -45,16 +45,16 @@ export __GLX_VENDOR_LIBRARY_NAME=nvidia
 ### Quick Install (Windows)
 
 ```bat
-git clone https://github.com/beatreichenbach/flare.git
-cd flare
+git clone https://github.com/beatreichenbach/realflare.git
+cd realflare
 scripts\install.bat
 ```
 
 ### Manual Install
 
 ```bash
-git clone https://github.com/beatreichenbach/flare.git
-cd flare
+git clone https://github.com/beatreichenbach/realflare.git
+cd realflare
 python -m venv venv
 source venv/bin/activate  # or venv\Scripts\activate on Windows
 pip install -e ".[openexr]"
@@ -89,18 +89,6 @@ flare render --project path/to/project.json --animation path/to/animation.json
 
 - [OpticsExplorer Optics Database](https://github.com/amegahed/OpticsDatabase)
 
-### Project Structure
-
-```
-flare/
-  api/        - Data models (project, database, illuminants)
-  core/       - Path parsing, preferences, state management
-  engine/     - OpenGL rendering engine
-  cli/        - Command-line interface
-  gui/        - Qt GUI application
-  widgets/    - Reusable Qt components (Viewer, DockWindow)
-```
-
 ### References
 
 Primary research this app is based on:
@@ -118,6 +106,28 @@ Additional interesting research:
 Further references:
 - [Johannes Hanika](https://jo.dreggn.org/home)
 - [Zhongyi Flare Test](https://www.youtube.com/watch?v=WjKnqnbiCWU), YouTube, 2016
+
+
+## Development
+
+To get started:
+```sh
+uv venv --python 3.14
+uv pip install -e ".[dev]"
+pre-commit install
+```
+
+### Project Structure
+
+```
+flare/
+  api/        - Data models (project, database, illuminants)
+  core/       - Path parsing, preferences, state management
+  engine/     - OpenGL rendering engine
+  cli/        - Command-line interface
+  gui/        - Qt GUI application
+  widgets/    - Reusable Qt components (Viewer, DockWindow)
+```
 
 ## License
 
