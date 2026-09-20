@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import OpenGL
 from OpenGL import GL
 import importlib.resources

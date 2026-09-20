@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from qt_parameters import (
     BoolParameter,
     CollapsibleBox,

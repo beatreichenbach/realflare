@@ -7,7 +7,7 @@ license = "GPL-3.0-or-later"
 authors = [
     { name = "Beat Reichenbach", email = "beatreichenbach@users.noreply.github.com" },
 ]
-requires-python = ">=3.9"
+requires-python = ">=3.11"
 dependencies = [
     "PyOpenGL>=3.1,<4",
     "PySide6",

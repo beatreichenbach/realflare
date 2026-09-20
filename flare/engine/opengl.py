@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import inspect
 from collections.abc import Sequence
 from pathlib import Path
@@ -479,9 +477,7 @@ def get_vram_info() -> dict[str, int | None]:
         )
 
         total_val = GL.glGetIntegerv(GL_GPU_MEMORY_INFO_TOTAL_AVAILABLE_MEMORY_NVX)
-        avail_val = GL.glGetIntegerv(
-            GL_GPU_MEMORY_INFO_CURRENT_AVAILABLE_VIDMEM_NVX
-        )
+        avail_val = GL.glGetIntegerv(GL_GPU_MEMORY_INFO_CURRENT_AVAILABLE_VIDMEM_NVX)
         total_kb = _as_int(total_val)
         available_kb = _as_int(avail_val)
         # Treat 0 as unavailable (no context or unsupported)

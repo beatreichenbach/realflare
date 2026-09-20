@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import enum
 import random
 
@@ -64,7 +62,6 @@ class Lens(HashableModel):
         previous_ior = 1
         coatings = []
         for i, surface in enumerate(self.surfaces):
-
             current_ior = surface.ior
 
             # No coating for two surfaces of similar IOR

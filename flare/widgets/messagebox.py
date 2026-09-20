@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import qt_themes
 from qt_material_icons import MaterialIcon
 from qtpy import QtGui, QtWidgets

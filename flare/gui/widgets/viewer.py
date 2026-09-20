@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import logging
 
 from qt_parameters import EnumParameter

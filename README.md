@@ -6,7 +6,7 @@ Physically-based lens flare rendering using spectral raytracing on the GPU.
 
 ### Requirements
 
-- **Python 3.9+**
+- **Python 3.11+**
 - **OpenGL 4.3+** (compute shaders required)
 - **Discrete GPU** recommended (NVIDIA/AMD with 4GB+ VRAM)
 
