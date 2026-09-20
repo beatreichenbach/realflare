@@ -107,6 +107,7 @@ Additional interesting research:
 Further references:
 - [Johannes Hanika](https://jo.dreggn.org/home)
 - [Zhongyi Flare Test](https://www.youtube.com/watch?v=WjKnqnbiCWU), YouTube, 2016
+- [Diffractsim: A diffraction simulator for exploring and visualizing physical optics](https://github.com/rafael-fuente/diffractsim)
 
 
 ## Development
