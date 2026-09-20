@@ -1,14 +1,11 @@
 from .dialog import DialogButtonBox
-
-from .messagebox import MessageBox
-
-from .mainwindow import (
+from .dock_window import (
     DockWidget,
     DockWidgetState,
     DockWindow,
     SplitterState,
 )
-
+from .messagebox import MessageBox
 from .viewer import (
     OpenGLView,
     Viewer,
