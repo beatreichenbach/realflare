@@ -93,14 +93,15 @@ flare render --project path/to/project.json --animation path/to/animation.json
 
 Primary research this app is based on:
 - [Physically-Based Real-Time Lens Flare Rendering](https://dl.acm.org/doi/abs/10.1145/2010324.1965003), Hullin et al., 2011
-- [Glare Generation Based on Wave Optics](http://nishitalab.org/user/nis/cdrom/pg/glare_m.pdf), Kakimoto et al, 2014
+- [Temporal Glare: Real-Time Dynamic Simulation of the Scattering in the Human Eye](https://people.mpi-inf.mpg.de/~ritschel/Papers/TemporalGlare.pdf), Ritschel et al., 2009
+- [Glare Generation Based on Wave Optics](http://nishitalab.org/user/nis/cdrom/pg/glare_m.pdf), Kakimoto et al., 2014
 
 Additional interesting research:
-- [General Spectral Camera Lens Simulation](https://jo.dreggn.org/home/2011_lens_simulation.pdf), Steinert et al, 2011
+- [General Spectral Camera Lens Simulation](https://jo.dreggn.org/home/2011_lens_simulation.pdf), Steinert et al., 2011
 - [Efficient Monte Carlo Rendering with Realistic Lenses](https://jo.dreggn.org/home/2014_lenssim.pdf), Hanika and Dachsbacher, 2014
 - [Sparse high-degree polynomials for wide-angle lenses](https://jo.dreggn.org/home/2014_lenssim.pdf), Schrade et al., 2016
 - [Brute-force calculation of aperture diffraction in camera lenses](https://jo.dreggn.org/home/2019_diffraction.pdf), Schrade et al., 2019
-- [Polynomial Optics: A Construction Kit for Efficient Ray-Tracing of Lens Systems](https://www.cs.ubc.ca/labs/imager/tr/2012/PolynomialOptics/), Hullin et al, 2012
+- [Polynomial Optics: A Construction Kit for Efficient Ray-Tracing of Lens Systems](https://www.cs.ubc.ca/labs/imager/tr/2012/PolynomialOptics/), Hullin et al., 2012
 - [Reference Implementation for papers titled Real-time ray transfer for lens flare rendering using sparse polynomials and Efficient tile-based rendering of lens flare ghosts](https://github.com/bodonyiandi94/LensFlareFramework)
 
 Further references:
