@@ -1,8 +1,9 @@
-class StateWidget:
-    """Abstract Base Class for a widget that can save and load state."""
+from typing import Any
 
-    def state(self) -> dict:
+
+class StateWidget:
+    def state(self) -> dict[str, Any]:
         return {}
 
-    def set_state(self, state: dict) -> None:
+    def set_state(self, state: dict[str, Any]) -> None:
         return

@@ -1,6 +1,7 @@
+import importlib.resources
+
 import OpenGL
 from OpenGL import GL
-import importlib.resources
 from qt_parameters import ParameterForm, StringParameter
 from qtpy import QtCore, QtGui, QtWidgets
 

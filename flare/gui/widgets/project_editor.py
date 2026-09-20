@@ -433,7 +433,7 @@ class ProjectEditor(ParameterEditor, StateWidget):
         param = SizeFParameter('size')
         param.set_slider_min(0)
         param.set_slider_max(1)
-        param.keep_ratio = True
+        param.set_keep_ratio(True)
         form.add_parameter(param)
 
         param = IntParameter('blades')
@@ -573,7 +573,7 @@ class ProjectEditor(ParameterEditor, StateWidget):
         form.add_parameter(param)
 
         param = PathParameter('file')
-        param.method = PathParameter.Method.OPEN_FILE
+        param.set_method(PathParameter.Method.OPEN_FILE)
         # param.dir_fallback = storage.decode_path('$APT')
         param.set_tooltip(
             'The path to the image file. Variables such as $APT can be used. '
@@ -639,7 +639,8 @@ class ProjectEditor(ParameterEditor, StateWidget):
 
         coatings = lens.get_coatings(wavelength_range, ior_range)
         param = self.flare_form.parameter('lens.coatings')
-        param.set_value(coatings)
+        if isinstance(param, TabDataParameter):
+            param.set_value(coatings)
 
     def _load(self) -> None:
         """Load data for the parameters."""

@@ -108,12 +108,12 @@ class PreferencesDialog(QtWidgets.QDialog):
         return preferences
 
 
-def view_names() -> dict:
-    names = {}
+def view_names() -> dict[str, dict[str, str]]:
+    names: dict[str, dict[str, str]] = {}
 
     try:
-        config = OCIO.GetCurrentConfig()
-    except OCIO.Exception:
+        config = OCIO.GetCurrentConfig()  # ty: ignore[unresolved-attribute]
+    except OCIO.Exception:  # ty: ignore[unresolved-attribute]
         return names
 
     for display in config.getDisplays():

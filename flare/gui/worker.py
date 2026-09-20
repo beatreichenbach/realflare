@@ -4,8 +4,9 @@ from collections.abc import Sequence
 from qtpy import QtCore
 
 from flare import api
+from flare.engine.engine import Engine, Render
+
 from ..engine.base import EngineError
-from flare.engine.engine import Render, Engine
 
 logger = logging.getLogger(__name__)
 
@@ -17,7 +18,7 @@ class Worker(QtCore.QObject):
     def __init__(self, parent: QtCore.QObject | None = None) -> None:
         super().__init__(parent)
 
-        self._layers = ()
+        self._layers: tuple[api.Layer, ...] = ()
         self._image_hashes: dict[api.Layer, int] = {}
 
         # Tasks
@@ -29,7 +30,7 @@ class Worker(QtCore.QObject):
 
     def set_layers(self, layers: Sequence[api.Layer]) -> None:
         self._image_hashes = {}
-        self._layers = layers
+        self._layers = tuple(layers)
 
     def render(self, project: api.Project) -> None:
         """Render the project."""

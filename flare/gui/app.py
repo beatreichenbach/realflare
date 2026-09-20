@@ -2,6 +2,7 @@ import copy
 import logging
 import os
 from functools import partial
+from typing import Any
 
 from qt_logging import LogBar, LogViewer
 from qt_material_icons import MaterialIcon
@@ -67,11 +68,11 @@ class FlareDockWindow(DockWindow):
         self._project_path = ''
         self._project_hash = 0
         self._project_saved = False
-        self._project_queue = None
+        self._project_queue: api.Project | None = None
 
         self._rendering = False
 
-        self.project_editor = None
+        self.project_editor: ProjectEditor | None = None
         self.widget_added.connect(self._update_widget)
 
         self._init_engine()
@@ -93,7 +94,7 @@ class FlareDockWindow(DockWindow):
         self.resize(1920, 1080)
 
         self.log_bar = LogBar()
-        self.log_bar.names = ['root', flare.__name__]
+        self.log_bar.names = {'root', flare.__name__}
         self.log_bar.level = logging.WARNING
         self._layout.addWidget(self.log_bar)
 
@@ -286,7 +287,7 @@ class FlareDockWindow(DockWindow):
         self._update_layers()
         self.request_render(self._project)
 
-    def _widget_states(self) -> dict:
+    def _widget_states(self) -> dict[str, Any]:
         """Return the state of all StateWidgets in the window."""
 
         states = {}
@@ -296,7 +297,7 @@ class FlareDockWindow(DockWindow):
                 states[title] = widget.state()
         return states
 
-    def _set_widget_states(self, states: dict) -> None:
+    def _set_widget_states(self, states: dict[str, Any]) -> None:
         """Set the state of all StateWidgets in the window."""
 
         for title, widget in self._widgets.items():
@@ -318,7 +319,9 @@ class FlareDockWindow(DockWindow):
         if value <= 0:
             preferences = PreferencesManager.get()
             if preferences.clear_log_on_render:
-                self.log_bar.cache().clear()
+                cache = self.log_bar.cache()
+                if cache is not None:
+                    cache.clear()
         if value >= 1:
             self.progress_bar.setValue(0)
             self._rendering = False
@@ -340,7 +343,7 @@ class FlareDockWindow(DockWindow):
             return
 
         # Update project
-        if self.project:
+        if self.project():
             ndc_position = QtCore.QPointF(
                 (position.x() / viewer.resolution().width() * 2.0) - 1.0,
                 (position.y() / viewer.resolution().height() * 2.0) - 1.0,
@@ -351,9 +354,10 @@ class FlareDockWindow(DockWindow):
         # Update the ProjectEditor
         if self.project_editor:
             param = self.project_editor.parameter('flare.light.position')
-            param.blockSignals(True)
-            param.set_value(self._project.flare.light.position)
-            param.blockSignals(False)
+            if param is not None:
+                param.blockSignals(True)
+                param.set_value(self._project.flare.light.position)
+                param.blockSignals(False)
 
         self.request_render(self._project)
 
@@ -397,13 +401,16 @@ class FlareDockWindow(DockWindow):
             widget.refreshed.connect(self.refresh)
 
         elif isinstance(widget, ProjectEditor):
+            widget.set_project(self._project)
+            widget.parameter_changed.connect(self._project_editor_changed)
+            if widget.render_button is not None:
+                widget.render_button.clicked.connect(self.request_disk_render)
             self.project_editor = widget
-            self.project_editor.set_project(self._project)
-            self.project_editor.parameter_changed.connect(self._project_editor_changed)
-            widget.render_button.clicked.connect(self.request_disk_render)
 
         elif isinstance(widget, LogViewer):
-            widget.set_cache(self.log_bar.cache())
+            cache = self.log_bar.cache()
+            if cache is not None:
+                widget.set_cache(cache)
 
     def _refresh_project_saved(self) -> None:
         """Refresh the save status of a project by checking if it has changed."""

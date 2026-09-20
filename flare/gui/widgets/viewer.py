@@ -1,10 +1,12 @@
 import logging
+from typing import Any
 
 from qt_parameters import EnumParameter
 from qtpy import QtCore, QtWidgets
 
 from flare import api
 from flare.widgets import Viewer
+
 from .base import StateWidget
 
 logger = logging.getLogger(__name__)
@@ -27,17 +29,19 @@ class LayerViewer(Viewer, StateWidget):
 
     def layer(self) -> api.Layer | None:
         layer = self.layer_parm.value()
-        return layer
+        if isinstance(layer, api.Layer):
+            return layer
+        return None
 
     def set_layer(self, layer: api.Layer) -> None:
         self.layer_parm.set_value(layer)
 
-    def state(self) -> dict:
+    def state(self) -> dict[str, Any]:
         state = super().state()
         state['layer'] = self.layer()
         return state
 
-    def set_state(self, state: dict) -> None:
+    def set_state(self, state: dict[str, Any]) -> None:
         super().set_state(state)
-        if layer := state.get('layer'):
+        if isinstance(layer := state.get('layer'), api.Layer):
             self.set_layer(layer)
