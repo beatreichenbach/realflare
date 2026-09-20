@@ -6,11 +6,10 @@ from OpenGL import GL
 from qtpy import QtCore, QtGui
 
 from flare import api
-from flare.api import color
 
 from ..base import Array
 from ..opengl import OpenGLTask
-from .common import LAMBDA_MAX, LAMBDA_MID, LAMBDA_MIN, get_screen_scale
+from .common import LAMBDA_MAX, LAMBDA_MID, LAMBDA_MIN, get_screen_scale, get_spectral
 from .constants import TEX, UBO
 
 logger = logging.getLogger(__name__)
@@ -25,7 +24,7 @@ params_dtype = np.dtype(
         ('rotation_weight', np.float32),
         ('intensity', np.float32),
         ('vignetting', np.float32),
-        ('fft_width', np.float32),
+        ('fft_radius', np.float32),
         ('samples', np.uint32),
         ('_pad', np.uint32),
     ]
@@ -33,6 +32,42 @@ params_dtype = np.dtype(
 
 
 class StarburstTask(OpenGLTask):
+    """
+    This task creates the starburst around a bright source using the Fraunhofer
+    approximation.
+
+    The pupil truncates the incoming wavefront, so each open point of the aperture
+    acts as a secondary source. In the far field their interference is the Fourier
+    transform of the aperture image, and the visible glare is its power spectrum.
+    Blade edges become spikes, while scratches, dust, and grating add streaks and
+    halos.
+
+    Steps:
+    1. Fourier transform the aperture image and take the power spectrum, assuming
+       uniform collimated incident light and a real-valued transmission function
+       (Hecht 2001). Fraunhofer is used instead of Fresnel because the sensor sits
+       at the focal plane, where the Fresnel phase reduces to a Fourier transform.
+    2. Scale the pattern to the sensor: its radius is normalized to the sensor
+       radius, so it grows with wavelength and f-number.
+    3. Sample wavelengths from 390 to 730 nm. Each lookup is re-scaled by its own
+       wavelength, so short wavelengths sit closer to the source and the spikes fan
+       out into chromatic fringes. Samples are weighted by the illuminant spectrum
+       times the CIE 2015 2-degree observer curves, converted to render space, and
+       dimmed by (LAMDA_MID / wavelength)^2 so every wavelength carries equal energy
+       despite spreading over different areas (Kakimoto et al. 2005, Eq. 2).
+    4. Apply artistic controls:
+       - Blur and rotation jitter the per-wavelength lookups, approximating relative
+         motion between aperture and sensor during exposure.
+       - Vignetting fades the FFT texture borders to hide edge artifacts.
+
+    References:
+    Kakimoto et al. 2005, Sec. 3.1 and 3.2, Eq. 5.
+    Ritschel et al. 2009, Sec. 4 and 5.
+    Hullin et al. 2011.
+    Hecht 2001.
+    https://github.com/TomCrypto/fraunhofer
+    """
+
     def __init__(self, context: QtGui.QOpenGLContext) -> None:
         super().__init__(context)
 
@@ -85,10 +120,9 @@ class StarburstTask(OpenGLTask):
         position: tuple[float, float],
         fstop: float,
         resolution: QtCore.QSize,
+        illuminant: str,
     ) -> Array:
-        """
-        Return a starburst image by rendering the fraunhofer diffraction of an aperture.
-        """
+        """Return the starburst around a bright source."""
 
         # Check if the light reaches the aperture
         # if config.camera.occlusion:
@@ -102,7 +136,7 @@ class StarburstTask(OpenGLTask):
         blur = config.diffraction.blur / 100
         rotation = np.radians(config.diffraction.rotation)
         aperture_resolution = aperture.array.shape[0]
-        fft_width = get_fft_width(sensor_size, fstop, aperture_resolution, resolution)
+        fft_radius = get_fft_radius(sensor_size, fstop, aperture_resolution, resolution)
 
         params = np.zeros((), dtype=params_dtype)
         params['resolution'] = (resolution.width(), resolution.height())
@@ -112,7 +146,7 @@ class StarburstTask(OpenGLTask):
         params['rotation_weight'] = config.diffraction.rotation_weight
         params['intensity'] = config.diffraction.intensity
         params['vignetting'] = config.diffraction.vignetting
-        params['fft_width'] = fft_width
+        params['fft_radius'] = fft_radius
         params['samples'] = config.render.samples
         self.update_ubo(self._ubo, params)
 
@@ -122,7 +156,7 @@ class StarburstTask(OpenGLTask):
 
         # Spectral Image
         wavelength_count = LAMBDA_MAX - LAMBDA_MIN + 1
-        spectral = get_spectral(wavelength_count)
+        spectral = get_spectral(illuminant, wavelength_count)
         cached_update_texture(self._spectral_image, spectral)
 
         # Render
@@ -131,7 +165,7 @@ class StarburstTask(OpenGLTask):
         self.render(self._program, self._fbo, resolution)
 
         array = self.read_texture(self._fbo_texture, resolution)
-        args = (aperture, config, sensor_size, position, fstop)
+        args = (aperture, config, sensor_size, position, fstop, illuminant)
         image = Array(array=array, args=args)
         return image
 
@@ -155,7 +189,7 @@ def get_fraunhofer_diffraction(aperture: np.ndarray) -> np.ndarray:
 
 @lru_cache(1)
 def get_fft(aperture: Array) -> Array:
-    """Return a point spread function (PSD) for an aperture."""
+    """Return a point spread function (PSF) for an aperture."""
 
     array = aperture.array[:, :, 0]
     intensity = get_fraunhofer_diffraction(array)
@@ -165,52 +199,35 @@ def get_fft(aperture: Array) -> Array:
 
 
 @lru_cache(1)
-def get_spectral(wavelength_count: int) -> Array:
-    """Return an Image with the CMFS for the wavelengths."""
-
-    lambdas = np.linspace(LAMBDA_MIN, LAMBDA_MAX, wavelength_count)
-    cmfs_variation = 'CIE 2015 2 Degree Standard Observer'
-    cmfs = color.get_cmfs(cmfs_variation, lambdas)
-
-    # Add an alpha channel and turn into 2d texture with 1 px height.
-    rgba = np.concatenate((cmfs, np.zeros((cmfs.shape[0], 1))), axis=-1)
-    rgba = rgba[np.newaxis, ...]
-
-    spectral = Array(rgba, args=(wavelength_count,))
-    return spectral
-
-
-@lru_cache(1)
-def get_fft_width(
+def get_fft_radius(
     sensor_size: tuple[float, float],
     fstop: float,
     aperture_resolution: int,
     resolution: QtCore.QSize,
 ) -> float:
     """
-    Return the width in pixels of the fft on the image plane.
+    Return the radius relative to the sensor.
 
-    Calculate FFT width:
-    fft_width = x_max / pixel_width
-
-    Where:
-    aperture_size = focal_length / fstop
-    f_max = 1 / (aperture_size / aperture_resolution)
-    x_max = focal_length * wavelength * f_max
-    pixel_width = sensor_size / resolution
-
-    This simplifies to:
-    fft_width = wavelength * fstop * aperture_resolution * resolution / sensor_size
+    The physical pattern radius grows with wavelength and f-number:
+    pattern_radius = wavelength * fstop * aperture_resolution / 2.
+    The image is fit into the sensor with letterboxing or pillarboxing.
     """
 
     # All units in mm
     wavelength = LAMBDA_MID * 1e-6
-    sensor_width = sensor_size[0]
-    fft_width = (
-        wavelength * fstop * aperture_resolution * resolution.width() / sensor_width
-    )
+    sensor_aspect = sensor_size[0] / sensor_size[1]
+    resolution_aspect = resolution.width() / resolution.height()
+    if resolution_aspect > sensor_aspect:
+        # Fit to width
+        effective_size = (sensor_size[0], sensor_size[0] / resolution_aspect)
+    else:
+        # Fit to height
+        effective_size = (sensor_size[1] * resolution_aspect, sensor_size[1])
+    sensor_radius = np.hypot(*effective_size) / 2
+    pattern_radius = wavelength * fstop * aperture_resolution / 2
+    fft_radius = pattern_radius / sensor_radius
 
-    return fft_width
+    return fft_radius
 
 
 @lru_cache(1)

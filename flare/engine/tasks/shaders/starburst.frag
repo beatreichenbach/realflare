@@ -13,7 +13,7 @@ uniform Params {
     float rotation_weight;
     float intensity;
     float vignetting;
-    float fft_width;
+    float fft_radius;
     uint samples;
     uint _pad;
 };
@@ -42,7 +42,7 @@ vec4 spectral(
 
     uint lambda_delta = LAMBDA_MAX - LAMBDA_MIN;
     for (uint t = 0u; t < samples; ++t) {
-        float step = float(t) / samples;
+        float step = (float(t) + 0.5) / samples;
         float seed = float(t) * 4.0;
         float wavelength = step * lambda_delta + LAMBDA_MIN;
         vec2 pos = ndc;
@@ -77,9 +77,12 @@ vec4 spectral(
         float fourier_intensity = texture(fft_image, uv).x;
         fourier_intensity *= 1 - vignetting + smooth_vignette(uv) * vignetting;
 
-        // Sample XYZ color data from the light spectrum
+        // Sample spectral color data from the light spectrum (in render space)
         vec4 xyz = texture(spectral_image, vec2(step, 0));
-        color += xyz * fourier_intensity;
+        // Long wavelengths spread over a wider area, so dim each sample by the
+        // square of its wavelength ratio to keep the energy per wavelength equal.
+        float falloff = pow(float(LAMBDA_MID) / wavelength, 2.0);
+        color += xyz * fourier_intensity * falloff;
     }
 
     color /= samples;
@@ -91,7 +94,7 @@ void main() {
     vec2 p = gl_FragCoord.xy;
     vec2 ndc = convert_ndc(p, resolution);
     ndc -= position;
-    ndc *= resolution / fft_width;
+    ndc *= resolution / (length(resolution) * fft_radius);
 
     rgba = spectral(ndc, blur, rotation, rotation_weight, samples);
     rgba *= intensity;

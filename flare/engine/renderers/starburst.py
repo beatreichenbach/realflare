@@ -40,5 +40,6 @@ class StarburstRenderer(Renderer):
             position=position,
             fstop=fstop,
             resolution=project.flare.render.resolution,
+            illuminant=project.flare.light.illuminant,
         )
         return image
