@@ -4,7 +4,7 @@ Gizmo {
  selected true
  addUserKnob {20 Flare}
  addUserKnob {2 project}
- addUserKnob {22 launch l Launch T "import flare_utils\nflare_utils.launch()\n" +STARTLINE}
+ addUserKnob {22 launch l Launch T "import nuke_flare\nnuke_flare.launch()\n" +STARTLINE}
  addUserKnob {26 ""}
  addUserKnob {4 layer M {"Ghost Aperture" "Starburst Aperture" Ghost Starburst Flare Comp}}
  layer Flare
@@ -21,10 +21,10 @@ Gizmo {
  frame_start {{root.first_frame}}
  addUserKnob {3 frame_end l "" -STARTLINE}
  frame_end {{root.last_frame}}
- addUserKnob {22 render l Render T "import flare_utils\nflare_utils.render()\n" +STARTLINE}
+ addUserKnob {22 render l Render T "import nuke_flare\nnuke_flare.render()\n" +STARTLINE}
  addUserKnob {26 ""}
  addUserKnob {41 on_error l "Missing Frames" T Read1.on_error}
- addUserKnob {22 reload l Reload -STARTLINE T "import flare_utils\nflare_utils.reload()\n"}
+ addUserKnob {22 reload l Reload -STARTLINE T "import nuke_flare\nnuke_flare.reload()\n"}
 }
  Input {
   inputs 0
