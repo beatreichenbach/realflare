@@ -44,3 +44,27 @@ self-explanatory classes, must NOT have a docstring.
 
        ...
    ```
+
+## Package imports / exports
+
+1. Every `__init__.py` that re-exports names must define `__all__` listing
+   exactly the public names. Keep re-exports and `__all__` in sync.
+
+## Type hints
+
+1. Fully annotate all parameters and return values, including `-> None`
+   and dunders (`__eq__(self, other: object) -> bool`,
+   `__hash__(self) -> int`). Never leave a parameter unannotated.
+2. Never use bare generics: `dict[str, Any]`, not `dict`;
+   `tuple[Any, ...]`, not `tuple`.
+3. Use `object` when accepting anything and narrowing with `isinstance`
+   (e.g. `__eq__`). Use `Any` only for dynamic passthrough
+   (e.g. delegating `__getattr__` / `__getitem__` to numpy).
+
+## Verification
+
+After a change, format the touched files with ruff, e.g.
+`uv run ruff format flare/core`.
+Then run the scoped type check for the touched package,
+e.g. `uv run ty check flare/core`. Do not run unrelated suites
+unless asked.
