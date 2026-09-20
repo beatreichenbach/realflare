@@ -61,6 +61,15 @@ self-explanatory classes, must NOT have a docstring.
    (e.g. `__eq__`). Use `Any` only for dynamic passthrough
    (e.g. delegating `__getattr__` / `__getitem__` to numpy).
 
+## Errors
+
+1. Exception messages are lowercase: they are read by developers in
+   tracebacks and often composed into larger messages.
+2. Log messages shown to the user are capitalized sentences, e.g.
+   `logger.error(f'Could not read file: {path}')`.
+3. Log once, at the boundary: library code raises, the CLI/UI layer logs.
+   Never log an error you also raise — it double-reports.
+
 ## Verification
 
 After a change, format the touched files with ruff, e.g.
