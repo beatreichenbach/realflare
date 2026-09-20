@@ -2,9 +2,10 @@ from __future__ import annotations
 
 import logging
 import os
+from typing import Any
 
-import PyOpenColorIO as OCIO
 import numpy as np
+import PyOpenColorIO as OCIO
 from OpenGL import GL
 from qtpy import QtCore, QtGui, QtWidgets
 
@@ -111,8 +112,7 @@ class OpenGLView(QtWidgets.QOpenGLWidget):
 
     def color_at(self, position: QtCore.QPoint) -> QtGui.QColor:
         """
-        Return the color at the position. The color is invalid if the position is
-        outside the array.
+        Return the color at the position, or an invalid color if outside the array.
         """
 
         color = QtGui.QColor()
@@ -253,22 +253,20 @@ def create_ocio_source() -> str:
     )
     os.environ['OCIO'] = ocio
 
-    config = OCIO.GetCurrentConfig()
+    config = OCIO.GetCurrentConfig()  # ty: ignore[unresolved-attribute]
 
     display = config.getDefaultDisplay()
     view = config.getDefaultView(display)
 
-    transform = OCIO.DisplayViewTransform()
-    transform.setSrc(OCIO.ROLE_SCENE_LINEAR)
+    transform = OCIO.DisplayViewTransform()  # ty: ignore[unresolved-attribute]
+    transform.setSrc(OCIO.ROLE_SCENE_LINEAR)  # ty: ignore[unresolved-attribute]
     transform.setDisplay(display)
     transform.setView(view)
 
     processor = config.getProcessor(transform)
     gpu = processor.getDefaultGPUProcessor()
 
-    shader_desc = OCIO.GpuShaderDesc.CreateShaderDesc(
-        language=OCIO.GPU_LANGUAGE_GLSL_4_0
-    )
+    shader_desc = OCIO.GpuShaderDesc.CreateShaderDesc(OCIO.GPU_LANGUAGE_GLSL_4_0)  # ty: ignore[unresolved-attribute]
     gpu.extractGpuShaderInfo(shader_desc)
     source = shader_desc.getShaderText()
 
@@ -286,12 +284,12 @@ def create_ubo(slot: int, size: int = 0) -> int:
 
 def load_source(filename: str) -> str:
     path = os.path.join(os.path.dirname(__file__), 'shaders', filename)
-    with open(path, 'r') as file:
+    with open(path) as file:
         source = file.read()
     return source
 
 
-def load_shader(source: str, shader_type: int) -> int:
+def load_shader(source: str, shader_type: Any) -> int:
     shader = GL.glCreateShader(shader_type)
     GL.glShaderSource(shader, source)
     GL.glCompileShader(shader)

@@ -127,7 +127,9 @@ class DockWidget(QtWidgets.QTabWidget):
         QtCore.Qt.DockWidgetArea.NoDockWidgetArea,
     )
 
-    def __init__(self, dock_window, parent: QtWidgets.QWidget | None = None) -> None:
+    def __init__(
+        self, dock_window: DockWindow, parent: QtWidgets.QWidget | None = None
+    ) -> None:
         super().__init__(parent or dock_window)
 
         self.dock_window = dock_window
@@ -177,7 +179,7 @@ class DockWidget(QtWidgets.QTabWidget):
         y = center.y() - (self.height() // 2)
         self.move(x, y)
 
-    def float(self) -> None:
+    def set_floating(self) -> None:
         self.setWindowFlag(QtCore.Qt.WindowType.Tool, True)
 
     def try_delete(self) -> None:
@@ -199,24 +201,25 @@ class DockWidget(QtWidgets.QTabWidget):
         """Add a QTabWidget to an area with a Splitter."""
 
         if area == QtCore.Qt.DockWidgetArea.NoDockWidgetArea:
-            self.addTab(widget.widget(0), widget.tabText(0))
+            first = widget.widget(0)
+            if first is not None:
+                self.addTab(first, widget.tabText(0))
         else:
             parent = self.parent()
-
-            if not parent:
+            if not isinstance(parent, QtWidgets.QWidget):
                 return
 
             if self.isWindow() or not isinstance(parent, QtWidgets.QSplitter):
                 splitter = Splitter(QtCore.Qt.Orientation.Vertical)
-
+                layout = parent.layout()
                 if self.isWindow():
                     splitter.setParent(parent)
                     splitter.setWindowFlags(self.windowFlags())
                     splitter.show()
                 elif isinstance(parent, QtWidgets.QScrollArea):
                     parent.setWidget(splitter)
-                elif isinstance(parent.layout(), QtWidgets.QLayout):
-                    parent.layout().replaceWidget(self, splitter)
+                elif isinstance(layout, QtWidgets.QLayout):
+                    layout.replaceWidget(self, splitter)
                     splitter.setParent(parent)
                 else:
                     # For other parents it's unknown on how to replace a widget
@@ -258,24 +261,27 @@ class DockWidget(QtWidgets.QTabWidget):
         if widget is not None:
             widget.deleteLater()
 
-    def detach(self, index: int, interactive=False) -> None:
+    def detach(self, index: int, interactive: bool = False) -> None:
         if index not in range(self.count()) or not self.detachable:
             return
 
         geometry = self.geometry()
 
         if not self.isWindow():
-            if parent := self.parent():
+            parent = self.parent()
+            if isinstance(parent, QtWidgets.QWidget):
                 top_left = parent.mapToGlobal(geometry.topLeft())
                 geometry.moveTopLeft(top_left)
 
         title = self.tabText(index)
         widget = self.widget(index)
+        if widget is None:
+            return
 
         self._drag_widget = self.__class__(self.dock_window)
         self._drag_widget.setParent(self.dock_window)
         # Setting WindowFlags after parenting creates a window
-        self._drag_widget.float()
+        self._drag_widget.set_floating()
         # Adding a tab after setting the WindowFlags triggers window title update
         self._drag_widget.addTab(widget, title)
         self._drag_widget.setGeometry(geometry)
@@ -353,7 +359,7 @@ class DockWidget(QtWidgets.QTabWidget):
             return rect
         return rect
 
-    def _hide_recursively(self, widget) -> None:
+    def _hide_recursively(self, widget: QtWidgets.QWidget) -> None:
         """Hide the top most widget without deleting it."""
 
         if widget.isWindow():
@@ -463,7 +469,7 @@ class DockWindow(QtWidgets.QWidget):
         dock_widget = DockWidget(dock_window=self)
         dock_widget.addTab(widget, title)
         dock_widget.resize(widget.size())
-        dock_widget.float()
+        dock_widget.set_floating()
         dock_widget.show()
         self.dock_widget_added.emit(dock_widget)
 
@@ -581,8 +587,10 @@ class DockWindow(QtWidgets.QWidget):
 
         states = []
         for child in children:
-            if state := self._child_state(child):
-                states.append(state)
+            if isinstance(child, QtWidgets.QWidget):
+                state = self._child_state(child)
+                if state is not None:
+                    states.append(state)
         return tuple(states)
 
     def _set_child_states(
@@ -631,7 +639,8 @@ class DockWindow(QtWidgets.QWidget):
                             continue
                         # Silently duplicate unique widgets
                         if registered_widget.unique:
-                            if widget in self._widgets.values():
+                            widget_values = self._widgets.values()
+                            if widget in widget_values:
                                 continue
                         widget = registered_widget.cls()
 
@@ -675,7 +684,7 @@ class DockWindow(QtWidgets.QWidget):
             new = True
 
         # Get a unique title
-        titles = self._widgets.keys()
+        titles = list(self._widgets.keys())
         title = utils.unique_name(title, titles)
 
         # Add widget

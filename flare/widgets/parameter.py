@@ -39,10 +39,10 @@ class MenuParameter(ParameterWidget):
         self.combo.clear()
         self.combo.addItem(text)
 
-    def data(self) -> dict:
+    def data(self) -> dict[str, Any] | None:
         return self._data
 
-    def set_data(self, data: dict) -> None:
+    def set_data(self, data: dict[str, Any]) -> None:
         self._data = data
         self._refresh_menu()
 
@@ -61,9 +61,10 @@ class MenuParameter(ParameterWidget):
         """Refresh the menu with the data."""
 
         self.combo.menu.clear()
-        self._add_items(self.combo.menu, self._data)
+        if self._data is not None:
+            self._add_items(self.combo.menu, self._data)
 
-    def _add_items(self, menu: QtWidgets.QMenu, data: dict) -> None:
+    def _add_items(self, menu: QtWidgets.QMenu, data: dict[str, Any]) -> None:
         """Add the items from data to the menu."""
 
         for key, value in data.items():

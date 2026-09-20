@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+from typing import Any
 
 import numpy as np
 from qt_material_icons import MaterialIcon
@@ -236,15 +237,15 @@ class Footer(QtWidgets.QWidget):
         self.hsv_lbl = QtWidgets.QLabel('hsv')
         layout.addWidget(self.hsv_lbl)
 
-    def set_pixel_color(self, color: QtGui.QColor | None) -> None:
+    def set_pixel_color(self, color: QtGui.QColor) -> None:
         if color.isValid():
-            r, g, b, a = color.getRgbF()
+            r, g, b, a = color.getRgbF()  # ty: ignore[not-iterable]
             rgb = (
                 f'<font color="#ff2222">{r:.4f}</font> '
                 f'<font color="#00ff22">{g:.4f}</font> '
                 f'<font color="#0088ff">{b:.4f}</font>'
             )
-            h, s, v, a = color.getHsvF()
+            h, s, v, a = color.getHsvF()  # ty: ignore[not-iterable]
             h = max(h, 0)
         else:
             rgb = ''
@@ -292,7 +293,7 @@ class ToolBar(QtWidgets.QToolBar):
         self.channel_parm = EnumParameter()
         self.channel_parm.set_enum(Channel)
         self.channel_parm.set_formatter(lambda e: e.name.lower())
-        self.channel_parm.combo.keyPressEvent = lambda event: event.ignore()
+        self.channel_parm.combo.keyPressEvent = lambda event: event.ignore()  # ty: ignore[invalid-assignment]
         self.channel_parm.combo.setSizePolicy(Policy.Minimum, Policy.Fixed)
         self.channel_parm.value_changed.connect(self.channel_changed)
 
@@ -364,7 +365,9 @@ class ToolBar(QtWidgets.QToolBar):
 
     def channel(self) -> Channel | None:
         channel = self.channel_parm.value()
-        return channel
+        if isinstance(channel, Channel):
+            return channel
+        return None
 
     def set_channel(self, channel: Channel) -> None:
         self.channel_parm.set_value(channel)
@@ -512,11 +515,11 @@ class Viewer(QtWidgets.QWidget):
         self.toolbar.set_exposure(exposure)
         self.view.set_exposure(exposure)
 
-    def state(self) -> dict:
+    def state(self) -> dict[str, Any]:
         state = {'exposure': self.exposure()}
         return state
 
-    def set_state(self, state: dict) -> None:
+    def set_state(self, state: dict[str, Any]) -> None:
         values = {'exposure': 0}
         values.update(state)
 

@@ -1,3 +1,5 @@
+from typing import Any
+
 from qtpy import QtGui, QtWidgets
 
 
@@ -11,7 +13,7 @@ class DialogButtonBox(QtWidgets.QDialogButtonBox):
         for button in self.buttons():
             button.setIcon(QtGui.QIcon())
 
-    def addButton(self, *args, **kwargs) -> QtWidgets.QPushButton:
+    def addButton(self, *args: Any, **kwargs: Any) -> Any:
         # Handle all overloaded methods
         button = super().addButton(*args, **kwargs)  # noqa
         if isinstance(button, QtWidgets.QPushButton):

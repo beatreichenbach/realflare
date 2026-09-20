@@ -21,16 +21,13 @@ class MessageBox(QtWidgets.QMessageBox):
         title: str,
         text: str,
         buttons: StandardButton = StandardButton.Ok,
-        default_button: StandardButton = StandardButton.NoButton,
+        defaultButton: StandardButton = StandardButton.NoButton,
     ) -> StandardButton:
         icon = MaterialIcon('error')
         theme = qt_themes.get_theme()
-        if theme:
-            color = theme.red
-        else:
-            color = QtGui.QColor('#ff1744')
+        color = theme.red if theme else QtGui.QColor('#ff1744')
         return MessageBox.message(
-            parent, title, text, buttons, default_button, icon, color
+            parent, title, text, buttons, defaultButton, icon, color
         )
 
     @staticmethod
@@ -39,10 +36,10 @@ class MessageBox(QtWidgets.QMessageBox):
         title: str,
         text: str,
         buttons: StandardButton = StandardButton.Ok,
-        default_button: StandardButton = StandardButton.NoButton,
+        defaultButton: StandardButton = StandardButton.NoButton,
     ) -> StandardButton:
         icon = MaterialIcon('info')
-        return MessageBox.message(parent, title, text, buttons, default_button, icon)
+        return MessageBox.message(parent, title, text, buttons, defaultButton, icon)
 
     @staticmethod
     def question(
@@ -50,10 +47,10 @@ class MessageBox(QtWidgets.QMessageBox):
         title: str,
         text: str,
         buttons: StandardButton = StandardButton.Yes | StandardButton.No,
-        default_button: StandardButton = StandardButton.NoButton,
+        defaultButton: StandardButton = StandardButton.NoButton,
     ) -> StandardButton:
         icon = MaterialIcon('help')
-        return MessageBox.message(parent, title, text, buttons, default_button, icon)
+        return MessageBox.message(parent, title, text, buttons, defaultButton, icon)
 
     @staticmethod
     def warning(
@@ -61,10 +58,10 @@ class MessageBox(QtWidgets.QMessageBox):
         title: str,
         text: str,
         buttons: StandardButton = StandardButton.Ok,
-        default_button: StandardButton = StandardButton.NoButton,
+        defaultButton: StandardButton = StandardButton.NoButton,
     ) -> StandardButton:
         icon = MaterialIcon('warning')
-        return MessageBox.message(parent, title, text, buttons, default_button, icon)
+        return MessageBox.message(parent, title, text, buttons, defaultButton, icon)
 
     @staticmethod
     def message(
@@ -82,9 +79,7 @@ class MessageBox(QtWidgets.QMessageBox):
         message_box.setStandardButtons(buttons)
         message_box.setDefaultButton(default_button)
         if icon:
-            if parent is None:
-                parent = QtWidgets.QApplication.instance()
-            style = parent.style()
+            style = QtWidgets.QApplication.style() if parent is None else parent.style()
             size = style.pixelMetric(QtWidgets.QStyle.PixelMetric.PM_MessageBoxIconSize)
             pixmap = icon.pixmap(size, color=color)
             message_box.setIconPixmap(pixmap)
