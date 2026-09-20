@@ -8,8 +8,8 @@ from OpenGL import GL
 from qtpy import QtCore, QtGui
 
 from flare import api
-from ..base import Array, EngineError
 
+from ..base import Array, EngineError
 from ..opengl import OpenGLTask
 from .constants import TEX, UBO
 
@@ -93,8 +93,6 @@ class ApertureTask(OpenGLTask):
 
     @lru_cache(1)  # noqa: B019
     def update_fbo_resolution(self, resolution: QtCore.QSize) -> None:
-        """Update the fbo with a new resolution."""
-
         self._fbo_texture = self.create_texture(
             clamp_to_border=True, resolution=resolution.toTuple()
         )
@@ -167,9 +165,9 @@ class ApertureTask(OpenGLTask):
 
 def load_image(filename: str) -> np.ndarray:
     """
-    Return a numpy array from a filename. Convert the image to np.float32 RGB.
+    Return a numpy array from a filename as float32 RGB.
 
-    :raises EngineError: If the file cannot be loaded.
+    :raises EngineError: if the file cannot be loaded.
     """
 
     image = iio.imread(filename)
@@ -213,9 +211,9 @@ def load_image(filename: str) -> np.ndarray:
 @lru_cache(1)
 def update_image(texture: int, file: api.File) -> None:
     """
-    Load a file used as the texture and return an OpenGL texture.
+    Load a file into a texture.
 
-    :raises EngineError: If the file cannot be found or cannot be loaded.
+    :raises EngineError: if the file cannot be found or cannot be loaded.
     """
 
     filename = str(file)

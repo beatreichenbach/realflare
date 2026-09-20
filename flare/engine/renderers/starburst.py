@@ -1,11 +1,11 @@
 from qtpy import QtGui
 
 from flare import api
-from ..base import Array
 from flare.utils import profiling
-from .aperture import StarburstApertureRenderer
-from ..base import Renderer
+
+from ..base import Array, Renderer
 from ..tasks import StarburstTask
+from .aperture import StarburstApertureRenderer
 
 
 class StarburstRenderer(Renderer):

@@ -3,13 +3,14 @@ from functools import lru_cache
 
 import numpy as np
 from OpenGL import GL
+from OpenGL.constant import Constant
 from qtpy import QtGui
 
 from flare import api
-from ..base import Array
 from flare.engine.tasks.common.lens import get_lens, get_surfaces
 from flare.utils import profiling
 
+from ..base import Array
 from ..opengl import OpenGLTask
 from .common import LAMBDA_MAX, LAMBDA_MIN, DiscMesh, get_paths
 from .constants import SSBO, UBO
@@ -334,10 +335,10 @@ class RaytraceTask(OpenGLTask):
 
 @lru_cache(1)
 def cached_update_ssbo(
-    buffer: int, array: Array, usage: int = GL.GL_DYNAMIC_DRAW
+    buffer: int,
+    array: Array,
+    usage: int | Constant = GL.GL_DYNAMIC_DRAW,
 ) -> None:
-    """Update the buffer with array."""
-
     OpenGLTask.update_ssbo(buffer, array.array, usage)
 
 

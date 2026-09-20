@@ -32,7 +32,7 @@ class Array:
             self._hash = hash(self.args)
         return self._hash
 
-    def __eq__(self, other: Any) -> bool:
+    def __eq__(self, other: object) -> bool:
         return isinstance(other, Array) and self._hash == other._hash
 
     def __repr__(self) -> str:
@@ -63,5 +63,5 @@ class Renderer(ABC):
 class Output(ABC):
     @abstractmethod
     def write(self, image: Array, project: api.Project) -> str:
-        """Write a Render to disk based on the Project's output values."""
+        """Return the path of the render written to disk from the project output."""
         ...

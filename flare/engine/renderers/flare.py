@@ -3,9 +3,9 @@ import logging
 from qtpy import QtGui
 
 from flare import api
-from ..base import Array
 from flare.utils import profiling
-from ..base import Renderer
+
+from ..base import Array, Renderer
 from ..tasks import FlareTask, PreprocessTask, RaytraceTask
 from .ghost import GhostRenderer
 

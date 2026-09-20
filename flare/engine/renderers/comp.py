@@ -3,12 +3,12 @@ import logging
 from qtpy import QtGui
 
 from flare import api
-from ..base import Array
 from flare.utils import profiling
-from ..base import Renderer
+
+from ..base import Array, Renderer
+from ..tasks import CompTask
 from .flare import FlareRenderer
 from .starburst import StarburstRenderer
-from ..tasks import CompTask
 
 logger = logging.getLogger(__name__)
 

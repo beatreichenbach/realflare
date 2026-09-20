@@ -3,8 +3,8 @@ from functools import lru_cache
 import numpy as np
 
 from flare.api import color
-from ...base import Array
 
+from ...base import Array
 from .raytracing import LAMBDA_MAX, LAMBDA_MIN
 
 XYZ_TO_ACESCG = np.array(

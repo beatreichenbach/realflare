@@ -3,11 +3,11 @@ import logging
 from qtpy import QtGui
 
 from flare import api
-from ..base import Array
 from flare.utils import profiling
-from .aperture import GhostApertureRenderer
-from ..base import Renderer
+
+from ..base import Array, Renderer
 from ..tasks import GhostTask
+from .aperture import GhostApertureRenderer
 
 logger = logging.getLogger(__name__)
 

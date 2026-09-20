@@ -3,10 +3,9 @@ from qtpy import QtGui
 from flare import api
 from flare.utils import profiling
 
-from ..base import Array
+from ..base import Array, Renderer
 from ..tasks import DiagramTask
 from ..tasks.common import GhostData, get_paths
-from ..base import Renderer
 
 
 class DiagramRenderer(Renderer):

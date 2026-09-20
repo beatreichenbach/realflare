@@ -3,11 +3,12 @@ from functools import lru_cache
 
 import numpy as np
 from OpenGL import GL
+from OpenGL.constant import Constant
 from qtpy import QtCore, QtGui
 
 from flare import api
-from ..base import Array
 
+from ..base import Array
 from ..opengl import OpenGLTask
 from .common import LAMBDA_MAX, LAMBDA_MIN, DiscMesh, get_screen_scale, get_spectral
 from .constants import SSBO, TEX, UBO
@@ -183,8 +184,6 @@ class FlareTask(OpenGLTask):
 
     @lru_cache(1)  # noqa: B019
     def update_fbo_resolution(self, resolution: QtCore.QSize) -> None:
-        """Update the fbo with a new resolution."""
-
         self._fbo_texture = self.create_texture(
             clamp_to_border=True, resolution=resolution.toTuple()
         )
@@ -192,8 +191,6 @@ class FlareTask(OpenGLTask):
 
     @lru_cache(1)  # noqa: B019
     def update_fbo_ssaa_resolution(self, resolution: QtCore.QSize) -> None:
-        """Update the fbo with a new resolution."""
-
         self._fbo_texture_ssaa = self.create_texture(
             clamp_to_border=True, resolution=resolution.toTuple()
         )
@@ -220,14 +217,12 @@ class FlareTask(OpenGLTask):
 
     @staticmethod
     def compute_commands(program: int, commands_count: int) -> None:
-        """Run the compute shader."""
-
         groups_x = commands_count
 
         GL.glUseProgram(program)
         GL.glDispatchCompute(groups_x, 1, 1)
         GL.glMemoryBarrier(
-            GL.GL_SHADER_STORAGE_BARRIER_BIT
+            GL.GL_SHADER_STORAGE_BARRIER_BIT  # ty: ignore[unsupported-operator]
             | GL.GL_COMMAND_BARRIER_BIT
             | GL.GL_ELEMENT_ARRAY_BARRIER_BIT
         )
@@ -425,17 +420,15 @@ class FlareTask(OpenGLTask):
 
 @lru_cache(1)
 def cached_update_texture(texture: int, array: Array) -> None:
-    """Update the texture with array."""
-
     OpenGLTask.update_texture(texture, array.array)
 
 
 @lru_cache(1)
 def cached_update_ssbo(
-    buffer: int, array: Array, usage: int = GL.GL_DYNAMIC_DRAW
+    buffer: int,
+    array: Array,
+    usage: int | Constant = GL.GL_DYNAMIC_DRAW,
 ) -> None:
-    """Update the buffer with array."""
-
     OpenGLTask.update_ssbo(buffer, array.array, usage)
 
 
@@ -446,7 +439,7 @@ def get_areas(ghost_datas: Array) -> Array:
     ghost_array = ghost_datas.array[~ghost_datas.array['culled']]
 
     lengths = ghost_array['radius'] / ghost_array['divisions']
-    array = np.float32((np.sqrt(3) / 4) * (lengths**2))
+    array = np.asarray((np.sqrt(3) / 4) * (lengths**2), dtype=np.float32)
 
     areas = Array(array=array, args=ghost_datas)
     return areas
@@ -454,7 +447,7 @@ def get_areas(ghost_datas: Array) -> Array:
 
 def get_ghost_scale(fstop: float) -> float:
     """
-    Return the scale for a ghost base on the fstop of the lens.
+    Return the scale for a ghost based on the fstop of the lens.
     While the minimum fstop is different per lens and could be used, it doesn't
     make sense to adjust the ProjectEditor parameters every time the lens changes.
     Instead, a default of f1 is used.

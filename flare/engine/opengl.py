@@ -1,18 +1,23 @@
+import contextlib
 import inspect
 from collections.abc import Sequence
 from pathlib import Path
+from typing import Any, TypeVar
 
 import numpy as np
 from OpenGL import GL
+from OpenGL.constant import Constant
 from qtpy import QtCore, QtGui
 
 from .base import Task
+
+T = TypeVar('T', bound='OpenGLTask')
 
 
 class ResourceManager:
     @classmethod
     def load_source(cls, filename: str) -> str:
-        """Load a shader source file relative to the subclass location."""
+        """Return the shader source loaded relative to the subclass location."""
 
         # Try shaders relative to the subclass file location.
         try:
@@ -24,20 +29,17 @@ class ResourceManager:
                 # Fallback: when called on ResourceManager/OpenGLTask defined in engine/
                 # shaders live in engine/tasks/shaders
                 fallback = Path(__file__).parent / 'tasks' / 'shaders' / filename
-                if fallback.is_file():
-                    path = fallback
-                else:
-                    path = candidate
+                path = fallback if fallback.is_file() else candidate
         except (TypeError, OSError):
             path = Path(__file__).parent / 'tasks' / 'shaders' / filename
 
-        with open(path, 'r') as file:
+        with open(path) as file:
             source = file.read()
         return source
 
     @classmethod
     def load_sources(cls, *filenames: str) -> str:
-        """Load and merge multiple shader sources, deduplicating version/defines."""
+        """Return the merged shader sources with deduplicated version and defines."""
 
         version = ''
         defines = ''
@@ -58,7 +60,7 @@ class ResourceManager:
 
     @staticmethod
     def read_buffer(buffer: int, array: np.ndarray) -> np.ndarray:
-        """Read the data from a buffer into an array that matches `array`."""
+        """Return the data read from a buffer as an array matching `array`."""
 
         GL.glBindBuffer(GL.GL_SHADER_STORAGE_BUFFER, buffer)
         data = GL.glGetBufferSubData(GL.GL_SHADER_STORAGE_BUFFER, 0, array.nbytes)
@@ -72,9 +74,9 @@ class ResourceManager:
     def read_texture(
         texture: int, resolution: QtCore.QSize, unit: int = 0
     ) -> np.ndarray:
-        """Read the data from a texture."""
+        """Return the data read from a texture."""
 
-        GL.glActiveTexture(GL.GL_TEXTURE0 + unit)
+        GL.glActiveTexture(GL.GL_TEXTURE0 + unit)  # ty: ignore[unsupported-operator]
         GL.glBindTexture(GL.GL_TEXTURE_2D, texture)
         data = GL.glGetTexImage(GL.GL_TEXTURE_2D, 0, GL.GL_RGBA, GL.GL_FLOAT)
         GL.glBindTexture(GL.GL_TEXTURE_2D, 0)
@@ -107,32 +109,26 @@ class ResourceManager:
 
     @staticmethod
     def create_buffer() -> int:
-        """Create a buffer."""
-
         buffer = GL.glGenBuffers(1)
         return buffer
 
     @staticmethod
     def create_vao() -> int:
-        """Create a VAO (VertexArray)."""
-
         array = GL.glGenVertexArrays(1)
         return array
 
     @staticmethod
     def create_texture(
-        tex_filter: int = GL.GL_LINEAR,
+        tex_filter: int | Constant = GL.GL_LINEAR,
         clamp_to_border: bool = False,
         resolution: tuple[int, int] | None = None,
-        fmt: int = GL.GL_RGBA32F,
+        fmt: int | Constant = GL.GL_RGBA32F,
     ) -> int:
-        """Create a texture."""
-
         texture = GL.glGenTextures(1)
 
         target = GL.GL_TEXTURE_2D
         GL.glBindTexture(target, texture)
-        if tex_filter > -1:
+        if tex_filter > -1:  # ty: ignore[unsupported-operator]
             GL.glTexParameteri(target, GL.GL_TEXTURE_MIN_FILTER, tex_filter)
             GL.glTexParameteri(target, GL.GL_TEXTURE_MAG_FILTER, tex_filter)
         if clamp_to_border:
@@ -146,8 +142,6 @@ class ResourceManager:
 
     @staticmethod
     def create_fbo(texture: int = -1, multisample: bool = False) -> int:
-        """Create an fbo (FrameBuffer)."""
-
         buffer = GL.glGenFramebuffers(1)
 
         if texture > -1:
@@ -164,8 +158,6 @@ class ResourceManager:
 
     @staticmethod
     def create_program(shaders: Sequence[int] = ()) -> int:
-        """Create a program."""
-
         program = GL.glCreateProgram()
 
         for shader in shaders:
@@ -183,10 +175,10 @@ class ResourceManager:
 
     @staticmethod
     def update_ssbo(
-        buffer: int, array: np.ndarray, usage: int = GL.GL_DYNAMIC_DRAW
+        buffer: int,
+        array: np.ndarray,
+        usage: int | Constant = GL.GL_DYNAMIC_DRAW,
     ) -> None:
-        """Update the buffer with an array."""
-
         array = np.ascontiguousarray(array)
         GL.glBindBuffer(GL.GL_SHADER_STORAGE_BUFFER, buffer)
         GL.glBufferData(GL.GL_SHADER_STORAGE_BUFFER, array.nbytes, array, usage)
@@ -194,10 +186,10 @@ class ResourceManager:
 
     @staticmethod
     def update_ubo(
-        buffer: int, array: np.ndarray, usage: int = GL.GL_DYNAMIC_DRAW
+        buffer: int,
+        array: np.ndarray,
+        usage: int | Constant = GL.GL_DYNAMIC_DRAW,
     ) -> None:
-        """Update the buffer with an array."""
-
         array = np.ascontiguousarray(array)
         GL.glBindBuffer(GL.GL_UNIFORM_BUFFER, buffer)
         GL.glBufferData(GL.GL_UNIFORM_BUFFER, array.nbytes, array, usage)
@@ -205,10 +197,10 @@ class ResourceManager:
 
     @staticmethod
     def update_vbo(
-        buffer: int, array: np.ndarray, usage: int = GL.GL_STATIC_DRAW
+        buffer: int,
+        array: np.ndarray,
+        usage: int | Constant = GL.GL_STATIC_DRAW,
     ) -> None:
-        """Update the buffer with an array."""
-
         array = np.ascontiguousarray(array)
         GL.glBindBuffer(GL.GL_ARRAY_BUFFER, buffer)
         GL.glBufferData(GL.GL_ARRAY_BUFFER, array.nbytes, array, usage)
@@ -216,10 +208,10 @@ class ResourceManager:
 
     @staticmethod
     def update_ebo(
-        buffer: int, array: np.ndarray, usage: int = GL.GL_STATIC_DRAW
+        buffer: int,
+        array: np.ndarray,
+        usage: int | Constant = GL.GL_STATIC_DRAW,
     ) -> None:
-        """Update the buffer with an array."""
-
         array = np.ascontiguousarray(array)
         GL.glBindBuffer(GL.GL_ELEMENT_ARRAY_BUFFER, buffer)
         GL.glBufferData(GL.GL_ELEMENT_ARRAY_BUFFER, array.nbytes, array, usage)
@@ -227,8 +219,6 @@ class ResourceManager:
 
     @staticmethod
     def update_fbo(buffer: int, texture: int) -> None:
-        """Update the fbo with a texture."""
-
         target = GL.GL_FRAMEBUFFER
         attachment = GL.GL_COLOR_ATTACHMENT0
         tex_target = GL.GL_TEXTURE_2D
@@ -249,6 +239,7 @@ class ResourceManager:
         (h, w, 4) -> GL_RGBA
 
         :raises ValueError: if the array has invalid shape.
+        :raises ValueError: if the channel count is invalid.
         """
 
         formats = {
@@ -286,11 +277,8 @@ class ResourceManager:
         """Delete resources from the current context."""
 
         for program in programs:
-            try:
+            with contextlib.suppress(GL.error.GLError):
                 GL.glDeleteProgram(program)
-            except GL.error.GLError:
-                # Program was already deleted
-                pass
 
         GL.glDeleteTextures(len(textures), textures)
         GL.glDeleteRenderbuffers(len(render_buffers), render_buffers)
@@ -301,42 +289,30 @@ class ResourceManager:
 class BindingManager:
     @staticmethod
     def bind_ssbo(buffer: int, slot: int) -> None:
-        """Bind an SSBO to a slot."""
-
         GL.glBindBufferBase(GL.GL_SHADER_STORAGE_BUFFER, slot, buffer)
 
     @staticmethod
     def bind_ssbo_block(program: int, name: str, slot: int) -> None:
-        """Bind the ShaderStorageBlock is to a slot."""
-
         index = GL.glGetProgramResourceIndex(program, GL.GL_SHADER_STORAGE_BLOCK, name)
         GL.glShaderStorageBlockBinding(program, index, slot)
 
     @staticmethod
     def bind_ubo(buffer: int, slot: int) -> None:
-        """Bind an UBO to a slot."""
-
         GL.glBindBufferBase(GL.GL_UNIFORM_BUFFER, slot, buffer)
 
     @staticmethod
     def bind_ubo_block(program: int, name: str, slot: int) -> None:
-        """Bind the UniformBlock is to a slot."""
-
         index = GL.glGetUniformBlockIndex(program, name)
         GL.glUniformBlockBinding(program, index, slot)
 
     @staticmethod
     def bind_texture(texture: int, unit: int) -> None:
-        """Bind a texture to a unit."""
-
-        GL.glActiveTexture(GL.GL_TEXTURE0 + unit)
+        GL.glActiveTexture(GL.GL_TEXTURE0 + unit)  # ty: ignore[unsupported-operator]
         GL.glBindTexture(GL.GL_TEXTURE_2D, texture)
         GL.glActiveTexture(GL.GL_TEXTURE0)
 
     @staticmethod
     def bind_texture_loc(program: int, name: str, unit: int) -> None:
-        """Bind a texture location to a unit."""
-
         GL.glUseProgram(program)
         loc = GL.glGetUniformLocation(program, name)
         GL.glUniform1i(loc, unit)
@@ -344,20 +320,14 @@ class BindingManager:
 
     @staticmethod
     def bind_fbo(buffer: int) -> None:
-        """Bind the fbo."""
-
         GL.glBindFramebuffer(GL.GL_FRAMEBUFFER, buffer)
 
     @staticmethod
     def bind_vbo(buffer: int) -> None:
-        """Bind the VBO."""
-
         GL.glBindBuffer(GL.GL_ARRAY_BUFFER, buffer)
 
     @staticmethod
     def bind_vao(buffer: int) -> None:
-        """Bind the VAO."""
-
         GL.glBindVertexArray(buffer)
 
     @staticmethod
@@ -366,9 +336,9 @@ class BindingManager:
         vbo: int,
         location: int = 0,
         components: int = 3,
-        dtype: int = GL.GL_FLOAT,
+        dtype: int | Constant = GL.GL_FLOAT,
     ) -> None:
-        """Configures how a VAO reads attributes from a VBO."""
+        """Configure how a VAO reads attributes from a VBO."""
 
         GL.glBindVertexArray(vao)
         GL.glBindBuffer(GL.GL_ARRAY_BUFFER, vbo)
@@ -385,9 +355,9 @@ class BindingManager:
 
 
 class OpenGLTask(Task, ResourceManager, BindingManager):
-    _instance = None
+    _instance: 'OpenGLTask | None' = None
 
-    def __new__(cls, *args, **kwargs):
+    def __new__(cls: type[T], *args: Any, **kwargs: Any) -> T:
         # NOTE: Tasks bind resources to slots that are constants. Multiple instances
         # would access the same slots, so only one instance is allowed.
         if cls._instance is not None:
@@ -401,7 +371,7 @@ class OpenGLTask(Task, ResourceManager, BindingManager):
         self.context = context
 
     @staticmethod
-    def load_shader(source: str, shader_type: int) -> int:
+    def load_shader(source: str, shader_type: int | Constant) -> int:
         shader = GL.glCreateShader(shader_type)
         GL.glShaderSource(shader, source)
         GL.glCompileShader(shader)
@@ -440,17 +410,17 @@ class OpenGLTask(Task, ResourceManager, BindingManager):
         GL.glFinish()
 
 
-def _as_int(value) -> int | None:
-    """Extract int from glGet result (int, tuple, list, ndarray)."""
+def _as_int(value: Any) -> int | None:
+    """Return the int extracted from a glGet result."""
 
     if value is None:
         return None
     try:
         # numpy array or sequence
         if hasattr(value, '__len__') and not isinstance(value, (str, bytes)):
-            if len(value) == 0:  # type: ignore[arg-type]
+            if len(value) == 0:
                 return None
-            value = value[0]  # type: ignore[index]
+            value = value[0]
         return int(value)
     except Exception:
         return None
@@ -493,15 +463,15 @@ def get_vram_info() -> dict[str, int | None]:
     # No total dedicated, so only available can be queried.
     if available_kb is None:
         try:
-            GL_TEXTURE_FREE_MEMORY_ATI = 0x87FC  # type: ignore[assignment]
+            GL_TEXTURE_FREE_MEMORY_ATI = 0x87FC
             # Try to get via glGetIntegerv; may need to check extension.
             # Some implementations expose as vec4, others via glGetIntegerv with count.
             # We try generic call and parse first element.
             val = GL.glGetIntegerv(GL_TEXTURE_FREE_MEMORY_ATI)
             # In PyOpenGL, this returns a tuple/list of 4 ints if successful.
             if val is not None:
-                if hasattr(val, '__len__') and len(val) >= 1:  # type: ignore[arg-type]
-                    available_kb = _as_int(val[0])  # type: ignore[index]
+                if hasattr(val, '__len__') and len(val) >= 1:
+                    available_kb = _as_int(val[0])
                 else:
                     available_kb = _as_int(val)
                 # Some drivers return 0 on failure, treat as unavailable
@@ -513,10 +483,10 @@ def get_vram_info() -> dict[str, int | None]:
     # Fallback for Renderbuffer free memory (same values)
     if available_kb is None:
         try:
-            GL_RENDERBUFFER_FREE_MEMORY_ATI = 0x87FD  # type: ignore[assignment]
+            GL_RENDERBUFFER_FREE_MEMORY_ATI = 0x87FD
             val = GL.glGetIntegerv(GL_RENDERBUFFER_FREE_MEMORY_ATI)
-            if val is not None and hasattr(val, '__len__') and len(val) >= 1:  # type: ignore[arg-type]
-                available_kb = _as_int(val[0])  # type: ignore[index]
+            if val is not None and hasattr(val, '__len__') and len(val) >= 1:
+                available_kb = _as_int(val[0])
             else:
                 available_kb = _as_int(val)
             if available_kb == 0:

@@ -4,6 +4,7 @@ import logging
 from qtpy import QtGui
 
 from flare import api
+
 from . import graph
 from .base import Array, EngineError
 
@@ -31,16 +32,12 @@ class Engine:
         return render
 
     def output(self, render: Render, project: api.Project) -> str | None:
-        """Output the render."""
-
         if project.output.layer == render.layer and project.output.write:
             path = self.graph.exr_output.write(render.image, project)
             return path
         return None
 
     def cleanup(self) -> None:
-        """Clean up the Tasks."""
-
         logger.debug('Cleaning up ...')
 
         # TODO: handle cleanup
@@ -60,8 +57,6 @@ class Engine:
 
     @staticmethod
     def _init_context_surface() -> tuple[QtGui.QOpenGLContext, QtGui.QOffscreenSurface]:
-        """Initialize the OpenGL context and surface."""
-
         # Format
         fmt = QtGui.QSurfaceFormat()
         fmt.setProfile(QtGui.QSurfaceFormat.OpenGLContextProfile.CoreProfile)

@@ -3,9 +3,7 @@ from functools import lru_cache
 
 import numpy as np
 
-from ..base import Array
-
-from ..base import Task
+from ..base import Array, Task
 from .common import LAMBDA_MID
 
 logger = logging.getLogger(__name__)
@@ -50,10 +48,8 @@ def fresnel_diffraction(
     """
     Return the near-field Fresnel diffraction using the Angular Spectrum Method.
 
-    :param aperture: A numpy array with the shape (h, w) of the aperture.
-    :param wavelength: The wavelength.
-    :param distance: The distance from the aperture to the observation plane.
-    :param size: The size of the aperture.
+    The aperture is an array with shape (h, w). Wavelength, distance, and
+    size must all use the same unit.
     """
 
     height, width = aperture.shape

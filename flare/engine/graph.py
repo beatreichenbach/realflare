@@ -65,7 +65,11 @@ class RenderGraph:
         self.exr_output = outputs.EXROutput()
 
     def get_renderer(self, layer: api.Layer) -> renderers.Renderer:
-        """Return the renderer for a layer."""
+        """
+        Return the renderer for a layer.
+
+        :raises ValueError: if no renderer exists for the layer.
+        """
 
         renderer = self.renderers.get(layer)
         if renderer is None:

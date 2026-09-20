@@ -3,12 +3,13 @@ from functools import lru_cache
 
 import numpy as np
 from OpenGL import GL
+from OpenGL.constant import Constant
 from qtpy import QtCore, QtGui
 
 from flare import api
-from ..base import Array
 from flare.engine.tasks.common.lens import get_surfaces
 
+from ..base import Array
 from ..opengl import OpenGLTask
 from .constants import SSBO, UBO
 from .raytrace import get_iors
@@ -90,8 +91,6 @@ class DiagramTask(OpenGLTask):
 
     @lru_cache(1)  # noqa: B019
     def update_fbo_resolution(self, resolution: QtCore.QSize) -> None:
-        """Update the fbo with a new resolution."""
-
         self._lens_fbo_texture = self.create_texture(
             clamp_to_border=True, resolution=resolution.toTuple()
         )
@@ -132,7 +131,7 @@ class DiagramTask(OpenGLTask):
 
         # Buffers
         cached_update_ssbo(self._ray_ids_buffer, ray_ids)
-        self.update_texture(self._lens_fbo_texture)
+        self.update_texture(self._lens_fbo_texture)  # ty: ignore[missing-argument]
 
         # Params
         params = np.zeros((), dtype=rays_params_dtype)
@@ -143,7 +142,7 @@ class DiagramTask(OpenGLTask):
         self.update_ubo(self._rays_ubo, params)
 
         # Render
-        self.update_fbo_texture(self._rays_fbo_texture, resolution, unit=2)
+        self.update_fbo_texture(self._rays_fbo_texture, resolution, unit=2)  # ty: ignore[unresolved-attribute]
         self.bind_vao(self._rays_vao)
         self.render(self._rays_program, self._rays_fbo, resolution)
 
@@ -175,8 +174,8 @@ class DiagramTask(OpenGLTask):
                 abbe_offset=lens_config.abbe_offset,
                 wavelength_count=1,
             )
-            cached_update_ssbo(self._surfaces_buffer, surfaces_array)
-            cached_update_ssbo(self._iors_buffer, iors)
+            cached_update_ssbo(self._surfaces_buffer, surfaces_array)  # ty: ignore[unresolved-attribute]
+            cached_update_ssbo(self._iors_buffer, iors)  # ty: ignore[unresolved-attribute]
         else:
             surfaces = ()
             surface_count = 0
@@ -192,10 +191,10 @@ class DiagramTask(OpenGLTask):
 
 @lru_cache(1)
 def cached_update_ssbo(
-    buffer: int, array: Array, usage: int = GL.GL_DYNAMIC_DRAW
+    buffer: int,
+    array: Array,
+    usage: int | Constant = GL.GL_DYNAMIC_DRAW,
 ) -> None:
-    """Update the buffer with array."""
-
     OpenGLTask.update_ssbo(buffer, array.array, usage)
 
 

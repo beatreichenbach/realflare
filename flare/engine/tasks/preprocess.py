@@ -4,13 +4,14 @@ from functools import lru_cache
 
 import numpy as np
 from OpenGL import GL
+from OpenGL.constant import Constant
 from qtpy import QtGui
 
 from flare import api
 from flare.api import Lens
-from ..base import Array
 from flare.engine.tasks.common.lens import get_lens
 
+from ..base import Array
 from ..opengl import OpenGLTask
 from .common import DiscMesh, get_ghost_scale, get_paths, raytracing
 from .constants import SSBO, UBO
@@ -83,8 +84,6 @@ class PreprocessTask(OpenGLTask):
 
     @staticmethod
     def compute(program: int, ghost_count: int, tri_count: int) -> None:
-        """Run the compute shader."""
-
         local_size_x = 512
         groups_x = (tri_count + local_size_x - 1) // local_size_x
         groups_y = ghost_count
@@ -98,7 +97,7 @@ class PreprocessTask(OpenGLTask):
     def run(
         self,
         rays: Array,
-        lens_config: Lens,
+        lens_config: api.Flare.Lens,
         divisions: int,
         fstop: float,
         cull_percentage: float,
@@ -194,10 +193,10 @@ class PreprocessTask(OpenGLTask):
 
 @lru_cache(1)
 def cached_update_ssbo(
-    buffer: int, array: Array, usage: int = GL.GL_DYNAMIC_DRAW
+    buffer: int,
+    array: Array,
+    usage: int | Constant = GL.GL_DYNAMIC_DRAW,
 ) -> None:
-    """Update the buffer with array."""
-
     OpenGLTask.update_ssbo(buffer, array.array, usage)
 
 

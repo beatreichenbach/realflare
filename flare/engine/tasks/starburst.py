@@ -7,8 +7,8 @@ from qtpy import QtCore, QtGui
 
 from flare import api
 from flare.api import color
-from ..base import Array
 
+from ..base import Array
 from ..opengl import OpenGLTask
 from .common import LAMBDA_MAX, LAMBDA_MID, LAMBDA_MIN, get_screen_scale
 from .constants import TEX, UBO
@@ -71,8 +71,6 @@ class StarburstTask(OpenGLTask):
 
     @lru_cache(1)  # noqa: B019
     def update_fbo_resolution(self, resolution: QtCore.QSize) -> None:
-        """Update the fbo with a new resolution."""
-
         self._fbo_texture = self.create_texture(
             clamp_to_border=True, resolution=resolution.toTuple()
         )
@@ -140,8 +138,6 @@ class StarburstTask(OpenGLTask):
 
 @lru_cache(1)
 def cached_update_texture(texture: int, array: Array) -> None:
-    """Update the texture with array."""
-
     OpenGLTask.update_texture(texture, array.array)
 
 

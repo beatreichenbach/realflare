@@ -5,8 +5,8 @@ import imageio.v3 as iio
 
 from flare import api
 from flare.core import PathParser
-from ..base import Array
-from ..base import Output
+
+from ..base import Array, Output
 
 logger = logging.getLogger(__name__)
 

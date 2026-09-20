@@ -26,9 +26,7 @@ def get_screen_scale(
 
 
 def get_ghost_scale(fstop: float) -> float:
-    """
-    Return the scale for a ghost base on the fstop of the lens.
-    """
+    """Return the scale for a ghost base on the fstop of the lens."""
 
     # NOTE: While the minimum fstop is different per lens and could be used, it doesn't
     # make sense to adjust the ProjectEditor parameters every time the lens changes.

@@ -3,6 +3,7 @@ from functools import lru_cache
 import numpy as np
 
 from flare import api
+
 from ...base import Array, EngineError
 
 surface_dtype = np.dtype(
@@ -24,7 +25,7 @@ def get_lens(lens_config: api.Flare.Lens) -> api.Lens:
     """
     Return a lens from the database.
 
-    :raise EngineError: If the lens cannot be found or loaded.
+    :raises EngineError: if the lens cannot be found or loaded.
     """
     db = api.Database()
     vendor = lens_config.vendor

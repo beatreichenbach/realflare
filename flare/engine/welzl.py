@@ -1,6 +1,6 @@
 import dataclasses
 import random
-from collections.abc import Sequence
+from collections.abc import MutableSequence, Sequence
 
 import numpy as np
 
@@ -67,7 +67,7 @@ def get_circle(points: Sequence[Point]) -> Circle:
 
 
 def _welzl(
-    points: Sequence[Point], remainder: Sequence[Point], num_points: int
+    points: MutableSequence[Point], remainder: Sequence[Point], num_points: int
 ) -> Circle:
     if num_points == 0 or len(remainder) == 3:
         remainder_copy = remainder[:]

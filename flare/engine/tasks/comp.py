@@ -1,8 +1,6 @@
 import logging
 
-from ..base import Array
-
-from ..base import Task
+from ..base import Array, Task
 
 logger = logging.getLogger(__name__)
 
