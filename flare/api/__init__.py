@@ -1,13 +1,6 @@
-from .database import (
-    Database,
-    Lens,
-    Material,
-)
-
+from .database import Database, Lens, Material
 from .path import File
-
 from .project import (
-    ProjectManager,
     Aperture,
     Diagram,
     Flare,
@@ -15,6 +8,7 @@ from .project import (
     Layer,
     Output,
     Project,
+    ProjectManager,
     Starburst,
 )
 

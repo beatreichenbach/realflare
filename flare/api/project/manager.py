@@ -3,21 +3,21 @@ import os
 
 import pydantic
 
-from flare import api
+from . import model
 
 logger = logging.getLogger(__name__)
 
 
 class ProjectManager:
     @staticmethod
-    def create() -> api.Project:
+    def create() -> model.Project:
         """Return a new Project."""
 
-        project = api.Project()
+        project = model.Project()
         return project
 
     @staticmethod
-    def open(path: str) -> api.Project | None:
+    def open(path: str) -> model.Project | None:
         """Return the Project from a file, or None if invalid."""
 
         if not os.path.exists(path):
@@ -27,8 +27,8 @@ class ProjectManager:
         logger.info(f'Opening: {path}')
 
         try:
-            with open(path, 'r') as f:
-                project = api.Project.model_validate_json(f.read())
+            with open(path) as f:
+                project = model.Project.model_validate_json(f.read())
         except OSError as e:
             logger.error(f'Could not read file: {path}', exc_info=e)
             return None
@@ -39,7 +39,7 @@ class ProjectManager:
         return project
 
     @staticmethod
-    def save(project: api.Project, path: str = '') -> None:
+    def save(project: model.Project, path: str = '') -> None:
         """Save the Project to a file."""
 
         logger.info(f'Saving: {path}')
