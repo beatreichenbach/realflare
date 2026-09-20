@@ -1,7 +1,3 @@
-from .base import (
-    Image,
-)
-
 from .database import (
     Database,
     Lens,
@@ -21,3 +17,19 @@ from .project import (
     Project,
     Starburst,
 )
+
+__all__ = [
+    'Aperture',
+    'Database',
+    'Diagram',
+    'File',
+    'Flare',
+    'Ghost',
+    'Layer',
+    'Lens',
+    'Material',
+    'Output',
+    'Project',
+    'ProjectManager',
+    'Starburst',
+]

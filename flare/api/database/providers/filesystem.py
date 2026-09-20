@@ -3,10 +3,10 @@ from __future__ import annotations
 import logging
 from collections.abc import Sequence
 
-from .base import Provider
-from .common import load_files
 from ..model import Lens, Material
 from ..parsers import Parser
+from .base import Provider
+from .common import load_files
 
 logger = logging.getLogger(__name__)
 
@@ -26,11 +26,11 @@ class FilesystemProvider(Provider):
     ) -> None:
         self._lens_dir = lens_dir
         self._lens_parsers = lens_parsers
-        self._lenses = ()
+        self._lenses: tuple[Lens, ...] = ()
 
         self._material_dir = material_dir
         self._material_parsers = material_parsers
-        self._materials = ()
+        self._materials: tuple[Material, ...] = ()
 
         self.load()
 

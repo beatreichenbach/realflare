@@ -4,12 +4,13 @@ import logging
 import os
 import re
 from collections.abc import Sequence
+from typing import Any
 
 import pydantic
 
+from ..model import Lens
 from .base import Parser
 from .common import parse_float
-from ..model import Lens
 
 logger = logging.getLogger(__name__)
 
@@ -20,7 +21,7 @@ class ZemaxParser(Parser[Lens]):
     supported_extensions: tuple[str, ...] = ('.zmx',)
 
     def parse(self, path: str) -> Lens | None:
-        """Parse a .ZMX file and return a Lens model if the file is valid."""
+        """Return a Lens from a .zmx file, or None if invalid."""
 
         filename = os.path.basename(path)
         name, ext = os.path.splitext(filename)
@@ -28,13 +29,14 @@ class ZemaxParser(Parser[Lens]):
             logger.warning(f'Unsupported extension: {ext}')
             return None
         try:
-            with open(path, 'r', encoding='utf-8') as file:
+            with open(path, encoding='utf-8') as file:
                 lines = file.readlines()
         except OSError as e:
             logger.warning(f'Failed to read file: {path}', exc_info=e)
+            return None
 
         # Camera
-        kwargs: dict = {
+        kwargs: dict[str, Any] = {
             'name': name,
             'fstop': self._get_fstop(name),
             'focal_length': self._get_focal_length(name),
@@ -69,21 +71,20 @@ class ZemaxParser(Parser[Lens]):
         return lens
 
     @staticmethod
-    def _get_surfaces(lines: Sequence[str]) -> tuple[dict, ...]:
+    def _get_surfaces(lines: Sequence[str]) -> tuple[dict[str, Any], ...]:
         """Return a tuple of surface dictionaries from the file."""
 
-        surfaces: list[dict] = []
+        surfaces: list[dict[str, Any]] = []
 
-        surface: dict | None = None
+        surface: dict[str, Any] | None = None
         for line in lines:
             if not line.strip():
                 continue
 
             # Append the surface
-            if isinstance(surface, dict):
-                if not line.startswith(' '):
-                    surfaces.append(surface)
-                    surface = None
+            if isinstance(surface, dict) and not line.startswith(' '):
+                surfaces.append(surface)
+                surface = None
 
             parts = line.strip().split(maxsplit=1)
             key = parts[0]

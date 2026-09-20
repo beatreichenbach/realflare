@@ -8,10 +8,10 @@ from collections.abc import Sequence
 
 import requests
 
-from .base import Provider
-from .common import load_files
 from ..model import Lens, Material
 from ..parsers import Parser
+from .base import Provider
+from .common import load_files
 
 logger = logging.getLogger(__name__)
 
@@ -37,8 +37,8 @@ class RepositoryProvider(Provider):
         self._lens_parsers = lens_parsers
         self._material_dir = material_dir
         self._material_parsers = material_parsers
-        self._lenses = ()
-        self._materials = ()
+        self._lenses: tuple[Lens, ...] = ()
+        self._materials: tuple[Material, ...] = ()
 
         self.load()
 
@@ -78,7 +78,7 @@ class RepositoryProvider(Provider):
 
 def download(url: str) -> str:
     """
-    Download a file and return its local path.
+    Return the local path of a downloaded file.
 
     :raises HTTPError: If one occurred.
     """

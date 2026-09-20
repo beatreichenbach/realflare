@@ -9,6 +9,7 @@ import platformdirs
 import pydantic
 
 import flare
+
 from . import model, parsers, providers
 
 logger = logging.getLogger(__name__)
@@ -24,7 +25,7 @@ class Database:
 
     _instance: Database | None = None
 
-    def __new__(cls) -> Database:
+    def __new__(cls: type[Database]) -> Database:
         if cls._instance is None:
             instance = super().__new__(cls)
             instance._init_cache()
@@ -179,8 +180,8 @@ class CacheStore:
             return None
 
         try:
-            with open(self.cache_path, 'r') as f:
-                cache = model.Cache.model_validate_json(f.read())
+            with open(self.cache_path) as file:
+                cache = model.Cache.model_validate_json(file.read())
             return cache
         except (OSError, ValueError, pydantic.ValidationError) as e:
             logger.error(f'Failed to read cache: {self.cache_path}', exc_info=e)

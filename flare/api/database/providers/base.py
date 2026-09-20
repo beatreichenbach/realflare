@@ -6,7 +6,7 @@ from .. import model
 
 
 class Provider(ABC):
-    """Provides Lenses and Materials"""
+    """Provide lenses and materials."""
 
     def get_lenses(self) -> tuple[model.Lens, ...]:
         return ()

@@ -5,9 +5,9 @@ import os
 
 import yaml
 
+from ..model import Material
 from .base import Parser
 from .common import parse_float
-from ..model import Material
 
 logger = logging.getLogger(__name__)
 
@@ -18,7 +18,7 @@ class MtrlParser(Parser[Material]):
     supported_extensions: tuple[str, ...] = ('.mtrl',)
 
     def parse(self, path: str) -> Material | None:
-        """Parse a .mtrl file and return a Material if the file is valid."""
+        """Return a Material from a .mtrl file, or None if invalid."""
 
         filename = os.path.basename(path)
         name, ext = os.path.splitext(filename)
@@ -27,10 +27,11 @@ class MtrlParser(Parser[Material]):
             return None
 
         try:
-            with open(path, 'r') as f:
-                data = yaml.safe_load(f)
+            with open(path) as file:
+                data = yaml.safe_load(file)
         except OSError as e:
             logger.warning(f'Failed to read file: {path}', exc_info=e)
+            return None
 
         # Specs
         specs = data.get('SPECS')

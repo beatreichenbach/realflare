@@ -1,8 +1,6 @@
-from functools import lru_cache
-
 import numpy as np
 
-from .data import chromaticity_coordinates, color_matching_functions, illuminants
+from . import data
 
 
 def xy_to_xyy(xy: np.ndarray, y: float = 1) -> np.ndarray:
@@ -40,7 +38,7 @@ def xyz_to_xy(xyz: np.ndarray) -> np.ndarray:
     return xyy_to_xy(xyz_to_xyy(xyz))
 
 
-def xyz_to_lab(xyz: np.ndarray, whitepoint: np.ndarray) -> np.array:
+def xyz_to_lab(xyz: np.ndarray, whitepoint: np.ndarray) -> np.ndarray:
     x = xyz[0]
     y = xyz[1]
     z = xyz[2]
@@ -68,7 +66,7 @@ def xyz_to_lab(xyz: np.ndarray, whitepoint: np.ndarray) -> np.array:
 
 
 def get_cmfs(variation: str, lambdas: np.ndarray) -> np.ndarray:
-    cmfs_data = color_matching_functions.CMFS[variation]
+    cmfs_data = data.CMFS[variation]
     cmfs_keys = np.array(list(cmfs_data.keys()))
     cmfs_values = np.array(list(cmfs_data.values()))
     cmfs = np.column_stack(
@@ -78,7 +76,7 @@ def get_cmfs(variation: str, lambdas: np.ndarray) -> np.ndarray:
 
 
 def get_illuminant(standard_illuminant: str, lambdas: np.ndarray) -> np.ndarray:
-    illuminant_data = illuminants.ILLUMINANTS_CIE[standard_illuminant]
+    illuminant_data = data.ILLUMINANTS_CIE[standard_illuminant]
     illuminant_keys = np.array(list(illuminant_data.keys()))
     illuminant_values = np.array(list(illuminant_data.values()))
     illuminant = np.interp(lambdas, illuminant_keys, illuminant_values)
@@ -86,11 +84,10 @@ def get_illuminant(standard_illuminant: str, lambdas: np.ndarray) -> np.ndarray:
 
 
 def get_illuminants() -> tuple[str, ...]:
-    return tuple(illuminants.ILLUMINANTS_CIE.keys())
+    return tuple(data.ILLUMINANTS_CIE.keys())
 
 
-@lru_cache(1)
 def get_whitepoint(standard_illuminant: str) -> np.ndarray:
-    coordinated = np.array(chromaticity_coordinates.COORDS[standard_illuminant])
+    coordinated = np.array(data.COORDS[standard_illuminant])
     whitepoint = xyy_to_xyz(xy_to_xyy(coordinated))
     return whitepoint

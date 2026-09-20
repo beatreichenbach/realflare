@@ -2,10 +2,7 @@ import os
 
 
 class File:
-    """
-    A hashable file on disk.
-    It used the modification time on creation to compare files.
-    """
+    """A hashable file on disk using the modification time for comparison."""
 
     def __init__(self, path: str) -> None:
         self.path = path
@@ -17,7 +14,7 @@ class File:
     def __str__(self) -> str:
         return self.path
 
-    def __eq__(self, other) -> bool:
+    def __eq__(self, other: object) -> bool:
         if isinstance(other, File):
             return self._hash == other._hash
         return False

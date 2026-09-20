@@ -17,10 +17,10 @@ def load_files(root_dir: str, parsers: Sequence[Parser[T]]) -> tuple[T, ...]:
         logger.warning(f'Invalid directory path: {root_dir!r}')
         return ()
 
-    _parsers: dict[str, Parser] = {}
+    supported_parsers: dict[str, Parser] = {}
     for parser in parsers:
         for ext in parser.supported_extensions:
-            _parsers[ext.casefold()] = parser
+            supported_parsers[ext.casefold()] = parser
 
     objects: list[T] = []
     for vendor in os.listdir(root_dir):
@@ -32,8 +32,10 @@ def load_files(root_dir: str, parsers: Sequence[Parser[T]]) -> tuple[T, ...]:
             for filename in filenames:
                 path = os.path.join(root, filename)
                 name, ext = os.path.splitext(filename)
-                if parser := _parsers.get(ext):
-                    if obj := parser.parse(path):
+                parser = supported_parsers.get(ext)
+                if parser is not None:
+                    obj = parser.parse(path)
+                    if obj is not None:
                         obj.vendor = vendor
                         objects.append(obj)
     return tuple(objects)
