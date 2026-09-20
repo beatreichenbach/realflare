@@ -8,3 +8,11 @@ from .preferences import (
     State,
     StateManager,
 )
+
+__all__ = [
+    'PathParser',
+    'Preferences',
+    'PreferencesManager',
+    'State',
+    'StateManager',
+]

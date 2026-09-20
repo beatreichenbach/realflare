@@ -1,3 +1,5 @@
+from typing import Any
+
 from pydantic import BaseModel, Field
 
 
@@ -8,6 +10,6 @@ class Preferences(BaseModel):
 
 
 class State(BaseModel):
-    main_window: dict = Field(default_factory=dict)
-    widgets: dict = Field(default_factory=dict)
+    main_window: dict[str, Any] = Field(default_factory=dict)
+    widgets: dict[str, Any] = Field(default_factory=dict)
     recent_paths: tuple[str, ...] = ()
