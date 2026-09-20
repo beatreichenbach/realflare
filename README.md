@@ -60,16 +60,6 @@ source venv/bin/activate  # or venv\Scripts\activate on Windows
 pip install -e ".[openexr]"
 ```
 
-### System Dependencies (Linux)
-
-```bash
-# Debian/Ubuntu
-sudo apt install libgl1-mesa-dev libegl1-mesa-dev libxkbcommon-dev libfontconfig1-dev
-
-# Fedora
-sudo dnf install mesa-libGL-devel mesa-libEGL-devel
-```
-
 ## Usage
 
 ```bash
