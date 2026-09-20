@@ -7,13 +7,14 @@ license = "GPL-3.0-or-later"
 authors = [
     { name = "Beat Reichenbach", email = "beatreichenbach@users.noreply.github.com" },
 ]
-requires-python = ">=3.11"
+requires-python = ">=3.11,<3.14"
 dependencies = [
     "PyOpenGL>=3.1,<4",
     "PySide6",
     "PyYAML>=6.0,<7",
     "numpy>=2.2,<3",
     "opencolorio>=2.4,<3",
+    "OpenEXR>=3.4,<4",
     "platformdirs>=4.0,<5",
     "pydantic>=2.9.0,<3",
     "qt-logging>=0.1,<1",
@@ -25,7 +26,7 @@ dependencies = [
     "requests>=2.34,<3",
     "rich>=15,<16",
     "typer>=0.12,<1",
-    "imageio[freeimage,pillow]>=2.37,<3"
+    "imageio[pillow]>=2.37,<3"
 ]
 
 [project.urls]
@@ -38,9 +39,6 @@ dev = [
     "ruff>=0.16",
     "ty>=0.0.82",
     "types-nuke>=13.0"
-]
-openexr = [
-    "OpenEXR>=3.4,<4"
 ]
 
 [project.scripts]

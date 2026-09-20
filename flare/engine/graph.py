@@ -63,6 +63,7 @@ class RenderGraph:
 
         # Outputs
         self.exr_output = outputs.EXROutput()
+        self.image_output = outputs.ImageOutput()
 
     def get_renderer(self, layer: api.Layer) -> renderers.Renderer:
         """

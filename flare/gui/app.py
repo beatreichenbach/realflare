@@ -343,7 +343,7 @@ class FlareDockWindow(DockWindow):
             return
 
         # Update project
-        if self.project():
+        if self._project:
             ndc_position = QtCore.QPointF(
                 (position.x() / viewer.resolution().width() * 2.0) - 1.0,
                 (position.y() / viewer.resolution().height() * 2.0) - 1.0,

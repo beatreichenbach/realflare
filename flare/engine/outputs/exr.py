@@ -1,7 +1,9 @@
 import logging
 import os.path
 
-import imageio.v3 as iio
+import Imath
+import numpy as np
+import OpenEXR
 
 from flare import api
 from flare.core import PathParser
@@ -11,12 +13,41 @@ from ..base import Array, Output
 logger = logging.getLogger(__name__)
 
 
-# TODO: https://imageio.readthedocs.io/en/stable/_autosummary/imageio.plugins.freeimage.html
 class EXROutput(Output):
+    """Image output for .exr files using OpenEXR."""
+
     def write(self, image: Array, project: api.Project) -> str:
         path = PathParser.format_path(project.output.path, project.output.frame)
         os.makedirs(os.path.dirname(path), exist_ok=True)
-        array = image.array[::-1, ...]
-        iio.imwrite(uri=path, image=array)
+        write_image(path, image.array[::-1, ...])
         logger.info(f'Image written to: {path}')
         return path
+
+
+def write_image(path: str, array: np.ndarray) -> None:
+    """
+    Write an RGBA float array to a single-part EXR file.
+
+    :raises ValueError: If the array is not RGBA float.
+    """
+
+    array = np.ascontiguousarray(array, dtype=np.float32)
+    if array.ndim != 3 or array.shape[2] != 4:
+        raise ValueError(f'expected an RGBA array, got shape {array.shape}')
+
+    height, width, _ = array.shape
+    box = Imath.Box2i(Imath.V2i(0, 0), Imath.V2i(width - 1, height - 1))
+    header = {
+        'compression': Imath.Compression(Imath.Compression.ZIP_COMPRESSION),
+        'dataWindow': box,
+        'displayWindow': box,
+        'channels': {
+            name: Imath.Channel(Imath.PixelType(Imath.PixelType.FLOAT))
+            for name in ('R', 'G', 'B', 'A')
+        },
+    }
+    pixels = {name: array[:, :, i].tobytes() for i, name in enumerate('RGBA')}
+
+    output = OpenEXR.OutputFile(path, header)
+    output.writePixels(pixels)
+    output.close()

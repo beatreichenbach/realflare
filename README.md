@@ -6,7 +6,7 @@ Physically-based lens flare rendering using spectral raytracing on the GPU.
 
 ### Requirements
 
-- **Python 3.11+**
+- **Python 3.11–3.13** (OpenEXR ships no 3.14 wheels yet)
 - **OpenGL 4.3+** (compute shaders required)
 - **Discrete GPU** recommended (NVIDIA/AMD with 4GB+ VRAM)
 
@@ -114,7 +114,7 @@ Further references:
 
 To get started:
 ```sh
-uv venv --python 3.14
+uv venv --python 3.13
 uv pip install -e ".[dev]"
 pre-commit install
 ```

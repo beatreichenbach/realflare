@@ -10,7 +10,7 @@ Flare uses a compute-shader-based pipeline:
 2. **Raytracing** — Spectral rays traced through the lens system (390-730nm)
 3. **Flare computation** — Ghost images, diffraction, starburst effects
 4. **Composition** — All layers combined with OCIO color management
-5. **Output** — EXR with OpenEXR or FreeImage backend
+5. **Output** — Output images (exr, jpg, png, etc.)
 
 ## Color
 

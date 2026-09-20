@@ -33,7 +33,10 @@ class Engine:
 
     def output(self, render: Render, project: api.Project) -> str | None:
         if project.output.layer == render.layer and project.output.write:
-            path = self.graph.exr_output.write(render.image, project)
+            if project.output.path.lower().endswith('.exr'):
+                path = self.graph.exr_output.write(render.image, project)
+            else:
+                path = self.graph.image_output.write(render.image, project)
             return path
         return None
 
