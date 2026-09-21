@@ -1,3 +1,8 @@
+#define CHANNEL_RED 1u
+#define CHANNEL_GREEN 2u
+#define CHANNEL_BLUE 3u
+#define CHANNEL_ALPHA 4u
+
 uniform sampler2D image;
 
 uniform Params {
@@ -26,13 +31,13 @@ void main() {
     rgba = texture(image, image_uv);
 
     // Select channel
-    if (channel == 1u) {
+    if (channel == CHANNEL_RED) {
         rgba = vec4(rgba.x, rgba.x, rgba.x, 1.0);
-    } else if (channel == 2u) {
+    } else if (channel == CHANNEL_GREEN) {
         rgba = vec4(rgba.y, rgba.y, rgba.y, 1.0);
-    } else if (channel == 3u) {
+    } else if (channel == CHANNEL_BLUE) {
         rgba = vec4(rgba.z, rgba.z, rgba.z, 1.0);
-    } else if (channel == 4u) {
+    } else if (channel == CHANNEL_ALPHA) {
         rgba = vec4(rgba.w, rgba.w, rgba.w, 1.0);
     }
 

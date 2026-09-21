@@ -74,8 +74,7 @@ class Viewport(QtWidgets.QFrame):
         if event.button() == QtCore.Qt.MouseButton.LeftButton:
             self._clicked = True
         elif event.button() == QtCore.Qt.MouseButton.MiddleButton:
-            cursor_position = event.position()
-            cursor_position.setY(self.height() - cursor_position.y())
+            cursor_position = self._flip_y(event.position())
 
             self._dragging = True
             self._start_position = cursor_position
@@ -88,8 +87,7 @@ class Viewport(QtWidgets.QFrame):
         if event.button() == QtCore.Qt.MouseButton.LeftButton:
             self._clicked = False
 
-            cursor_position = event.position()
-            cursor_position.setY(self.height() - cursor_position.y())
+            cursor_position = self._flip_y(event.position())
             view_position = (cursor_position - self._offset) * (1 / self._scale)
             pixel_position = view_position.toPoint()
             self.position_changed.emit(pixel_position)
@@ -100,8 +98,7 @@ class Viewport(QtWidgets.QFrame):
         super().mouseReleaseEvent(event)
 
     def mouseMoveEvent(self, event: QtGui.QMouseEvent) -> None:
-        cursor_position = event.position()
-        cursor_position.setY(self.height() - cursor_position.y())
+        cursor_position = self._flip_y(event.position())
         self._scale = max(self._scale, EPSILON)
 
         if self._dragging:
@@ -126,13 +123,8 @@ class Viewport(QtWidgets.QFrame):
         zoom_out_factor = 1 / zoom_in_factor
 
         # Zoom
-        if event.angleDelta().y() > 0:
-            zoom_factor = zoom_in_factor
-        else:
-            zoom_factor = zoom_out_factor
-
-        cursor_position = event.position()
-        cursor_position.setY(self.height() - cursor_position.y())
+        zoom_factor = zoom_in_factor if event.angleDelta().y() > 0 else zoom_out_factor
+        cursor_position = self._flip_y(event.position())
         self._scale = max(self._scale, EPSILON)
 
         # Preserve the absolute position of the cursor (zoom to cursor).
@@ -204,6 +196,12 @@ class Viewport(QtWidgets.QFrame):
         self.view.set_offset(self._offset)
         self.scale_changed.emit(self._scale)
 
+    def _flip_y(self, position: QtCore.QPointF) -> QtCore.QPointF:
+        """Return the position with the y-axis flipped to match the image."""
+
+        position.setY(self.height() - position.y())
+        return position
+
 
 class Footer(QtWidgets.QWidget):
     def __init__(self, parent: QtWidgets.QWidget | None = None) -> None:
@@ -236,14 +234,20 @@ class Footer(QtWidgets.QWidget):
         layout.addWidget(self.hsv_lbl)
 
     def set_pixel_color(self, color: QtGui.QColor) -> None:
+        """Set the pixel readout.
+
+        The values are the raw render-space (scene-linear) values read from the
+        image array. They are intentionally not exposure- or OCIO-transformed.
+        """
+
         if color.isValid():
-            r, g, b, a = color.getRgbF()  # ty: ignore[not-iterable]
+            r, g, b, _ = color.getRgbF()  # ty: ignore[not-iterable]
             rgb = (
                 f'<font color="#ff2222">{r:.4f}</font> '
                 f'<font color="#00ff22">{g:.4f}</font> '
                 f'<font color="#0088ff">{b:.4f}</font>'
             )
-            h, s, v, a = color.getHsvF()  # ty: ignore[not-iterable]
+            h, s, v, _ = color.getHsvF()  # ty: ignore[not-iterable]
             h = max(h, 0)
         else:
             rgb = ''
@@ -383,7 +387,7 @@ class ToolBar(QtWidgets.QToolBar):
     def set_zoom(self, zoom: float) -> None:
         # Round the zoom value to match item values.
         zoom = int(zoom * 1000) / 1000
-        for text, factor in self.zoom_param.items():
+        for _text, factor in self.zoom_param.items():
             if zoom == factor:
                 zoom = factor
                 break
@@ -514,14 +518,18 @@ class Viewer(QtWidgets.QWidget):
         self.view.set_exposure(exposure)
 
     def state(self) -> dict[str, Any]:
-        state = {'exposure': self.exposure()}
-        return state
+        """Return the state to persist.
+
+        Only the exposure is persisted. Transient view state such as the
+        channel, zoom, pan and pause is intentionally not restored.
+        """
+
+        return {'exposure': self.exposure()}
 
     def set_state(self, state: dict[str, Any]) -> None:
-        values = {'exposure': 0}
-        values.update(state)
+        """Restore the persisted state."""
 
-        self.set_exposure(values['exposure'])
+        self.set_exposure(state.get('exposure', 0))
 
     def resolution(self) -> QtCore.QSize:
         return self._resolution

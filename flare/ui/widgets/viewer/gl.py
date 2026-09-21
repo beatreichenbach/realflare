@@ -1,15 +1,19 @@
 import logging
 import os
-from typing import Any
 
 import numpy as np
 import PyOpenColorIO as OCIO
 from OpenGL import GL
+from OpenGL.constant import Constant
 from qtpy import QtCore, QtGui, QtWidgets
+
+from flare import env
 
 from .data import Channel
 
 logger = logging.getLogger(__name__)
+
+BUNDLED_OCIO_CONFIG = 'fn-nuke_cg-config-v1.0.0_aces-v1.3_ocio-v2.1.ocio'
 
 
 params_dtype = np.dtype(
@@ -45,7 +49,8 @@ class OpenGLView(QtWidgets.QOpenGLWidget):
         self._resolution = (0, 0)
         self._image_size = (0, 0)
 
-        self._update_requested = True
+        self._texture_dirty = False
+        self._ubo_dirty = True
 
     def closeEvent(self, event: QtGui.QCloseEvent) -> None:
         self.cleanup()
@@ -61,23 +66,16 @@ class OpenGLView(QtWidgets.QOpenGLWidget):
         if array.shape[2] != 4:
             raise ValueError(f'expected 4 channels, got {array.shape[2]}')
 
-        self._array = array
-
-        self.makeCurrent()
-        if self._image is not None:
-            GL.glDeleteTextures([self._image])
-        self._image = create_texture(array)
-
-        height, width = self._array.shape[:2]
-        self._image_size = (width, height)
-        self.update()
+        self._array = np.ascontiguousarray(array)
+        self._texture_dirty = True
+        self.request_update()
 
     def channel(self) -> Channel:
         return Channel(self._channel)
 
     def set_channel(self, channel: Channel) -> None:
         self._channel = channel.value
-        self.update()
+        self.request_update()
 
     def exposure(self) -> float:
         return self._exposure
@@ -85,28 +83,28 @@ class OpenGLView(QtWidgets.QOpenGLWidget):
     def set_exposure(self, exposure: float) -> None:
         self._exposure = exposure
         self._gain = pow(2, exposure)
-        self.update()
+        self.request_update()
 
     def offset(self) -> tuple[float, float]:
         return self._offset
 
     def set_offset(self, offset: QtCore.QPointF) -> None:
         self._offset = offset.toTuple()
-        self.update()
+        self.request_update()
 
     def scale(self) -> float:
         return self._scale
 
     def set_scale(self, scale: float) -> None:
         self._scale = scale
-        self.update()
+        self.request_update()
 
     def border(self) -> bool:
         return self._border
 
     def set_border(self, border: bool) -> None:
         self._border = border
-        self.update()
+        self.request_update()
 
     def color_at(self, position: QtCore.QPoint) -> QtGui.QColor:
         """
@@ -119,7 +117,7 @@ class OpenGLView(QtWidgets.QOpenGLWidget):
             x = position.x()
             y = position.y()
             if 0 <= x < width and 0 <= y < height:
-                r, g, b, a = self._array[y, x]
+                r, g, b, _ = self._array[y, x]
                 color = QtGui.QColor.fromRgbF(r, g, b)
         return color
 
@@ -134,13 +132,21 @@ class OpenGLView(QtWidgets.QOpenGLWidget):
             logger.exception(e)
 
     def paintGL(self) -> None:
+        if self._program is None:
+            return
+
         try:
             GL.glBindFramebuffer(GL.GL_FRAMEBUFFER, self.defaultFramebufferObject())
             GL.glClearColor(0.0, 0.0, 0.0, 1.0)
             GL.glClear(GL.GL_COLOR_BUFFER_BIT)
             GL.glUseProgram(self._program)
-            if self._update_requested:
-                self._update()
+            if self._texture_dirty:
+                self._update_texture()
+            if self._ubo_dirty:
+                self._update_ubo()
+            if self._image is not None:
+                GL.glActiveTexture(GL.GL_TEXTURE0)
+                GL.glBindTexture(GL.GL_TEXTURE_2D, self._image)
             GL.glDrawArrays(GL.GL_TRIANGLES, 0, 3)
         except Exception as e:
             logger.exception(e)
@@ -151,17 +157,29 @@ class OpenGLView(QtWidgets.QOpenGLWidget):
         try:
             GL.glViewport(0, 0, width, height)
             self._resolution = (width, height)
-            self._update_requested = True
-            if self._image is not None:
-                GL.glBindTexture(GL.GL_TEXTURE_2D, self._image)
+            self._ubo_dirty = True
         except Exception as e:
             logger.exception(e)
 
-    def update(self) -> None:
-        self._update_requested = True
+    def request_update(self) -> None:
+        self._ubo_dirty = True
         super().update()
 
-    def _update(self) -> None:
+    def _update_texture(self) -> None:
+        """Upload the array to the GPU texture."""
+
+        if self._image is not None:
+            GL.glDeleteTextures([self._image])
+            self._image = None
+
+        if self._array is not None:
+            self._image = create_texture(self._array)
+            height, width = self._array.shape[:2]
+            self._image_size = (width, height)
+
+        self._texture_dirty = False
+
+    def _update_ubo(self) -> None:
         """Update the UBO."""
 
         params = np.zeros(1, dtype=params_dtype)
@@ -175,26 +193,34 @@ class OpenGLView(QtWidgets.QOpenGLWidget):
 
         GL.glBindBuffer(GL.GL_UNIFORM_BUFFER, self._ubo)
         GL.glBufferData(GL.GL_UNIFORM_BUFFER, params.nbytes, params, GL.GL_DYNAMIC_DRAW)
-        self._update_requested = False
+        self._ubo_dirty = False
 
     def cleanup(self) -> None:
         """Clean up OpenGL resources."""
 
-        if self._program is not None:
-            GL.glDeleteProgram(self._program)
-            self._program = None
+        context = self.context()
+        if context is None or not context.isValid():
+            return
 
-        if self._image is not None:
-            GL.glDeleteTextures([self._image])
-            self._image = None
+        self.makeCurrent()
+        try:
+            if self._program is not None:
+                GL.glDeleteProgram(self._program)
+                self._program = None
 
-        if self._vao is not None:
-            GL.glDeleteVertexArrays([self._vao])
-            self._vao = None
+            if self._image is not None:
+                GL.glDeleteTextures([self._image])
+                self._image = None
 
-        if self._ubo is not None:
-            GL.glDeleteBuffers([self._ubo])
-            self._ubo = None
+            if self._vao is not None:
+                GL.glDeleteVertexArrays([self._vao])
+                self._vao = None
+
+            if self._ubo is not None:
+                GL.glDeleteBuffers([self._ubo])
+                self._ubo = None
+        finally:
+            self.doneCurrent()
 
 
 def create_program() -> int:
@@ -242,14 +268,27 @@ def create_texture(array: np.ndarray) -> int:
     return image
 
 
-# TODO: implement ocio properly
+def use_bundled_ocio_config() -> None:
+    """
+    Point the OCIO environment at the bundled config.
+
+    TODO: Use the config from the preferences instead of the bundled one and
+    stop mutating the process environment here.
+    """
+
+    path = os.path.join(os.path.dirname(__file__), 'ocio', BUNDLED_OCIO_CONFIG)
+    os.environ[env.OCIO] = path
+
+
 def create_ocio_source() -> str:
-    ocio = os.path.join(
-        os.path.dirname(__file__),
-        'ocio',
-        'fn-nuke_cg-config-v1.0.0_aces-v1.3_ocio-v2.1.ocio',
-    )
-    os.environ['OCIO'] = ocio
+    """
+    Return the GLSL source for the OCIO view transform.
+
+    The source is baked into the program when it is created. A change to the
+    OCIO config therefore does not recompile the shader yet.
+    """
+
+    use_bundled_ocio_config()
 
     config = OCIO.GetCurrentConfig()  # ty: ignore[unresolved-attribute]
 
@@ -261,14 +300,10 @@ def create_ocio_source() -> str:
     transform.setDisplay(display)
     transform.setView(view)
 
-    processor = config.getProcessor(transform)
-    gpu = processor.getDefaultGPUProcessor()
-
+    gpu = config.getProcessor(transform).getDefaultGPUProcessor()
     shader_desc = OCIO.GpuShaderDesc.CreateShaderDesc(OCIO.GPU_LANGUAGE_GLSL_4_0)  # ty: ignore[unresolved-attribute]
     gpu.extractGpuShaderInfo(shader_desc)
-    source = shader_desc.getShaderText()
-
-    return source
+    return shader_desc.getShaderText()
 
 
 def create_ubo(slot: int, size: int = 0) -> int:
@@ -287,11 +322,12 @@ def load_source(filename: str) -> str:
     return source
 
 
-def load_shader(source: str, shader_type: Any) -> int:
+def load_shader(source: str, shader_type: int | Constant) -> int:
     shader = GL.glCreateShader(shader_type)
     GL.glShaderSource(shader, source)
     GL.glCompileShader(shader)
 
     if not GL.glGetShaderiv(shader, GL.GL_COMPILE_STATUS):
-        raise RuntimeError(GL.glGetShaderInfoLog(shader).decode())
+        log = GL.glGetShaderInfoLog(shader)
+        raise RuntimeError(log.decode('utf-8', errors='replace'))
     return shader
