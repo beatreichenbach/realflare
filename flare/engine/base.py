@@ -76,7 +76,13 @@ class File:
 
 
 class Task:
-    def cleanup(self) -> None: ...
+    def delete_resources(self) -> None:
+        """Delete the GPU resources of the task."""
+
+    def release(self) -> None:
+        """Delete the task resources and release it for recreation."""
+
+        self.delete_resources()
 
 
 class Renderer(ABC):

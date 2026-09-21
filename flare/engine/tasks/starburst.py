@@ -95,7 +95,7 @@ class StarburstTask(OpenGLTask):
         self.bind_texture_loc(self._program, 'fft_image', TEX.STARBURST_FFT)
         self.bind_texture_loc(self._program, 'spectral_image', TEX.STARBURST_SPECTRAL)
 
-    def cleanup(self) -> None:
+    def delete_resources(self) -> None:
         self.delete(
             programs=(self._program,),
             textures=(self._fbo_texture, self._fft_image, self._spectral_image),
@@ -103,8 +103,6 @@ class StarburstTask(OpenGLTask):
             vertex_arrays=(self._vao,),
             buffers=(self._ubo,),
         )
-        self.update_fbo_resolution.cache_clear()
-        self.run.cache_clear()
 
     @lru_cache(1)  # noqa: B019
     def update_fbo_resolution(self, resolution: QtCore.QSize) -> None:
@@ -159,12 +157,12 @@ class StarburstTask(OpenGLTask):
 
         # FFT Image
         fft = get_fft(aperture)
-        cached_update_mipmap_texture(self._fft_image, fft)
+        self.cached_update_mipmap_texture(self._fft_image, fft)
 
         # Spectral Image
         wavelength_count = LAMBDA_MAX - LAMBDA_MIN + 1
         spectral = get_spectral(illuminant, wavelength_count)
-        cached_update_texture(self._spectral_image, spectral)
+        self.cached_update_texture(self._spectral_image, spectral)
 
         # Render
         self.update_fbo_resolution(resolution)
@@ -175,17 +173,6 @@ class StarburstTask(OpenGLTask):
         args = (aperture, config, sensor_size, position, fstop, illuminant)
         image = Array(array=array, args=args)
         return image
-
-
-@lru_cache(1)
-def cached_update_texture(texture: int, array: Array) -> None:
-    OpenGLTask.update_texture(texture, array.array)
-
-
-@lru_cache(1)
-def cached_update_mipmap_texture(texture: int, array: Array) -> None:
-    OpenGLTask.update_texture(texture, array.array)
-    OpenGLTask.generate_mipmap(texture)
 
 
 def get_fraunhofer_diffraction(aperture: np.ndarray) -> np.ndarray:

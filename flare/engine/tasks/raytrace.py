@@ -3,7 +3,6 @@ from functools import lru_cache
 
 import numpy as np
 from OpenGL import GL
-from OpenGL.constant import Constant
 from qtpy import QtGui
 
 from flare import api
@@ -103,7 +102,7 @@ class RaytraceTask(OpenGLTask):
         self.bind_ssbo_block(self._program, 'Rays', SSBO.RAYS)
         self.bind_ssbo_block(self._program, 'Intersections', SSBO.INTERSECTIONS)
 
-    def cleanup(self) -> None:
+    def delete_resources(self) -> None:
         self.delete(
             programs=(self._program,),
             buffers=(
@@ -158,10 +157,10 @@ class RaytraceTask(OpenGLTask):
         self.update_ubo(self._ubo, params)
 
         # Buffers
-        cached_update_ssbo(self._surfaces_buffer, surfaces)
-        cached_update_ssbo(self._iors_buffer, iors)
-        cached_update_ssbo(self._wavelengths_buffer, wavelengths)
-        cached_update_ssbo(self._ghosts_buffer, ghosts)
+        self.cached_update_ssbo(self._surfaces_buffer, surfaces)
+        self.cached_update_ssbo(self._iors_buffer, iors)
+        self.cached_update_ssbo(self._wavelengths_buffer, wavelengths)
+        self.cached_update_ssbo(self._ghosts_buffer, ghosts)
         self.update_ssbo(self._rays_buffer, rays.array, usage=GL.GL_DYNAMIC_COPY)
 
         rays.args = (*rays.args, use_aspheric)
@@ -332,15 +331,6 @@ class RaytraceTask(OpenGLTask):
         )
 
         return intersections
-
-
-@lru_cache(1)
-def cached_update_ssbo(
-    buffer: int,
-    array: Array,
-    usage: int | Constant = GL.GL_DYNAMIC_DRAW,
-) -> None:
-    OpenGLTask.update_ssbo(buffer, array.array, usage)
 
 
 @lru_cache(64)

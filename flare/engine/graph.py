@@ -26,6 +26,17 @@ class RenderGraph:
         comp_task = tasks.CompTask()
         diagram_task = tasks.DiagramTask(context)
 
+        self.tasks = (
+            aperture_task,
+            starburst_task,
+            ghost_task,
+            raytrace_task,
+            preprocess_task,
+            flare_task,
+            comp_task,
+            diagram_task,
+        )
+
         # Renderers
         starburst_aperture_renderer = renderers.StarburstApertureRenderer(
             context,

@@ -3,7 +3,6 @@ from functools import lru_cache
 
 import numpy as np
 from OpenGL import GL
-from OpenGL.constant import Constant
 from qtpy import QtCore, QtGui
 
 from flare import api
@@ -147,7 +146,7 @@ class FlareTask(OpenGLTask):
         self.bind_texture_loc(self._program, 'spectral_image', TEX.FLARE_SPECTRAL)
         self.bind_texture_loc(self._program, 'ghost_image', TEX.FLARE_GHOST)
 
-    def cleanup(self) -> None:
+    def delete_resources(self) -> None:
         self.delete(
             programs=(
                 self._prim_program,
@@ -323,9 +322,9 @@ class FlareTask(OpenGLTask):
         self.update_ssbo(self._indices_buffer, indices.array, usage)
         self.update_ssbo(self._counts_buffer, counts.array, usage)
         self.update_ssbo(self._intensities_buffer, intensities.array, usage)
-        cached_update_ssbo(self._ghosts_buffer, ghosts)
-        cached_update_ssbo(self._mesh_buffer, mesh_indices)
-        cached_update_ssbo(self._areas_buffer, areas)
+        self.cached_update_ssbo(self._ghosts_buffer, ghosts)
+        self.cached_update_ssbo(self._mesh_buffer, mesh_indices)
+        self.cached_update_ssbo(self._areas_buffer, areas)
 
         # Compute
         self.compute_prims(self._prim_program, ghost_datas)
@@ -377,9 +376,9 @@ class FlareTask(OpenGLTask):
             render_fbo = self._fbo
             self.update_fbo_resolution(render.resolution)
 
-        cached_update_ssbo(self._neighbors_buffer, neighbors)
-        cached_update_texture(self._spectral_image, spectral)
-        cached_update_texture(self._ghost_image, ghost)
+        self.cached_update_ssbo(self._neighbors_buffer, neighbors)
+        self.cached_update_texture(self._spectral_image, spectral)
+        self.cached_update_texture(self._ghost_image, ghost)
 
         self.render_vao(
             program=self._program,
@@ -413,20 +412,6 @@ class FlareTask(OpenGLTask):
         )
         image = Array(array=array, args=args)
         return image
-
-
-@lru_cache(1)
-def cached_update_texture(texture: int, array: Array) -> None:
-    OpenGLTask.update_texture(texture, array.array)
-
-
-@lru_cache(1)
-def cached_update_ssbo(
-    buffer: int,
-    array: Array,
-    usage: int | Constant = GL.GL_DYNAMIC_DRAW,
-) -> None:
-    OpenGLTask.update_ssbo(buffer, array.array, usage)
 
 
 @lru_cache(1)

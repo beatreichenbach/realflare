@@ -3,7 +3,6 @@ from functools import lru_cache
 
 import numpy as np
 from OpenGL import GL
-from OpenGL.constant import Constant
 from qtpy import QtCore, QtGui
 
 from flare import api
@@ -77,7 +76,7 @@ class DiagramTask(OpenGLTask):
         self.bind_ssbo_block(self._rays_program, 'RayIDs', SSBO.DIAGRAM_RAY_IDS)
         self.bind_ssbo_block(self._rays_program, 'Intersections', SSBO.INTERSECTIONS)
 
-    def cleanup(self) -> None:
+    def delete_resources(self) -> None:
         self.delete(
             programs=(self._lens_program,),  # self._rays_program),
             textures=(self._lens_fbo_texture, self._rays_fbo_texture),
@@ -131,7 +130,7 @@ class DiagramTask(OpenGLTask):
         ray_id_count = len(ray_ids.array)
 
         # Buffers
-        cached_update_ssbo(self._ray_ids_buffer, ray_ids)
+        self.cached_update_ssbo(self._ray_ids_buffer, ray_ids)
         self.update_texture(self._lens_fbo_texture)  # ty: ignore[missing-argument]
 
         # Params
@@ -175,8 +174,8 @@ class DiagramTask(OpenGLTask):
                 abbe_offset=lens_config.abbe_offset,
                 wavelength_count=1,
             )
-            cached_update_ssbo(self._surfaces_buffer, surfaces_array)  # ty: ignore[unresolved-attribute]
-            cached_update_ssbo(self._iors_buffer, iors)  # ty: ignore[unresolved-attribute]
+            self.cached_update_ssbo(self._surfaces_buffer, surfaces_array)  # ty: ignore[unresolved-attribute]
+            self.cached_update_ssbo(self._iors_buffer, iors)  # ty: ignore[unresolved-attribute]
         else:
             surfaces = ()
             surface_count = 0
@@ -188,15 +187,6 @@ class DiagramTask(OpenGLTask):
         array = self.read_texture(self._lens_fbo_texture, resolution, unit=2)
         image = Array(array=array, args=(vendor, lens, intersections, resolution))
         return image
-
-
-@lru_cache(1)
-def cached_update_ssbo(
-    buffer: int,
-    array: Array,
-    usage: int | Constant = GL.GL_DYNAMIC_DRAW,
-) -> None:
-    OpenGLTask.update_ssbo(buffer, array.array, usage)
 
 
 @lru_cache(1)

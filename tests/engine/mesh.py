@@ -1,6 +1,5 @@
 import logging
 
-import tests
 from flare.engine.tasks.common import DiscMesh
 
 logger = logging.getLogger(__name__)
@@ -13,5 +12,4 @@ def test_get_neighbors() -> None:
 
 
 if __name__ == '__main__':
-    tests.init()
     test_get_neighbors()

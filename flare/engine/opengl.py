@@ -1,15 +1,16 @@
 import contextlib
 import inspect
 from collections.abc import Sequence
+from functools import lru_cache
 from pathlib import Path
-from typing import Any, TypeVar
+from typing import Any, ClassVar, TypeVar
 
 import numpy as np
 from OpenGL import GL
 from OpenGL.constant import Constant
 from qtpy import QtCore, QtGui
 
-from .base import EngineError, Task
+from .base import Array, EngineError, Task
 
 T = TypeVar('T', bound='OpenGLTask')
 
@@ -366,20 +367,61 @@ class BindingManager:
 
 
 class OpenGLTask(Task, ResourceManager, BindingManager):
-    _instance: 'OpenGLTask | None' = None
+    _instances: ClassVar[dict[QtGui.QOpenGLContext, dict[type, 'OpenGLTask']]] = {}
 
-    def __new__(cls: type[T], *args: Any, **kwargs: Any) -> T:
-        # NOTE: Tasks bind resources to slots that are constants. Multiple instances
-        # would access the same slots, so only one instance is allowed.
-        if cls._instance is not None:
+    def __new__(
+        cls: type[T], context: QtGui.QOpenGLContext, *args: Any, **kwargs: Any
+    ) -> T:
+        # NOTE: Tasks bind resources to slots that are constants per context.
+        # Multiple instances per context would access the same slots, so only one
+        # instance per task class and context is allowed.
+        instances = OpenGLTask._instances.setdefault(context, {})
+        if cls in instances:
             raise RuntimeError(f'cannot instance {cls.__name__} multiple times')
-        cls._instance = super().__new__(cls)
-        return cls._instance
+        instance = super().__new__(cls)
+        instances[cls] = instance
+        return instance
 
     def __init__(self, context: QtGui.QOpenGLContext) -> None:
         super().__init__()
 
         self.context = context
+
+    def release(self) -> None:
+        """Delete the task resources and allow re-instantiation for the context."""
+
+        self.delete_resources()
+
+        # Clear the cached methods using lru_cache so they release the reference to
+        # this instance.
+        for name in dir(type(self)):
+            cache_clear = getattr(getattr(type(self), name, None), 'cache_clear', None)
+            if callable(cache_clear):
+                cache_clear()
+
+        instances = OpenGLTask._instances.get(self.context)
+        if instances is not None:
+            instances.pop(type(self), None)
+            if not instances:
+                OpenGLTask._instances.pop(self.context, None)
+
+    @lru_cache(1)  # noqa: B019
+    def cached_update_ssbo(
+        self,
+        buffer: int,
+        array: Array,
+        usage: int | Constant = GL.GL_DYNAMIC_DRAW,
+    ) -> None:
+        self.update_ssbo(buffer, array.array, usage)
+
+    @lru_cache(1)  # noqa: B019
+    def cached_update_texture(self, texture: int, array: Array) -> None:
+        self.update_texture(texture, array.array)
+
+    @lru_cache(1)  # noqa: B019
+    def cached_update_mipmap_texture(self, texture: int, array: Array) -> None:
+        self.update_texture(texture, array.array)
+        self.generate_mipmap(texture)
 
     @staticmethod
     def load_shader(source: str, shader_type: int | Constant) -> int:

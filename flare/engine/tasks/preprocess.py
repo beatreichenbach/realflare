@@ -4,7 +4,6 @@ from functools import lru_cache
 
 import numpy as np
 from OpenGL import GL
-from OpenGL.constant import Constant
 from qtpy import QtGui
 
 from flare import api
@@ -133,7 +132,7 @@ class PreprocessTask(OpenGLTask):
         usage = GL.GL_DYNAMIC_COPY
         self.update_ssbo(self._areas_buffer, areas.array, usage)
         self.update_ssbo(self._intensities_buffer, intensities.array, usage)
-        cached_update_ssbo(self._mesh_buffer, mesh)
+        self.cached_update_ssbo(self._mesh_buffer, mesh)
 
         # Compute
         self.compute(self._program, ghost_count, tri_count)
@@ -189,15 +188,6 @@ class PreprocessTask(OpenGLTask):
         )
 
         return ghost_datas
-
-
-@lru_cache(1)
-def cached_update_ssbo(
-    buffer: int,
-    array: Array,
-    usage: int | Constant = GL.GL_DYNAMIC_DRAW,
-) -> None:
-    OpenGLTask.update_ssbo(buffer, array.array, usage)
 
 
 def apply_intensity_mask(

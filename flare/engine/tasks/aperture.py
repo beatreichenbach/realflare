@@ -80,7 +80,7 @@ class ApertureTask(OpenGLTask):
 
         logger.debug(f'Initialized {self.__class__.__name__}')
 
-    def cleanup(self) -> None:
+    def delete_resources(self) -> None:
         self.delete(
             programs=(self._program,),
             textures=(self._fbo_texture, self._image),
@@ -88,8 +88,6 @@ class ApertureTask(OpenGLTask):
             vertex_arrays=(self._vao,),
             buffers=(self._ubo,),
         )
-        self.update_fbo_resolution.cache_clear()
-        self.run.cache_clear()
 
     @lru_cache(1)  # noqa: B019
     def update_fbo_resolution(self, resolution: QtCore.QSize) -> None:
@@ -148,7 +146,9 @@ class ApertureTask(OpenGLTask):
 
         # Image
         file = File(aperture.image.file)
-        update_image(self._image, file)
+        if str(file):
+            texture_image = get_image(file)
+            self.cached_update_texture(self._image, texture_image)
 
         # Render
         render_resolution = QtCore.QSize(resolution, resolution)
@@ -209,17 +209,14 @@ def load_image(filename: str) -> np.ndarray:
 
 
 @lru_cache(1)
-def update_image(texture: int, file: File) -> None:
+def get_image(file: File) -> Array:
     """
-    Load a file into a texture.
+    Return an image file as an Array for a texture upload.
 
     :raises EngineError: if the file cannot be found or cannot be loaded.
     """
 
     filename = str(file)
-    if not filename:
-        return
-
     if not os.path.exists(filename):
         raise EngineError(
             f'file does not exist: {filename}',
@@ -227,8 +224,4 @@ def update_image(texture: int, file: File) -> None:
         )
 
     array = load_image(filename)
-    array = np.flipud(array)
-
-    ApertureTask.update_texture(texture, array)
-
-    logger.debug(f'Updated image: {filename}')
+    return Array(array=array, args=(file,))

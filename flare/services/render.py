@@ -84,9 +84,6 @@ class RenderController(QtCore.QObject):
         self._rendering = True
         self.progress_changed.emit(-1)
         try:
-            # The Viewer has another context that is current.
-            self.engine.context.makeCurrent(self.engine.surface)
-
             for layer in self._layers:
                 render = self.engine.render(project, layer)
                 self.engine.output(render, project)
