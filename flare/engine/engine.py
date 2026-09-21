@@ -1,12 +1,11 @@
 import dataclasses
 import logging
 
-from qtpy import QtGui
-
 from flare import api
 
 from . import graph
-from .base import Array, EngineError
+from .base import Array
+from .opengl import create_context_surface
 
 logger = logging.getLogger(__name__)
 
@@ -22,7 +21,7 @@ class Render:
 
 class Engine:
     def __init__(self) -> None:
-        self.context, self.surface = self._init_context_surface()
+        self.context, self.surface = create_context_surface()
         self.graph = graph.RenderGraph(self.context)
 
     def render(self, project: api.Project, layer: api.Layer) -> Render:
@@ -57,38 +56,3 @@ class Engine:
         #     self.diagram_task,
         # ):
         #     task.cleanup()
-
-    @staticmethod
-    def _init_context_surface() -> tuple[QtGui.QOpenGLContext, QtGui.QOffscreenSurface]:
-        # Format
-        fmt = QtGui.QSurfaceFormat()
-        fmt.setProfile(QtGui.QSurfaceFormat.OpenGLContextProfile.CoreProfile)
-        # NOTE: Set both RenderableType and Version, otherwise a mismatch happens.
-        fmt.setRenderableType(QtGui.QSurfaceFormat.RenderableType.OpenGL)
-        fmt.setVersion(4, 3)
-
-        # Surface
-        surface = QtGui.QOffscreenSurface()
-        surface.setFormat(fmt)
-        surface.create()
-        if not surface.isValid():
-            raise EngineError('invalid QOffscreenSurface')
-
-        # Context
-        context = QtGui.QOpenGLContext()
-        context.setFormat(fmt)
-        context.create()
-        if not context.isValid():
-            raise EngineError('invalid QOpenGLContext')
-
-        # Make current
-        if not context.makeCurrent(surface):
-            raise EngineError('failed to make the context current')
-
-        # Version
-        actual_fmt = context.format()
-        major, minor = actual_fmt.version()
-        if (major, minor) < (4, 3):
-            raise EngineError(f'required OpenGL 4.3, got OpenGL {major}.{minor}')
-
-        return context, surface
