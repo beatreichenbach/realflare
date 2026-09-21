@@ -387,8 +387,10 @@ class ProjectEditor(ParameterEditor, StateWidget):
 
         param = IntParameter('samples')
         param.set_slider_visible(False)
+        param.set_line_min(0)
+        param.set_line_max(12)
         param.set_tooltip(
-            'Number of samples. High quality renders might need up to 2048 samples.'
+            'The number of samples. High quality renders might need up to 11 samples.'
         )
         form.add_parameter(param)
 

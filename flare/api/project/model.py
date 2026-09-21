@@ -160,7 +160,7 @@ class Starburst(HashableModel):
 
     class Render(HashableModel):
         resolution: int = 1024
-        samples: int = 128
+        samples: int = 7
 
     aperture: Aperture = Field(default_factory=Aperture)
     diffraction: Diffraction = Field(default_factory=Diffraction)

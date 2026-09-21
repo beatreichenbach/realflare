@@ -137,6 +137,7 @@ class StarburstTask(OpenGLTask):
         rotation = np.radians(config.diffraction.rotation)
         aperture_resolution = aperture.array.shape[0]
         fft_radius = get_fft_radius(sensor_size, fstop, aperture_resolution, resolution)
+        samples = 2**config.render.samples
 
         params = np.zeros((), dtype=params_dtype)
         params['resolution'] = (resolution.width(), resolution.height())
@@ -147,7 +148,7 @@ class StarburstTask(OpenGLTask):
         params['intensity'] = config.diffraction.intensity
         params['vignetting'] = config.diffraction.vignetting
         params['fft_radius'] = fft_radius
-        params['samples'] = config.render.samples
+        params['samples'] = samples
         self.update_ubo(self._ubo, params)
 
         # FFT Image
