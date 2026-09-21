@@ -67,10 +67,13 @@ class StarburstTask(OpenGLTask):
 
 ### Content
 
-1. Write in imperative mood: `Return`, `Update`, `Run`, `Render`, `Compute`, not `Returns`, `Updates`, `This function renders`.
+1. Write in imperative: `Return`, `Update`, `Run`, `Render`, `Compute`,
+   not `Returns`, `Updates`, `This function renders`.
 2. Functions that return something start the docstring with `Return ...`.
-   Functions that return `None` start with a verb describing the side effect, e.g. `Update ...`, `Run ...`, `Render ...`.
-3. Never use `:param:`, `:type:`, `:return:`, or `:rtype:`. Parameters and return values are documented by type hints and must be fully annotated.
+   Functions that return `None` start with a verb describing the side effect,
+   e.g. `Update ...`, `Run ...`, `Render ...`.
+3. Never use `:param:`, `:type:`, `:return:`, or `:rtype:`.
+   Parameters and return values are documented by type hints and must be fully annotated.
 4. Use `:raises ...:` if the function raises, with a trailing period:
    ```python
    def get_renderer(layer: Layer) -> Renderer:
