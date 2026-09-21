@@ -13,6 +13,7 @@ from flare import api
 from flare.core import PreferencesManager, ProjectManager, StateManager
 from flare.gui.menu import FlareMenuBar, ProjectActions
 from flare.gui.render import RenderController
+from flare.gui.update import UpdateController
 from flare.gui.widgets.base import StateWidget
 from flare.gui.widgets.project_editor import ProjectEditor
 from flare.gui.widgets.viewer import LayerViewer
@@ -31,6 +32,7 @@ class FlareDockWindow(StateDockWindow):
         self.manager = ProjectManager(self)
         self.renderer = RenderController(self)
         self.project_actions = ProjectActions(self.manager, self)
+        self.updates = UpdateController(self)
 
         self._syncing = False
 
@@ -74,6 +76,7 @@ class FlareDockWindow(StateDockWindow):
         super().showEvent(event)
 
         QtCore.QTimer.singleShot(500, self.refresh)
+        QtCore.QTimer.singleShot(2000, self.updates.check)
 
     def closeEvent(self, event: QtGui.QCloseEvent) -> None:
         if not self.project_actions.maybe_save():

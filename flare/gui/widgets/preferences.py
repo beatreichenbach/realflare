@@ -64,6 +64,15 @@ class PreferencesDialog(QtWidgets.QDialog):
         parm.set_tooltip('Clear the log on every render.')
         form.add_parameter(parm)
 
+        # Updates
+        form = ParameterForm('updates')
+        self.form.add_form(form)
+        form.set_flat(True)
+
+        parm = BoolParameter('check_updates')
+        parm.set_label('Check for updates on startup')
+        form.add_parameter(parm)
+
         # Buttons
         self.button_box = DialogButtonBox()
         size_policy = self.button_box.sizePolicy()

@@ -234,12 +234,9 @@ def show_preferences(window: FlareDockWindow) -> None:
 
 
 def show_update(window: FlareDockWindow) -> None:
-    """Show the update dialog."""
+    """Check for updates."""
 
-    from flare.gui.widgets.update import UpdateDialog
-
-    dialog = UpdateDialog(parent=window)
-    dialog.show()
+    window.updates.check(manual=True)
 
 
 def show_about(window: FlareDockWindow) -> None:
