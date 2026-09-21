@@ -44,6 +44,9 @@ void main() {
     // Gain
     rgba.xyz *= gain;
 
+    // Clamp out-of-gamut spectral colors before the display transform.
+    rgba.xyz = max(rgba.xyz, vec3(0.0));
+
     // OCIO
     rgba = OCIOMain(rgba);
 

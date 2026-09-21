@@ -6,8 +6,8 @@ from qt_material_icons import MaterialIcon
 from qt_parameters import ComboParameter, EnumParameter, FloatParameter
 from qtpy import QtCore, QtGui, QtWidgets
 
-from .data import Channel
-from .gl import OpenGLView
+from .model import Channel
+from .view import OpenGLView
 
 logger = logging.getLogger(__name__)
 
@@ -448,7 +448,7 @@ class Viewer(QtWidgets.QWidget):
         self.toolbar.paused.connect(self.set_paused)
         self._layout.addWidget(self.toolbar)
 
-        # OpenGLView
+        # View
         self.viewport = Viewport()
         self.view = self.viewport.view
 

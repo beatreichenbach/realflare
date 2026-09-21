@@ -2,7 +2,7 @@ import numpy as np
 
 import tests
 from flare.ui import application
-from flare.ui.widgets.viewer.viewer import Viewer
+from flare.ui.widgets import Viewer
 
 
 def main() -> None:

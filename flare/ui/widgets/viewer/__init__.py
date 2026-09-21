@@ -1,4 +1,5 @@
-from .gl import OpenGLView
-from .viewer import Viewer
+from .model import Channel
+from .view import OpenGLView
+from .widget import Viewer
 
-__all__ = ['OpenGLView', 'Viewer']
+__all__ = ['Channel', 'OpenGLView', 'Viewer']

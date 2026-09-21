@@ -10,11 +10,13 @@ from .dock_window import (
 )
 from .messagebox import MessageBox
 from .viewer import (
+    Channel,
     OpenGLView,
     Viewer,
 )
 
 __all__ = [
+    'Channel',
     'DialogButtonBox',
     'DockWidget',
     'DockWidgetState',

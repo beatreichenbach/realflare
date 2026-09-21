@@ -1,16 +1,8 @@
 import logging
-import os
 
-import PyOpenColorIO as OCIO
-from qt_parameters import (
-    BoolParameter,
-    ParameterForm,
-    PathParameter,
-    StringParameter,
-)
+from qt_parameters import BoolParameter, ParameterForm
 from qtpy import QtGui, QtWidgets
 
-from flare import env
 from flare.infrastructure.storage.settings import Preferences, PreferencesManager
 from flare.ui.widgets import DialogButtonBox
 
@@ -35,25 +27,6 @@ class PreferencesDialog(QtWidgets.QDialog):
 
         self.form = ParameterForm()
         self._layout.addWidget(self.form)
-
-        # Color
-        form = ParameterForm('color')
-        self.form.add_form(form)
-        form.set_flat(True)
-
-        parm = PathParameter('ocio')
-        parm.set_label('OCIO Config')
-        parm.set_method(PathParameter.OPEN_FILE)
-        parm.set_tooltip(
-            'Path to the config.ocio file. An ACES config is required! '
-            'If no path is set here, the system will fall back to the environment '
-            'variable `OCIO`.'
-        )
-        form.add_parameter(parm)
-
-        parm = StringParameter('view_colorspace')
-        parm.set_menu(view_names())
-        form.add_parameter(parm)
 
         # Logging
         form = ParameterForm('logging')
@@ -99,8 +72,6 @@ class PreferencesDialog(QtWidgets.QDialog):
         preferences = preferences.model_validate(values)
         PreferencesManager.set(preferences)
 
-        os.environ[env.OCIO] = preferences.ocio
-
     def load_preferences(self) -> None:
         PreferencesManager.get.cache_clear()
         preferences = PreferencesManager.get()
@@ -115,20 +86,3 @@ class PreferencesDialog(QtWidgets.QDialog):
         values = self.form.values()
         preferences = Preferences.model_validate(values)
         return preferences
-
-
-def view_names() -> dict[str, dict[str, str]]:
-    names: dict[str, dict[str, str]] = {}
-
-    try:
-        config = OCIO.GetCurrentConfig()  # ty: ignore[unresolved-attribute]
-    except OCIO.Exception:  # ty: ignore[unresolved-attribute]
-        return names
-
-    for display in config.getDisplays():
-        views = names.get(display, {})
-        for view in config.getViews(display):
-            views[view] = f'{display} - {view}'
-            names[display] = views
-
-    return names

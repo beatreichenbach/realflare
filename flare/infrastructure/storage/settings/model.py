@@ -4,8 +4,6 @@ from pydantic import BaseModel, Field
 
 
 class Preferences(BaseModel):
-    ocio: str = ''
-    view_colorspace: str = ''
     clear_log_on_render: bool = True
     check_updates: bool = True
 

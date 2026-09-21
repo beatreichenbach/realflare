@@ -13,7 +13,6 @@ from qt_parameters import (
     PointParameter,
     SizeFParameter,
     SizeParameter,
-    StringParameter,
     TabDataParameter,
 )
 from qtpy import QtCore, QtWidgets
@@ -55,13 +54,6 @@ class ProjectEditor(ParameterEditor, StateWidget):
         param.set_tooltip(
             'Output image path. Use $F4 to replace frame numbers.\n'
             'For example: render.$F4.exr'
-        )
-        form.add_parameter(param)
-
-        param = StringParameter('colorspace')
-        # param.set_menu(ocio.colorspace_names())
-        param.set_tooltip(
-            'Colorspace from the OCIO config.\nFor example: "ACES - ACEScg"'
         )
         form.add_parameter(param)
 
