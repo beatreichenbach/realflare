@@ -5,7 +5,6 @@ from qtpy import QtWidgets
 from .dock_widget import DockWidget
 from .dock_window import DockWindow
 from .model import (
-    BaseWidgetState,
     DockWidgetState,
     SplitterState,
     TabState,
@@ -56,7 +55,7 @@ class StateDockWindow(DockWindow):
         """Return the state of a widget in the window."""
 
         if isinstance(widget, Splitter):
-            state: BaseWidgetState = SplitterState(
+            state = SplitterState(
                 sizes=tuple(widget.sizes()),
                 orientation=widget.orientation(),
                 states=self._child_states(widget),
@@ -64,7 +63,7 @@ class StateDockWindow(DockWindow):
         elif isinstance(widget, DockWidget):
             state = DockWidgetState(
                 current_index=widget.currentIndex(),
-                widgets=tab_states(widget),
+                widgets=self._tab_states(widget),
                 detachable=widget.detachable,
                 auto_delete=widget.auto_delete,
                 is_center_widget=(widget == self.center_widget),
@@ -219,11 +218,11 @@ class StateDockWindow(DockWindow):
             widget.setGeometry(state.geometry)
             widget.show()
 
+    @staticmethod
+    def _tab_states(widget: QtWidgets.QTabWidget) -> tuple[TabState, ...]:
+        """Return the title and widget class name of each tab of a QTabWidget."""
 
-def tab_states(widget: QtWidgets.QTabWidget) -> tuple[TabState, ...]:
-    """Return the title and widget class name of each tab of a QTabWidget."""
-
-    return tuple(
-        TabState(widget.tabText(i), type(widget.widget(i)).__name__)
-        for i in range(widget.count())
-    )
+        return tuple(
+            TabState(widget.tabText(i), type(widget.widget(i)).__name__)
+            for i in range(widget.count())
+        )

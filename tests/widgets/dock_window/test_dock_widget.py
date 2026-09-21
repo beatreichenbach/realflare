@@ -5,7 +5,7 @@ from flare.ui.widgets.dock_window import DockWidget, DockWindow
 
 def test_dock_rect_areas(qapp: QtWidgets.QApplication) -> None:
     window = DockWindow()
-    dock = DockWidget(dock_window=window)
+    dock = DockWidget(window=window)
     dock.resize(100, 100)
 
     areas = QtCore.Qt.DockWidgetArea

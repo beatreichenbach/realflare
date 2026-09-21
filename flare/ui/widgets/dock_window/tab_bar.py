@@ -12,7 +12,7 @@ class DockTabBar(QtWidgets.QTabBar):
     def __init__(self, parent: QtWidgets.QWidget | None = None) -> None:
         super().__init__(parent)
 
-        self._drag_index: int | None = None
+        self._drag_index: int = -1
         self._drag_widget: QtWidgets.QWidget | None = None
 
     def mousePressEvent(self, event: QtGui.QMouseEvent) -> None:
@@ -24,17 +24,17 @@ class DockTabBar(QtWidgets.QTabBar):
         position = event.position().toPoint()
         if self._drag_widget is not None and not self.rect().contains(position):
             widget = self._drag_widget
-            self._drag_index = None
+            self._drag_index = -1
             self._drag_widget = None
-            # Finish the tab bar's own move so it does not get stuck when the
-            # external drag takes over the mouse.
+            # Finish the tab bar's own move so it does not get stuck when the external
+            # drag takes over the mouse.
             self._finish_move(event)
             self.detach_started.emit(widget)
             return
         super().mouseMoveEvent(event)
 
     def mouseReleaseEvent(self, event: QtGui.QMouseEvent) -> None:
-        self._drag_index = None
+        self._drag_index = -1
         self._drag_widget = None
         super().mouseReleaseEvent(event)
 

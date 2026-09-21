@@ -34,8 +34,8 @@ class DockWindow(QtWidgets.QWidget):
     widgets.
     """
 
-    widget_added: QtCore.Signal = QtCore.Signal(QtWidgets.QWidget)
-    dock_widget_added: QtCore.Signal = QtCore.Signal(DockWidget)
+    widget_added = QtCore.Signal(QtWidgets.QWidget)
+    dock_widget_added = QtCore.Signal(DockWidget)
 
     def __init__(self, parent: QtWidgets.QWidget | None = None) -> None:
         super().__init__(parent)
@@ -109,7 +109,8 @@ class DockWindow(QtWidgets.QWidget):
         registered_widget = self._get_registered_widget(source)
 
         if not registered_widget:
-            logger.warning(f'{source!r} is not a registered widget.')
+            name = source if isinstance(source, str) else source.__class__.__name__
+            logger.warning(f'{name!r} is not a registered widget.')
             return
 
         if registered_widget.unique:
@@ -123,7 +124,7 @@ class DockWindow(QtWidgets.QWidget):
         title = self._add_widget(widget, registered_widget.name)
 
         # Create the DockWidget
-        dock_widget = DockWidget(dock_window=self)
+        dock_widget = DockWidget(window=self)
         dock_widget.addTab(widget, title)
         dock_widget.resize(widget.size())
         dock_widget.set_floating()

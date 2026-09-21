@@ -14,6 +14,7 @@ if TYPE_CHECKING:
 MIME_TYPE = 'application/x-flare-dock-tab'
 
 _active_drag: DockDrag | None = None
+
 logger = logging.getLogger(__name__)
 
 
@@ -81,11 +82,8 @@ class DockDrag:
     def float(self) -> None:
         """Detach the tab into a new floating window."""
 
-        dock_window = self.source.dock_window
-        dock_widget_cls = self.source.__class__
-
         self._remove()
-        dock_widget = dock_widget_cls(dock_window)
+        dock_widget = self.source.__class__(self.source.dock_window)
         dock_widget.addTab(self.widget, self.title)
         dock_widget.resize(self.widget.size())
         dock_widget.set_floating()

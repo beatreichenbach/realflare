@@ -37,11 +37,11 @@ class DockWidget(QtWidgets.QTabWidget):
     )
 
     def __init__(
-        self, dock_window: DockWindow, parent: QtWidgets.QWidget | None = None
+        self, window: DockWindow, parent: QtWidgets.QWidget | None = None
     ) -> None:
-        super().__init__(parent or dock_window)
+        super().__init__(parent or window)
 
-        self.dock_window: DockWindow = dock_window
+        self.dock_window: DockWindow = window
         self.detachable: bool = True
         self.auto_delete: bool = True
 
