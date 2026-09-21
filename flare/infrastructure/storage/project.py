@@ -4,6 +4,7 @@ import os
 import pydantic
 
 from flare.api.project import model
+from flare.api.project.default import default_project
 
 logger = logging.getLogger(__name__)
 
@@ -15,7 +16,7 @@ class ProjectIO:
     def create() -> model.Project:
         """Return a new Project."""
 
-        return model.Project()
+        return default_project()
 
     @staticmethod
     def open(path: str) -> model.Project | None:
