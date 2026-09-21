@@ -9,6 +9,7 @@ from .project import (
     PathParser,
     Project,
     Starburst,
+    Supersampling,
 )
 
 __all__ = [
@@ -23,4 +24,5 @@ __all__ = [
     'PathParser',
     'Project',
     'Starburst',
+    'Supersampling',
 ]

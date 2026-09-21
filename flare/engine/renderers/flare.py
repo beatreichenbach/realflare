@@ -84,7 +84,6 @@ class FlareRenderer(Renderer):
             ghost_datas=ghost_datas,
             rays=rays,
             ghost=ghost,
-            samples=project.flare.render.samples,
             wireframe=project.flare.debug.wireframe,
         )
 

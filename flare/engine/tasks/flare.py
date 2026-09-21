@@ -286,7 +286,6 @@ class FlareTask(OpenGLTask):
         ghost_datas: Array,
         rays: Array,
         ghost: Array,
-        samples: int,
         wireframe: bool,
     ) -> Array:
         """Render the lens flare to a framebuffer."""
@@ -294,8 +293,8 @@ class FlareTask(OpenGLTask):
         # TODO: Determine pixel based subwavelengths.
         # Loop through all rays of wavelength 1 and compare with wavelength -1,
         # based on difference determine subwavelengths. To find the ideal sub count,
-        # get the largest difference and scale it to screen, then turn that difference to
-        # an integer (length in pixels > one sub count per pixel).
+        # get the largest difference and scale it to screen, then turn that difference
+        # to an integer (length in pixels > one sub count per pixel).
 
         # Params
         if raytracing.wavelength_count > 1:
@@ -367,12 +366,11 @@ class FlareTask(OpenGLTask):
         spectral = get_spectral(illuminant, spectral_wavelength_count)
 
         # Buffers
-        ssaa_scale = 2 ** (samples - 1)
-        if ssaa_scale > 1:
-            ssaa_resolution = render.resolution * ssaa_scale
+        if render.supersampling == api.Supersampling.SSAA_2X:
+            scale = 2
+            render_resolution = render.resolution * scale
             render_fbo = self._fbo_ssaa
-            render_resolution = ssaa_resolution
-            self.update_fbo_ssaa_resolution(ssaa_resolution)
+            self.update_fbo_ssaa_resolution(render_resolution)
             self.update_fbo_resolution(render.resolution)
         else:
             render_resolution = render.resolution
@@ -394,7 +392,7 @@ class FlareTask(OpenGLTask):
             wireframe=wireframe,
         )
 
-        if ssaa_scale > 1:
+        if render.supersampling == api.Supersampling.SSAA_2X:
             self.blit_fbos(
                 source=self._fbo_ssaa,
                 destination=self._fbo,
@@ -411,7 +409,6 @@ class FlareTask(OpenGLTask):
             camera,
             raytracing,
             render,
-            samples,
             wireframe,
         )
         image = Array(array=array, args=args)

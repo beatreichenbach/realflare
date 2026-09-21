@@ -20,6 +20,11 @@ class Layer(enum.Enum):
     DIAGRAM = 'diagram'
 
 
+class Supersampling(enum.Enum):
+    NONE = 'none'
+    SSAA_2X = 'ssaa_2x'
+
+
 class Aperture(HashableModel):
     class Shape(HashableModel):
         size: QSizeF = QtCore.QSizeF(0.75, 0.75)
@@ -69,7 +74,6 @@ class Aperture(HashableModel):
 class Output(HashableModel):
     layer: Layer = Layer.COMP
     path: str = ''
-    colorspace: str = 'ACES - ACEScg'
     write: bool = False
     frame: int = 0
 
@@ -112,7 +116,7 @@ class Flare(HashableModel):
 
     class Render(HashableModel):
         resolution: QSize = QtCore.QSize(1920, 1080)
-        samples: int = 1
+        supersampling: Supersampling = Supersampling.NONE
 
     class Debug(HashableModel):
         ghost: int = 0

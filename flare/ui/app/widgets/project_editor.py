@@ -270,10 +270,9 @@ class ProjectEditor(ParameterEditor, StateWidget):
         param.set_tooltip('Resolution of the flare image.')
         form.add_parameter(param)
 
-        param = IntParameter('samples')
-        param.set_line_min(1)
-        param.set_slider_min(1)
-        param.set_slider_max(3)
+        param = EnumParameter('supersampling')
+        param.set_enum(api.Supersampling)
+        param.set_formatter(self._format_supersampling)
         form.add_parameter(param)
 
         # Debug
@@ -657,3 +656,13 @@ class ProjectEditor(ParameterEditor, StateWidget):
         if isinstance(param, ComboParameter):
             names = tuple(lens.name for lens in vendor_lenses)
             param.set_items(names)
+
+    @staticmethod
+    def _format_supersampling(member: api.Supersampling) -> str:
+        """Return the display label for a supersampling option."""
+
+        labels = {
+            api.Supersampling.NONE: 'None',
+            api.Supersampling.SSAA_2X: '2x SSAA',
+        }
+        return labels[member]
