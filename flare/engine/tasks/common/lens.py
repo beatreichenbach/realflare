@@ -3,6 +3,7 @@ from functools import lru_cache
 import numpy as np
 
 from flare import api
+from flare.infrastructure.database import Database
 
 from ...base import Array, EngineError
 
@@ -27,7 +28,7 @@ def get_lens(lens_config: api.Flare.Lens) -> api.Lens:
 
     :raises EngineError: if the lens cannot be found or loaded.
     """
-    db = api.Database()
+    db = Database()
     vendor = lens_config.vendor
     name = lens_config.lens
     lens = db.get_lens(vendor=vendor, name=name)

@@ -8,6 +8,7 @@ from qtpy import QtGui
 
 from flare import api
 from flare.engine.tasks.common.lens import get_lens, get_surfaces
+from flare.infrastructure.database import Database
 from flare.utils import profiling
 
 from ..base import Array
@@ -417,7 +418,7 @@ def get_iors(
 ) -> Array:
     """Return an Array with IORs for every surface and wavelength."""
 
-    db = api.Database()
+    db = Database()
     wavelengths = get_wavelengths(wavelength_count)
     wavelengths_array = wavelengths.array
 

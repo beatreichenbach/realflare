@@ -1,7 +1,7 @@
 import logging
 
 import tests
-from flare.api.database import database
+from flare.infrastructure.database import database
 
 logger = logging.getLogger(__name__)
 

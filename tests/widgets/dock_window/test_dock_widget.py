@@ -1,6 +1,6 @@
 from qtpy import QtCore, QtWidgets
 
-from flare.widgets.dock_window import DockWidget, DockWindow
+from flare.ui.widgets.dock_window import DockWidget, DockWindow
 
 
 def test_dock_rect_areas(qapp: QtWidgets.QApplication) -> None:

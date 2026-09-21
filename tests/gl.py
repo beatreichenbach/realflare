@@ -1,7 +1,7 @@
 import logging
 
-from qtpy import QtOpenGLWidgets, QtWidgets
 from OpenGL import GL
+from qtpy import QtOpenGLWidgets, QtWidgets
 
 import tests
 
@@ -39,8 +39,8 @@ class GLWidget(QtOpenGLWidgets.QOpenGLWidget):
         # Nvidia
         try:
             from OpenGL.GL.NVX.gpu_memory_info import (
-                GL_GPU_MEMORY_INFO_TOTAL_AVAILABLE_MEMORY_NVX,
                 GL_GPU_MEMORY_INFO_CURRENT_AVAILABLE_VIDMEM_NVX,
+                GL_GPU_MEMORY_INFO_TOTAL_AVAILABLE_MEMORY_NVX,
             )
 
             total_memory = GL.glGetIntegerv(
@@ -50,10 +50,10 @@ class GLWidget(QtOpenGLWidgets.QOpenGLWidget):
                 GL_GPU_MEMORY_INFO_CURRENT_AVAILABLE_VIDMEM_NVX
             )
             logger.info(
-                f'{'NVIDIA TOTAL_AVAILABLE_MEMORY':<48}{total_memory / 1024:.2f} MB'
+                f'{"NVIDIA TOTAL_AVAILABLE_MEMORY":<48}{total_memory / 1024:.2f} MB'
             )
             logger.info(
-                f'{'NVIDIA CURRENT_AVAILABLE_VIDMEM':<48}{current_memory / 1024:.2f} MB'
+                f'{"NVIDIA CURRENT_AVAILABLE_VIDMEM":<48}{current_memory / 1024:.2f} MB'
             )
         except ImportError, AttributeError:
             pass

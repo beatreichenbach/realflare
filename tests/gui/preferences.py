@@ -1,6 +1,6 @@
 import tests
-from flare.gui.widgets.preferences import PreferencesDialog
-from flare.utils.gui import application
+from flare.ui import application
+from flare.ui.app.widgets.preferences import PreferencesDialog
 
 
 def main() -> None:

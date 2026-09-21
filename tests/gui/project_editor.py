@@ -1,7 +1,7 @@
 import tests
 from flare.api.project import Project
-from flare.gui.widgets.project_editor import ProjectEditor
-from flare.utils.gui import application
+from flare.ui import application
+from flare.ui.app.widgets.project_editor import ProjectEditor
 
 
 def main() -> None:

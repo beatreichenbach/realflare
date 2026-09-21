@@ -8,6 +8,7 @@ from qtpy import QtCore, QtGui
 
 from flare import api
 from flare.engine.tasks.common.lens import get_surfaces
+from flare.infrastructure.database import Database
 
 from ..base import Array
 from ..opengl import OpenGLTask
@@ -157,7 +158,7 @@ class DiagramTask(OpenGLTask):
     ) -> Array:
         """Render the lens diagram and the rays."""
 
-        db = api.Database()
+        db = Database()
         lens_model = db.get_lens(vendor, lens)
         if lens_model:
             surfaces = lens_model.surfaces

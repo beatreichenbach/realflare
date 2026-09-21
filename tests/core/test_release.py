@@ -1,6 +1,6 @@
 import pytest
 
-from flare.core.update import release
+from flare.services.update import release
 
 
 class Response:

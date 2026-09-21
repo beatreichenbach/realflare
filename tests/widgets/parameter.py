@@ -1,6 +1,6 @@
 import tests
-from flare.utils.gui import application
-from flare.widgets.parameter import MenuParameter
+from flare.ui import application
+from flare.ui.widgets.parameter import MenuParameter
 
 
 def main() -> None:

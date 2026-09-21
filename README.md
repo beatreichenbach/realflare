@@ -105,26 +105,10 @@ Further references:
 - [Diffractsim: A diffraction simulator for exploring and visualizing physical optics](https://github.com/rafael-fuente/diffractsim)
 
 
-## Development
+## Contributing
 
-To get started:
-```sh
-uv venv --python 3.13
-uv pip install -e ".[dev]"
-pre-commit install
-```
-
-### Project Structure
-
-```
-flare/
-  api/        - Data models (project, database, illuminants)
-  core/       - Path parsing, preferences, state management
-  engine/     - OpenGL rendering engine
-  cli/        - Command-line interface
-  gui/        - Qt GUI application
-  widgets/    - Reusable Qt components (Viewer, DockWindow)
-```
+See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup, the project layout
+and the layering rules.
 
 ## License
 

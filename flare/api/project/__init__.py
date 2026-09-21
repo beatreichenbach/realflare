@@ -1,6 +1,5 @@
-from .defaults import default_project
-from .io import ProjectIO
 from .model import Aperture, Diagram, Flare, Ghost, Layer, Output, Project, Starburst
+from .path import PathParser
 
 __all__ = [
     'Aperture',
@@ -9,8 +8,7 @@ __all__ = [
     'Ghost',
     'Layer',
     'Output',
+    'PathParser',
     'Project',
-    'ProjectIO',
     'Starburst',
-    'default_project',
 ]

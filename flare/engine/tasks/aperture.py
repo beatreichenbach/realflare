@@ -9,7 +9,7 @@ from qtpy import QtCore, QtGui
 
 from flare import api
 
-from ..base import Array, EngineError
+from ..base import Array, EngineError, File
 from ..opengl import OpenGLTask
 from .constants import TEX, UBO
 
@@ -147,7 +147,7 @@ class ApertureTask(OpenGLTask):
         self.update_ubo(self._ubo, params)
 
         # Image
-        file = api.File(aperture.image.file)
+        file = File(aperture.image.file)
         update_image(self._image, file)
 
         # Render
@@ -209,7 +209,7 @@ def load_image(filename: str) -> np.ndarray:
 
 
 @lru_cache(1)
-def update_image(texture: int, file: api.File) -> None:
+def update_image(texture: int, file: File) -> None:
     """
     Load a file into a texture.
 

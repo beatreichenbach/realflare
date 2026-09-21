@@ -1,6 +1,6 @@
 import tests
-from flare.gui.app import FlareDockWindow
-from flare.utils.gui import application
+from flare.ui import application
+from flare.ui.app import FlareDockWindow
 
 
 def main() -> None:

@@ -6,7 +6,7 @@ import numpy as np
 from PIL import Image
 
 from flare import api
-from flare.core import PathParser
+from flare.api import PathParser
 
 from ..base import Array, EngineError, Output
 

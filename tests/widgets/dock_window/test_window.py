@@ -1,8 +1,8 @@
 from qtpy import QtWidgets
 
 import tests
-from flare.utils.gui import application
-from flare.widgets import DockWidgetState, StateDockWindow, TabState, WindowState
+from flare.ui import application
+from flare.ui.widgets import DockWidgetState, StateDockWindow, TabState, WindowState
 
 
 class Widget(QtWidgets.QWidget):

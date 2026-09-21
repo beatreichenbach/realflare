@@ -13,7 +13,7 @@ def render(
 ) -> None:
     """Render an animation to disk."""
 
-    from flare.app.render import run_render
+    from flare.cli.render import run_render
 
     try:
         run_render(project_path, animation_path, output)
@@ -30,6 +30,6 @@ def gui(
 ) -> None:
     """Show the graphical user interface."""
 
-    from flare.app.gui import run_gui
+    from flare.cli.gui import run_gui
 
     run_gui(project_path)

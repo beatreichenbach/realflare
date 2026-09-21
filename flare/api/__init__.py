@@ -1,5 +1,4 @@
-from .database import Database, Lens, Material
-from .path import File
+from .lens import Lens, Material
 from .project import (
     Aperture,
     Diagram,
@@ -7,23 +6,21 @@ from .project import (
     Ghost,
     Layer,
     Output,
+    PathParser,
     Project,
-    ProjectIO,
     Starburst,
 )
 
 __all__ = [
     'Aperture',
-    'Database',
     'Diagram',
-    'File',
     'Flare',
     'Ghost',
     'Layer',
     'Lens',
     'Material',
     'Output',
+    'PathParser',
     'Project',
-    'ProjectIO',
     'Starburst',
 ]

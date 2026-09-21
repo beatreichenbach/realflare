@@ -1,12 +1,12 @@
 from qtpy import QtCore, QtWidgets
 
-from flare.widgets import (
+from flare.ui.widgets import (
     DockWidgetState,
     StateDockWindow,
     TabState,
     WindowState,
 )
-from flare.widgets.dock_window.drag import DockDrag
+from flare.ui.widgets.dock_window.drag import DockDrag
 
 
 class WidgetA(QtWidgets.QWidget): ...

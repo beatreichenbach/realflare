@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from flare.core.update import manager, updater
+from flare.services.update import manager, updater
 
 
 def make_archive(root: Path, version: str = '2.0.0') -> Path:

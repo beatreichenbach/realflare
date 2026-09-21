@@ -1,8 +1,8 @@
 import numpy as np
 
 import tests
-from flare.utils.gui import application
-from flare.widgets.viewer.viewer import Viewer
+from flare.ui import application
+from flare.ui.widgets.viewer.viewer import Viewer
 
 
 def main() -> None:

@@ -1,3 +1,4 @@
+import os
 from abc import ABC, abstractmethod
 from typing import Any
 
@@ -36,7 +37,8 @@ class Array:
         return isinstance(other, Array) and self._hash == other._hash
 
     def __repr__(self) -> str:
-        return f'{self.__class__.__name__}({self.array.shape if self.array is not None else None})'
+        shape = self.array.shape if self.array is not None else None
+        return f'{self.__class__.__name__}({shape})'
 
     @property
     def args(self) -> Any:
@@ -46,6 +48,31 @@ class Array:
     def args(self, args: Any) -> None:
         self._hash = None
         self._args = args
+
+
+class File:
+    """A hashable file on disk using the modification time for comparison."""
+
+    def __init__(self, path: str) -> None:
+        self.path = path
+        self._hash = hash((path, os.path.getmtime(path))) if os.path.exists(path) else 0
+
+    def __repr__(self) -> str:
+        return f'{self.__class__.__name__}({self.path!r})'
+
+    def __str__(self) -> str:
+        return self.path
+
+    def __eq__(self, other: object) -> bool:
+        if isinstance(other, File):
+            return self._hash == other._hash
+        return False
+
+    def __hash__(self) -> int:
+        return self._hash
+
+    def __add__(self, other: str) -> str:
+        return self.path + other
 
 
 class Task:

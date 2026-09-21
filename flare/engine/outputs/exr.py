@@ -3,10 +3,10 @@ import os.path
 
 import Imath
 import numpy as np
-import OpenEXR
+import OpenEXR  # ty: ignore[unresolved-import]
 
 from flare import api
-from flare.core import PathParser
+from flare.api import PathParser
 
 from ..base import Array, Output
 

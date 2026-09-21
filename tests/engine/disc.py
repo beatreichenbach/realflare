@@ -5,8 +5,8 @@ from qtpy import QtCore, QtGui
 from flare.engine.base import Array
 from flare.engine.opengl import OpenGLTask
 from flare.engine.tasks.common import DiscMesh
-from flare.utils.gui import application
-from flare.widgets.viewer import Viewer
+from flare.ui import application
+from flare.ui.widgets.viewer import Viewer
 
 VERTEX_SHADER = """
 #version 430 core

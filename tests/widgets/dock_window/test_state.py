@@ -2,7 +2,7 @@ import pytest
 from pydantic import ValidationError
 from qtpy import QtCore, QtWidgets
 
-from flare.widgets.dock_window import StateDockWindow, WindowState
+from flare.ui.widgets.dock_window import StateDockWindow, WindowState
 
 
 class WidgetA(QtWidgets.QWidget):

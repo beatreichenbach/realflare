@@ -1,6 +1,6 @@
 import tests
-from flare.gui.widgets.about import AboutDialog
-from flare.utils.gui import application
+from flare.ui import application
+from flare.ui.app.widgets.about import AboutDialog
 
 
 def main() -> None:

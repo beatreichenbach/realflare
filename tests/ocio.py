@@ -2,7 +2,6 @@ import os
 
 import PyOpenColorIO as OCIO
 
-
 # Step 1: Get the config
 config = OCIO.GetCurrentConfig()
 
