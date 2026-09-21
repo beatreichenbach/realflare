@@ -14,8 +14,8 @@ class DockTabBar(QtWidgets.QTabBar):
     def __init__(self, parent: QtWidgets.QWidget | None = None) -> None:
         super().__init__(parent)
 
-        self._drag_index = None
-        self._detaching = False
+        self._drag_index: int | None = None
+        self._detaching: bool = False
 
         self.tabBarClicked.connect(self._tab_bar_click)
 

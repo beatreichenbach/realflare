@@ -1,52 +1,18 @@
 from collections.abc import Sequence
-from typing import Annotated, Literal, NamedTuple
 
-from pydantic import BaseModel, Field
-from qt_pydantic import QRect
-from qtpy import QtCore, QtWidgets
+from qtpy import QtWidgets
 
 from .dock_widget import DockWidget
 from .dock_window import DockWindow
+from .model import (
+    BaseWidgetState,
+    DockWidgetState,
+    SplitterState,
+    TabState,
+    WidgetState,
+    WindowState,
+)
 from .splitter import Splitter
-
-
-class TabState(NamedTuple):
-    title: str
-    cls_name: str
-
-
-class BaseWidgetState(BaseModel):
-    geometry: QRect = QtCore.QRect()
-    flags: QtCore.Qt.WindowType = QtCore.Qt.WindowType(0)
-
-
-class SplitterState(BaseWidgetState):
-    kind: Literal['splitter'] = 'splitter'
-    sizes: tuple[int, ...]
-    orientation: QtCore.Qt.Orientation
-    states: tuple['WidgetState', ...] = ()
-
-
-class DockWidgetState(BaseWidgetState):
-    kind: Literal['dock'] = 'dock'
-    current_index: int
-    widgets: tuple[TabState, ...]
-    detachable: bool
-    auto_delete: bool
-    is_center_widget: bool
-
-
-WidgetState = Annotated[SplitterState | DockWidgetState, Field(discriminator='kind')]
-
-
-# NOTE: SplitterState is defined before WidgetState but references it in its
-# `states` field, so the model is incomplete until rebuilt with WidgetState defined.
-SplitterState.model_rebuild()
-
-
-class WindowState(BaseModel):
-    geometry: QRect = QtCore.QRect()
-    states: tuple[WidgetState, ...] = ()
 
 
 class StateDockWindow(DockWindow):
@@ -78,6 +44,13 @@ class StateDockWindow(DockWindow):
         # Remove unused widgets
         for widget in widgets.values():
             widget.deleteLater()
+
+        # Remove dock widgets that are no longer part of the state
+        for dock_widget in self.dock_widgets():
+            if dock_widget is self.center_widget or dock_widget.count():
+                continue
+            dock_widget.close()
+            dock_widget.deleteLater()
 
     def _child_state(self, widget: QtWidgets.QWidget) -> WidgetState | None:
         """Return the state of a widget in the window."""

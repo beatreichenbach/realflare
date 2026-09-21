@@ -18,7 +18,10 @@ def main() -> None:
                 states=(
                     DockWidgetState(
                         current_index=0,
-                        widgets=(TabState(name, 'Widget'),),
+                        widgets=(
+                            TabState('Tab 1', name),
+                            TabState('Tab 2', name),
+                        ),
                         detachable=True,
                         auto_delete=False,
                         is_center_widget=True,

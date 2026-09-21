@@ -120,3 +120,49 @@ def test_window_state_round_trip() -> None:
     dumped = state.model_dump()
     assert dumped['states'][0]['kind'] == 'splitter'
     assert dumped['states'][0]['states'][0]['kind'] == 'dock'
+
+
+def _process_deletions() -> None:
+    QtCore.QCoreApplication.sendPostedEvents(None, QtCore.QEvent.Type.DeferredDelete)
+
+
+def test_set_state_removes_unused_docks(qapp: QtWidgets.QApplication) -> None:
+    window = _window()
+
+    center = _dock(0, [['A', 'WidgetA']])
+    center['is_center_widget'] = True
+    center['auto_delete'] = False
+
+    _set_state(
+        window,
+        {
+            'states': [
+                _splitter([center, _dock(0, [['B', 'WidgetB']])], [100, 100]),
+            ],
+        },
+    )
+    _set_state(
+        window,
+        {
+            'states': [
+                _splitter([center], [100]),
+            ],
+        },
+    )
+    _process_deletions()
+
+    unused = [d for d in window.dock_widgets() if d is not window.center_widget]
+    assert unused == []
+
+
+def test_close_tab_deletes_widget(qapp: QtWidgets.QApplication) -> None:
+    window = _window()
+    window.show_widget('A')
+    dock = window.dock_widgets()[0]
+    widget = dock.widget(0)
+    assert widget is not None
+
+    dock.close_tab(0)
+    _process_deletions()
+
+    assert not any(w is widget for w in window._widgets.values())

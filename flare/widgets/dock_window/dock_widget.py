@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from collections import OrderedDict
 from typing import TYPE_CHECKING
 
@@ -14,6 +15,8 @@ if TYPE_CHECKING:
 # Platform plugins that implement window opacity. Others, such as wayland and
 # offscreen, print a warning and ignore the request.
 OPACITY_PLATFORMS = ('cocoa', 'windows', 'xcb')
+
+logger = logging.getLogger(__name__)
 
 
 def supports_window_opacity() -> bool:
@@ -42,6 +45,8 @@ def area_orientation(area: QtCore.Qt.DockWidgetArea) -> QtCore.Qt.Orientation:
 
 
 class DockWidget(QtWidgets.QTabWidget):
+    """A tabbed dock that can be docked, floated and detached by dragging."""
+
     dock_areas = (
         QtCore.Qt.DockWidgetArea.LeftDockWidgetArea,
         QtCore.Qt.DockWidgetArea.RightDockWidgetArea,
@@ -55,12 +60,12 @@ class DockWidget(QtWidgets.QTabWidget):
     ) -> None:
         super().__init__(parent or dock_window)
 
-        self.dock_window = dock_window
-        self.detachable = True
-        self.auto_delete = True
+        self.dock_window: DockWindow = dock_window
+        self.detachable: bool = True
+        self.auto_delete: bool = True
 
-        self._drag_widget = None
-        self._hidden = False
+        self._drag_widget: DockWidget | None = None
+        self._hidden: bool = False
 
         self._init_ui()
 
@@ -115,14 +120,14 @@ class DockWidget(QtWidgets.QTabWidget):
                 self.deleteLater()
 
     def add_dock_widget(
-        self, widget: QtWidgets.QTabWidget, area: QtCore.Qt.DockWidgetArea
+        self, dock_widget: DockWidget, area: QtCore.Qt.DockWidgetArea
     ) -> None:
-        """Add a QTabWidget to an area with a Splitter."""
+        """Add a DockWidget to an area with a Splitter."""
 
         if area == QtCore.Qt.DockWidgetArea.NoDockWidgetArea:
-            first = widget.widget(0)
+            first = dock_widget.widget(0)
             if first is not None:
-                self.addTab(first, widget.tabText(0))
+                self.addTab(first, dock_widget.tabText(0))
             return
 
         container = self._dock_container()
@@ -135,12 +140,12 @@ class DockWidget(QtWidgets.QTabWidget):
             QtCore.Qt.DockWidgetArea.LeftDockWidgetArea,
             QtCore.Qt.DockWidgetArea.TopDockWidgetArea,
         ):
-            container.insertWidget(index, widget)
+            container.insertWidget(index, dock_widget)
         elif area in (
             QtCore.Qt.DockWidgetArea.RightDockWidgetArea,
             QtCore.Qt.DockWidgetArea.BottomDockWidgetArea,
         ):
-            container.insertWidget(index + 1, widget)
+            container.insertWidget(index + 1, dock_widget)
 
     def _dock_container(self) -> QtWidgets.QSplitter | None:
         """
@@ -212,14 +217,6 @@ class DockWidget(QtWidgets.QTabWidget):
         if index not in range(self.count()) or not self.detachable:
             return
 
-        geometry = self.geometry()
-
-        if not self.isWindow():
-            parent = self.parent()
-            if isinstance(parent, QtWidgets.QWidget):
-                top_left = parent.mapToGlobal(geometry.topLeft())
-                geometry.moveTopLeft(top_left)
-
         title = self.tabText(index)
         widget = self.widget(index)
         if widget is None:
@@ -231,12 +228,22 @@ class DockWidget(QtWidgets.QTabWidget):
         self._drag_widget.set_floating()
         # Adding a tab after setting the WindowFlags triggers window title update
         self._drag_widget.addTab(widget, title)
-        self._drag_widget.setGeometry(geometry)
+        self._drag_widget.setGeometry(self._detach_geometry())
         if interactive:
             set_window_opacity(self._drag_widget, 0.5)
         self._drag_widget.raise_()
         self._drag_widget.show()
         self._drag_widget.activateWindow()
+
+    def _detach_geometry(self) -> QtCore.QRect:
+        """Return this widget's geometry in global coordinates."""
+
+        geometry = self.geometry()
+        if not self.isWindow():
+            parent = self.parent()
+            if isinstance(parent, QtWidgets.QWidget):
+                geometry.moveTopLeft(parent.mapToGlobal(geometry.topLeft()))
+        return geometry
 
     def update_window_title(self, index: int) -> None:
         """Update a floating window's title to the current tab."""
@@ -267,6 +274,7 @@ class DockWidget(QtWidgets.QTabWidget):
         return widgets
 
     def _detach_start(self, index: int) -> None:
+        logger.debug('_detach_start')
         self.detach(index, interactive=True)
 
     def _detach_move(self) -> None:
@@ -276,10 +284,12 @@ class DockWidget(QtWidgets.QTabWidget):
                 QtWidgets.QStyle.PixelMetric.PM_TitleBarHeight
             )
             offset = position - QtCore.QPoint(int(height / 2), int(height / 2))
+            logger.debug(f'{offset=}')
             self._drag_widget.move(offset)
             self.dock_window.add_dock_widget(self._drag_widget, position, True)
 
     def _detach_finish(self) -> None:
+        logger.debug('_detach_finish')
         if self._drag_widget:
             set_window_opacity(self._drag_widget, 1)
             position = QtGui.QCursor().pos()
@@ -290,28 +300,24 @@ class DockWidget(QtWidgets.QTabWidget):
     def _dock_rect(
         self, area: QtCore.Qt.DockWidgetArea, scale: float = 0.2
     ) -> QtCore.QRect:
-        """Return a scaled QRect for an area."""
+        """Return a scaled QRect for a dock area."""
 
         size = self.size() * scale
         rect = self.rect()
-        if area == QtCore.Qt.DockWidgetArea.LeftDockWidgetArea:
+        if area in (
+            QtCore.Qt.DockWidgetArea.LeftDockWidgetArea,
+            QtCore.Qt.DockWidgetArea.RightDockWidgetArea,
+        ):
             rect.setWidth(size.width())
-            return rect
-        elif area == QtCore.Qt.DockWidgetArea.RightDockWidgetArea:
-            right = rect.right()
-            rect.setWidth(size.width())
-            rect.moveRight(right)
-            return rect
-        elif area == QtCore.Qt.DockWidgetArea.TopDockWidgetArea:
+            if area == QtCore.Qt.DockWidgetArea.RightDockWidgetArea:
+                rect.moveRight(self.rect().right())
+        elif area in (
+            QtCore.Qt.DockWidgetArea.TopDockWidgetArea,
+            QtCore.Qt.DockWidgetArea.BottomDockWidgetArea,
+        ):
             rect.setHeight(size.height())
-            return rect
-        elif area == QtCore.Qt.DockWidgetArea.BottomDockWidgetArea:
-            bottom = rect.bottom()
-            rect.setHeight(size.height())
-            rect.moveBottom(bottom)
-            return rect
-        elif area == QtCore.Qt.DockWidgetArea.NoDockWidgetArea:
-            return rect
+            if area == QtCore.Qt.DockWidgetArea.BottomDockWidgetArea:
+                rect.moveBottom(self.rect().bottom())
         return rect
 
     def _hide_recursively(self, widget: QtWidgets.QWidget) -> None:

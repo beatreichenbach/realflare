@@ -3,6 +3,7 @@ from __future__ import annotations
 import dataclasses
 import logging
 from collections import OrderedDict
+from functools import partial
 
 from qtpy import QtCore, QtGui, QtWidgets
 
@@ -179,7 +180,7 @@ class DockWindow(QtWidgets.QWidget):
 
         # Remove existing entries
         if widget in self._widgets.values():
-            self._widgets = {t: w for t, w in self._widgets.items() if w != widget}
+            self._widgets = {t: w for t, w in self._widgets.items() if w is not widget}
             new = False
         else:
             new = True
@@ -193,7 +194,7 @@ class DockWindow(QtWidgets.QWidget):
 
         # Emit the signal after the widget has been added.
         if new:
-            widget.destroyed.connect(self._object_destroyed)
+            widget.destroyed.connect(partial(self._object_destroyed, widget))
             self.widget_added.emit(widget)
 
         return title
@@ -210,14 +211,15 @@ class DockWindow(QtWidgets.QWidget):
                 return registered_widget
         return None
 
-    def _object_destroyed(self, obj: QtCore.QObject) -> None:
+    def _object_destroyed(self, widget: QtWidgets.QWidget, _obj: object = None) -> None:
         """
-        Handle destroyed widgets.
-        The destroyed signal is emitted from the QObject when `obj` is no longer a
-        QWidget.
+        Remove a destroyed widget from the registry.
+
+        The widget is captured by the connection because the `destroyed` signal
+        passes a different wrapper for the same object.
         """
 
-        self._widgets = {t: w for t, w in self._widgets.items() if w != obj}
+        self._widgets = {t: w for t, w in self._widgets.items() if w is not widget}
 
     def _dock_rects(
         self,

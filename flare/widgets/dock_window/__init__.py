@@ -1,14 +1,14 @@
 from .dock_widget import DockWidget
 from .dock_window import DockWindow, RegisteredWidget, WidgetSource
-from .state import (
+from .model import (
     BaseWidgetState,
     DockWidgetState,
     SplitterState,
-    StateDockWindow,
     TabState,
     WidgetState,
     WindowState,
 )
+from .state import StateDockWindow
 from .tab_bar import DockTabBar
 
 __all__ = [
