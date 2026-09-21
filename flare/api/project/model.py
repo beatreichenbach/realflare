@@ -84,13 +84,6 @@ class Flare(HashableModel):
         illuminant: str = 'D65'
         position: QPointF = QtCore.QPointF(0, 0)
 
-    class Image(HashableModel):
-        file_enabled: bool = False
-        file: str = ''
-        sample_resolution: int = 256
-        samples: int = 8
-        show: bool = False
-
     class Lens(HashableModel):
         vendor: str = ''
         lens: str = ''
@@ -124,7 +117,6 @@ class Flare(HashableModel):
         wireframe: bool = False
 
     light: Light = Field(default_factory=Light)
-    image: Image = Field(default_factory=Image)
     lens: Lens = Field(default_factory=Lens)
     camera: Camera = Field(default_factory=Camera)
     raytracing: Raytracing = Field(default_factory=Raytracing)

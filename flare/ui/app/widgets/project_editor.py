@@ -92,34 +92,6 @@ class ProjectEditor(ParameterEditor, StateWidget):
         param.set_tooltip('The position of the light source in NDC space (-1, 1).')
         form.add_parameter(param)
 
-        # Image
-        form = ParameterForm('image')
-        box = self.flare_form.add_form(form, checkable=True)
-        box.set_box_style(CollapsibleBox.Style.BUTTON)
-        box.setEnabled(False)
-
-        param = PathParameter('image_file')
-        param.set_method(PathParameter.Method.OPEN_FILE)
-        # param.set_dir_fallback(storage.decode_path('$RES'))
-        param.set_tooltip(
-            'The path to the image file. Variables such as $RES can be used. '
-            'For more information see documentation. (To come...)'
-        )
-        form.add_parameter(param)
-
-        param = IntParameter('image_sample_resolution')
-        param.set_line_min(1)
-        param.set_slider_visible(False)
-        form.add_parameter(param)
-
-        param = IntParameter('image_samples')
-        param.set_line_min(1)
-        param.set_slider_visible(False)
-        form.add_parameter(param)
-
-        param = BoolParameter('show_image')
-        form.add_parameter(param)
-
         # Lens
         form = ParameterForm('lens')
         box = self.flare_form.add_form(form)
