@@ -82,7 +82,7 @@ class StarburstTask(OpenGLTask):
         self._fbo = self.create_fbo(self._fbo_texture)
         self._vao = self.create_vao()
         self._ubo = self.create_buffer()
-        self._fft_image = self.create_texture(clamp_to_border=True)
+        self._fft_image = self.create_texture(clamp_to_border=True, mipmaps=True)
         self._spectral_image = self.create_texture()
 
         self.bind_ubo(self._ubo, UBO.STARBURST)
@@ -152,7 +152,7 @@ class StarburstTask(OpenGLTask):
 
         # FFT Image
         fft = get_fft(aperture)
-        cached_update_texture(self._fft_image, fft)
+        cached_update_mipmap_texture(self._fft_image, fft)
 
         # Spectral Image
         wavelength_count = LAMBDA_MAX - LAMBDA_MIN + 1
@@ -173,6 +173,12 @@ class StarburstTask(OpenGLTask):
 @lru_cache(1)
 def cached_update_texture(texture: int, array: Array) -> None:
     OpenGLTask.update_texture(texture, array.array)
+
+
+@lru_cache(1)
+def cached_update_mipmap_texture(texture: int, array: Array) -> None:
+    OpenGLTask.update_texture(texture, array.array)
+    OpenGLTask.generate_mipmap(texture)
 
 
 def get_fraunhofer_diffraction(aperture: np.ndarray) -> np.ndarray:

@@ -39,8 +39,11 @@ vec4 spectral(
     uint samples
 ) {
     vec4 color;
-
     uint lambda_delta = LAMBDA_MAX - LAMBDA_MIN;
+
+    vec2 p = gl_FragCoord.xy;
+    float fft_resolution = float(textureSize(fft_image, 0).x);
+
     for (uint t = 0u; t < samples; ++t) {
         float step = (float(t) + 0.5) / samples;
         float seed = float(t) * 4.0;
@@ -74,7 +77,17 @@ vec4 spectral(
         if (uv.x < 0.0 || uv.x > 1.0 || uv.y < 0.0 || uv.y > 1.0) {
             continue;
         }
-        float fourier_intensity = texture(fft_image, uv).x;
+
+        // Prefilter the fft with a mip level matching the pixel footprint.
+        // The scaling maps one pixel to the texel size in uv space,
+        // which spans that many fft texels.
+        float texel_size = (wavelength / float(LAMBDA_MID)) / (length(resolution) * fft_radius);
+        float texel_footprint = fft_resolution * texel_size;
+        float lod = max(log2(texel_footprint), 0.0);
+
+        float fourier_intensity = textureLod(fft_image, uv, lod).x;
+
+        // Vignette to hide artefacts
         fourier_intensity *= 1 - vignetting + smooth_vignette(uv) * vignetting;
 
         // Sample spectral color data from the light spectrum (in render space)

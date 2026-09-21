@@ -123,13 +123,15 @@ class ResourceManager:
         clamp_to_border: bool = False,
         resolution: tuple[int, int] | None = None,
         fmt: int | Constant = GL.GL_RGBA32F,
+        mipmaps: bool = False,
     ) -> int:
         texture = GL.glGenTextures(1)
 
         target = GL.GL_TEXTURE_2D
         GL.glBindTexture(target, texture)
         if tex_filter > -1:  # ty: ignore[unsupported-operator]
-            GL.glTexParameteri(target, GL.GL_TEXTURE_MIN_FILTER, tex_filter)
+            min_filter = GL.GL_LINEAR_MIPMAP_LINEAR if mipmaps else tex_filter
+            GL.glTexParameteri(target, GL.GL_TEXTURE_MIN_FILTER, min_filter)
             GL.glTexParameteri(target, GL.GL_TEXTURE_MAG_FILTER, tex_filter)
         if clamp_to_border:
             GL.glTexParameteri(target, GL.GL_TEXTURE_WRAP_S, GL.GL_CLAMP_TO_BORDER)
@@ -264,6 +266,15 @@ class ResourceManager:
         GL.glActiveTexture(GL.GL_TEXTURE0)
         GL.glBindTexture(target, texture)
         GL.glTexImage2D(target, 0, internal_fmt, w, h, 0, fmt, GL.GL_FLOAT, data)
+        GL.glBindTexture(target, 0)
+
+    @staticmethod
+    def generate_mipmap(texture: int) -> None:
+        """Generate the mipmap chain for a texture."""
+
+        target = GL.GL_TEXTURE_2D
+        GL.glBindTexture(target, texture)
+        GL.glGenerateMipmap(target)
         GL.glBindTexture(target, 0)
 
     @staticmethod
