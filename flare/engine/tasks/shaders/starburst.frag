@@ -46,14 +46,15 @@ vec4 spectral(
 
     for (uint t = 0u; t < samples; ++t) {
         float step = (float(t) + 0.5) / samples;
-        float seed = float(t) * 4.0;
         float wavelength = step * lambda_delta + LAMBDA_MIN;
         vec2 pos = ndc;
+
+        uint seed = pcg_hash(uint(p.x) + 0x9E3779B9u * pcg_hash(uint(p.y) + 0x85EBCA6Bu * (t + 1u)));
         vec4 rand = vec4(
-            noise(vec3(ndc, seed)),
-            noise(vec3(ndc, seed + 1.0)),
-            noise(vec3(ndc, seed + 2.0)),
-            noise(vec3(ndc, seed + 3.0))
+            random(seed),
+            random(seed + 1u),
+            random(seed + 2u),
+            random(seed + 3u)
         );
 
         // Blur
