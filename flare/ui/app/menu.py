@@ -193,13 +193,12 @@ class ProjectActions:
         if not self._manager.modified():
             return True
 
+        buttons = StandardButton.Save | StandardButton.Discard | StandardButton.Cancel
         result = MessageBox.question(
             self._parent,
             'Unsaved Changes',
-            'Save changes to the current project before continuing?',
-            buttons=(
-                StandardButton.Save | StandardButton.Discard | StandardButton.Cancel
-            ),
+            'Save changes to the current project?',
+            buttons=buttons,
             defaultButton=StandardButton.Save,
         )
         if result == StandardButton.Save:
