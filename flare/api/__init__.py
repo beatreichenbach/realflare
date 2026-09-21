@@ -8,7 +8,7 @@ from .project import (
     Layer,
     Output,
     Project,
-    ProjectManager,
+    ProjectIO,
     Starburst,
 )
 
@@ -24,6 +24,6 @@ __all__ = [
     'Material',
     'Output',
     'Project',
-    'ProjectManager',
+    'ProjectIO',
     'Starburst',
 ]

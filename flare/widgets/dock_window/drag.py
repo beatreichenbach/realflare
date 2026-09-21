@@ -6,6 +6,8 @@ from typing import TYPE_CHECKING
 
 from qtpy import QtCore, QtGui, QtWidgets
 
+from .utils import activate_window
+
 if TYPE_CHECKING:
     from .dock_widget import DockWidget
 
@@ -88,9 +90,7 @@ class DockDrag:
         dock_widget.resize(self.widget.size())
         dock_widget.set_floating()
         dock_widget.move(QtGui.QCursor.pos())  # NOTE: Does not work on wayland.
-        dock_widget.show()
-        dock_widget.raise_()
-        dock_widget.activateWindow()
+        activate_window(dock_widget)
 
     def _remove(self) -> None:
         index = self.source.indexOf(self.widget)

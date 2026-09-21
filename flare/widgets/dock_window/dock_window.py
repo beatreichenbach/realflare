@@ -10,6 +10,7 @@ from flare import utils
 
 from .dock_widget import DockWidget
 from .splitter import Splitter
+from .utils import activate_window
 
 logger = logging.getLogger(__name__)
 
@@ -216,8 +217,4 @@ def focus_widget(widget: QtWidgets.QWidget) -> None:
         parent = parent.parent()
 
     # Bring the window to the front
-    window = widget.window()
-    if window.windowState() & QtCore.Qt.WindowState.WindowMinimized:
-        window.setWindowState(QtCore.Qt.WindowState.WindowActive)
-    window.raise_()  # for macOS
-    window.activateWindow()  # for Windows
+    activate_window(widget)

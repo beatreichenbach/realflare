@@ -4,17 +4,19 @@ import os
 import pydantic
 
 from . import model
+from .defaults import default_project
 
 logger = logging.getLogger(__name__)
 
 
-class ProjectManager:
+class ProjectIO:
+    """Stateless reading and writing of Project files."""
+
     @staticmethod
     def create() -> model.Project:
         """Return a new Project."""
 
-        project = model.Project()
-        return project
+        return default_project()
 
     @staticmethod
     def open(path: str) -> model.Project | None:

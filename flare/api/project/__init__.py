@@ -1,5 +1,5 @@
-from .manager import ProjectManager
-
+from .defaults import default_project
+from .io import ProjectIO
 from .model import Aperture, Diagram, Flare, Ghost, Layer, Output, Project, Starburst
 
 __all__ = [
@@ -10,6 +10,7 @@ __all__ = [
     'Layer',
     'Output',
     'Project',
-    'ProjectManager',
+    'ProjectIO',
     'Starburst',
+    'default_project',
 ]

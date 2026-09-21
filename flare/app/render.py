@@ -30,7 +30,7 @@ def run_render(project_path: str, animation_path: str, output: str) -> None:
     with open(animation_path) as file:
         animation = json.load(file)
 
-    project = api.ProjectManager.open(project_path)
+    project = api.ProjectIO.open(project_path)
     if project is None:
         raise ValueError(f'could not load project: {project_path}')
 
