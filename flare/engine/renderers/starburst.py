@@ -28,17 +28,13 @@ class StarburstRenderer(Renderer):
             project.flare.camera.sensor_size.height(),
         )
         position = project.flare.light.position.x(), project.flare.light.position.y()
-        if project.starburst.camera.fstop_enabled:
-            fstop = project.starburst.camera.fstop
-        else:
-            fstop = project.flare.camera.fstop
 
         image = self.starburst_task.run(
             aperture=aperture,
             config=project.starburst,
             sensor_size=sensor_size,
             position=position,
-            fstop=fstop,
+            fstop=project.flare.camera.fstop,
             resolution=project.flare.render.resolution,
             illuminant=project.flare.light.illuminant,
         )

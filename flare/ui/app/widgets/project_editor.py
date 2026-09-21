@@ -303,11 +303,16 @@ class ProjectEditor(ParameterEditor, StateWidget):
         box = self.starburst_form.add_form(form)
         box.set_box_style(CollapsibleBox.Style.BUTTON)
 
-        param = FloatParameter('fstop')
+        param = BoolParameter('scale_with_fstop')
+        param.set_tooltip('Scale the starburst pattern with the f-stop of the lens.')
+        form.add_parameter(param)
+
+        param = FloatParameter('scale')
         param.set_line_min(0)
-        param.set_slider_max(22)
-        param.set_tooltip('The fstop controls the size of the starburst pattern.')
-        form.add_parameter(param, checkable=True)
+        param.set_slider_min(0)
+        param.set_slider_max(10)
+        param.set_tooltip('Additional multiplier for the starburst pattern size.')
+        form.add_parameter(param)
 
         # param = BoolParameter('occlusion')
         # form.add_parameter(param)

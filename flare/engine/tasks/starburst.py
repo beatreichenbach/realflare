@@ -48,7 +48,9 @@ class StarburstTask(OpenGLTask):
        (Hecht 2001). Fraunhofer is used instead of Fresnel because the sensor sits
        at the focal plane, where the Fresnel phase reduces to a Fourier transform.
     2. Scale the pattern to the sensor: its radius is normalized to the sensor
-       radius, so it grows with wavelength and f-number.
+       radius, so it grows with wavelength and, when `scale_with_fstop` is set,
+       with the lens f-number. The `scale` control applies an additional
+       multiplier.
     3. Sample wavelengths from 390 to 730 nm. Each lookup is re-scaled by its own
        wavelength, so short wavelengths sit closer to the source and the spikes fan
        out into chromatic fringes. Samples are weighted by the illuminant spectrum
@@ -136,7 +138,11 @@ class StarburstTask(OpenGLTask):
         blur = config.diffraction.blur / 100
         rotation = np.radians(config.diffraction.rotation)
         aperture_resolution = aperture.array.shape[0]
-        fft_radius = get_fft_radius(sensor_size, fstop, aperture_resolution, resolution)
+        fft_fstop = fstop if config.camera.scale_with_fstop else 2.8
+        fft_radius = get_fft_radius(
+            sensor_size, fft_fstop, aperture_resolution, resolution
+        )
+        fft_radius *= max(config.camera.scale, 0.0)
         samples = 2**config.render.samples
 
         params = np.zeros((), dtype=params_dtype)

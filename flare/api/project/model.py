@@ -146,8 +146,8 @@ class Starburst(HashableModel):
         vignetting: float = 1
 
     class Camera(HashableModel):
-        fstop: float = 2.8
-        fstop_enabled: bool = False
+        scale_with_fstop: bool = False
+        scale: float = 1
         occlusion: bool = True
 
     class Render(HashableModel):
