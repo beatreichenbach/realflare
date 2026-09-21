@@ -12,8 +12,8 @@ def run_gui(project_path: str = '') -> None:
         dialog = FlareDockWindow()
 
         if project_path:
-            dialog.load_project(project_path)
+            dialog.manager.open(project_path)
         elif recent := dialog.manager.recent_paths():
-            dialog.load_project(recent[0])
+            dialog.manager.open(recent[0])
 
         dialog.show()

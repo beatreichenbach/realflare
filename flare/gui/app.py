@@ -6,24 +6,22 @@ from functools import partial
 from typing import TYPE_CHECKING, Any
 
 from qt_logging import LogBar, LogViewer
-from qt_material_icons import MaterialIcon
 from qtpy import QtCore, QtGui, QtWidgets
 
 import flare
 from flare import api
 from flare.core import PreferencesManager, ProjectManager, StateManager
+from flare.gui.menu import FlareMenuBar, ProjectActions
 from flare.gui.render import RenderController
 from flare.gui.widgets.base import StateWidget
 from flare.gui.widgets.project_editor import ProjectEditor
 from flare.gui.widgets.viewer import LayerViewer
-from flare.widgets import MessageBox, StateDockWindow, WindowState
+from flare.widgets import StateDockWindow, WindowState
 
 if TYPE_CHECKING:
     from flare.engine.engine import Render
 
 logger = logging.getLogger(__name__)
-
-StandardButton = QtWidgets.QMessageBox.StandardButton
 
 
 class FlareDockWindow(StateDockWindow):
@@ -31,7 +29,8 @@ class FlareDockWindow(StateDockWindow):
         super().__init__(parent)
 
         self.manager = ProjectManager(self)
-        self.renderer = RenderController(self.manager, self)
+        self.renderer = RenderController(self)
+        self.project_actions = ProjectActions(self.manager, self)
 
         self._syncing = False
 
@@ -39,7 +38,8 @@ class FlareDockWindow(StateDockWindow):
         self.widget_added.connect(self._update_widget)
 
         self._init_window()
-        self._init_menu()
+        self.menu_bar = FlareMenuBar(self, self.manager, self.project_actions)
+        self._layout.insertWidget(0, self.menu_bar)
         self._init_signals()
         self.load_state()
         self._refresh_window_title()
@@ -61,88 +61,11 @@ class FlareDockWindow(StateDockWindow):
         self.register_widget(ProjectEditor, name='Parameters', unique=True)
         self.register_widget(LogViewer, name='Log', unique=True)
 
-    def _init_menu(self) -> None:
-        self.menu_bar = QtWidgets.QMenuBar(self)
-        self._layout.insertWidget(0, self.menu_bar)
-
-        # File
-        file_menu = self.menu_bar.addMenu('File')
-
-        action = QtWidgets.QAction('New', self)
-        action.setShortcut(QtGui.QKeySequence.StandardKey.New)
-        action.triggered.connect(self._file_new)
-        file_menu.addAction(action)
-        action = QtWidgets.QAction('Open ...', self)
-        action.setIcon(MaterialIcon('file_open'))
-        action.setShortcut(QtGui.QKeySequence.StandardKey.Open)
-        action.triggered.connect(self._file_open)
-        file_menu.addAction(action)
-        self.recent_menu = file_menu.addMenu('Open Recent ...')
-        file_menu.addSeparator()
-
-        action = QtWidgets.QAction('Preferences ...', self)
-        action.setShortcut(QtGui.QKeySequence('Ctrl+Alt+S'))
-        action.setIcon(MaterialIcon('settings'))
-        action.triggered.connect(self._file_preferences)
-        file_menu.addAction(action)
-        file_menu.addSeparator()
-
-        action = QtWidgets.QAction('Save', self)
-        action.setIcon(MaterialIcon('save'))
-        action.setShortcut(QtGui.QKeySequence.StandardKey.Save)
-        action.triggered.connect(self._file_save)
-        file_menu.addAction(action)
-        action = QtWidgets.QAction('Save As ...', self)
-        action.setShortcut(QtGui.QKeySequence('Ctrl+Shift+S'))
-        action.triggered.connect(self._file_save_as)
-        file_menu.addAction(action)
-        file_menu.addSeparator()
-
-        action = QtWidgets.QAction('Exit', self)
-        action.setShortcut(QtGui.QKeySequence.StandardKey.Quit)
-        action.triggered.connect(self.close)
-        file_menu.addAction(action)
-
-        # View
-        view_menu = self.menu_bar.addMenu('View')
-        action = QtWidgets.QAction('New Viewer', self)
-        action.setIcon(MaterialIcon('preview'))
-        action.triggered.connect(partial(self.show_widget, LayerViewer))
-        view_menu.addAction(action)
-        action = QtWidgets.QAction('Show Parameters', self)
-        action.setIcon(MaterialIcon('tune'))
-        action.triggered.connect(partial(self.show_widget, ProjectEditor))
-        view_menu.addAction(action)
-        action = QtWidgets.QAction('Show Log', self)
-        action.setIcon(MaterialIcon('article'))
-        action.triggered.connect(partial(self.show_widget, LogViewer))
-        view_menu.addAction(action)
-
-        # Help
-        help_menu = self.menu_bar.addMenu('Help')
-        action = QtWidgets.QAction('Documentation', self)
-        action.setIcon(MaterialIcon('question_mark'))
-        action.triggered.connect(self._help_documentation)
-        help_menu.addAction(action)
-        action = QtWidgets.QAction('Report an Issue', self)
-        action.setIcon(MaterialIcon('bug_report'))
-        action.triggered.connect(self._help_report_bug)
-        help_menu.addAction(action)
-        help_menu.addSeparator()
-        action = QtWidgets.QAction('Check for Updates', self)
-        action.setIcon(MaterialIcon('update'))
-        action.triggered.connect(self._help_update)
-        help_menu.addAction(action)
-        action = QtWidgets.QAction('About', self)
-        action.triggered.connect(self._help_about)
-        help_menu.addAction(action)
-
     def _init_signals(self) -> None:
         self.manager.project_changed.connect(self._project_changed)
         self.manager.project_changed.connect(self.renderer.set_project)
         self.manager.path_changed.connect(self._refresh_window_title)
         self.manager.modified_changed.connect(self._refresh_window_title)
-        self.manager.recent_paths_changed.connect(self._refresh_recent_menu)
 
         self.renderer.rendered.connect(self._update_viewers)
         self.renderer.progress_changed.connect(self._progress_changed)
@@ -153,7 +76,7 @@ class FlareDockWindow(StateDockWindow):
         QtCore.QTimer.singleShot(500, self.refresh)
 
     def closeEvent(self, event: QtGui.QCloseEvent) -> None:
-        if not self._maybe_save():
+        if not self.project_actions.maybe_save():
             event.ignore()
             return
 
@@ -254,8 +177,6 @@ class FlareDockWindow(StateDockWindow):
         if viewer.layer() not in (api.Layer.FLARE, api.Layer.STARBURST, api.Layer.COMP):
             return
 
-        project = self.manager.project()
-        project = self.manager.project()
         ndc_position = QtCore.QPointF(
             (position.x() / viewer.resolution().width() * 2.0) - 1.0,
             (position.y() / viewer.resolution().height() * 2.0) - 1.0,
@@ -338,104 +259,3 @@ class FlareDockWindow(StateDockWindow):
         if self.manager.modified():
             title = f'{title} *'
         self.setWindowTitle(title)
-
-    def _refresh_recent_menu(self, *_args: object) -> None:
-        """Refresh the recent menu with the paths from the manager."""
-
-        self.recent_menu.clear()
-        for filename in self.manager.recent_paths():
-            action = QtWidgets.QAction(filename, self)
-            action.triggered.connect(partial(self._open_recent, filename))
-            self.recent_menu.addAction(action)
-
-    def _maybe_save(self) -> bool:
-        """Return whether it is safe to discard the current project."""
-
-        if not self.manager.modified():
-            return True
-
-        result = MessageBox.question(
-            self,
-            'Unsaved Changes',
-            'Save changes to the current project before continuing?',
-            buttons=(
-                StandardButton.Save | StandardButton.Discard | StandardButton.Cancel
-            ),
-            defaultButton=StandardButton.Save,
-        )
-        if result == StandardButton.Save:
-            self._file_save()
-            return not self.manager.modified()
-        return result == StandardButton.Discard
-
-    # Menu
-
-    def _file_new(self) -> None:
-        if self._maybe_save():
-            self.manager.new()
-
-    def _file_save(self) -> None:
-        path = self.manager.path()
-        if not path:
-            path, _filters = QtWidgets.QFileDialog.getSaveFileName(
-                self, 'Save Project', self._get_recent_dir(), '*.json'
-            )
-        if path:
-            self.manager.save(path)
-
-    def _file_save_as(self) -> None:
-        path, _filters = QtWidgets.QFileDialog.getSaveFileName(
-            self, 'Save Project As', self._get_recent_dir(), '*.json'
-        )
-        if path:
-            self.manager.save_as(path)
-
-    def _file_open(self) -> None:
-        if not self._maybe_save():
-            return
-
-        path, _filters = QtWidgets.QFileDialog.getOpenFileName(
-            self, 'Open Project', self._get_recent_dir(), '*.json'
-        )
-        if path:
-            self.manager.open(path)
-
-    def _open_recent(self, path: str) -> None:
-        if self._maybe_save():
-            self.manager.open(path)
-
-    def _file_preferences(self) -> None:
-        from flare.gui.widgets.preferences import PreferencesDialog
-
-        dialog = PreferencesDialog(parent=self)
-        dialog.show()
-
-    @staticmethod
-    def _help_documentation() -> None:
-        import webbrowser
-
-        webbrowser.open('https://beatreichenbach.github.io/realflare/reference/flare/')
-
-    @staticmethod
-    def _help_report_bug() -> None:
-        import webbrowser
-
-        webbrowser.open('https://github.com/beatreichenbach/realflare/issues/new')
-
-    def _help_update(self) -> None:
-        from flare.gui.widgets.update import UpdateDialog
-
-        dialog = UpdateDialog(parent=self)
-        dialog.show()
-
-    def _help_about(self) -> None:
-        from flare.gui.widgets.about import AboutDialog
-
-        dialog = AboutDialog(parent=self)
-        dialog.show()
-
-    def _get_recent_dir(self) -> str:
-        """Return the recent dir."""
-
-        recent_dirs = (os.path.dirname(p) for p in self.manager.recent_paths())
-        return next(recent_dirs, os.path.expanduser('~'))
