@@ -26,7 +26,7 @@ class MenuParameter(ParameterWidget):
 
     def set_value(self, value: Any) -> None:
         if self._data:
-            texts = self._get_texts(self._data)
+            texts = get_flat_keys(self._data)
             text = texts.get(value)
         else:
             text = None
@@ -43,17 +43,6 @@ class MenuParameter(ParameterWidget):
     def set_data(self, data: dict[str, Any]) -> None:
         self._data = data
         self._refresh_menu()
-
-    def _get_texts(self, data: dict[str, Any]) -> dict[Any, str]:
-        """Return the texts of the data in a flat dict."""
-
-        texts = {}
-        for key, value in data.items():
-            if isinstance(value, dict):
-                texts.update(self._get_texts(value))
-            else:
-                texts[value] = key
-        return texts
 
     def _refresh_menu(self) -> None:
         """Refresh the menu with the data."""
@@ -84,3 +73,15 @@ class MenuParameter(ParameterWidget):
         text = action.text()
         self.combo.clear()
         self.combo.addItem(text)
+
+
+def get_flat_keys(data: dict[str, Any]) -> dict[Any, str]:
+    """Return the keys of the data in a flat dict."""
+
+    keys = {}
+    for key, value in data.items():
+        if isinstance(value, dict):
+            keys.update(get_flat_keys(value))
+        else:
+            keys[value] = key
+    return keys
