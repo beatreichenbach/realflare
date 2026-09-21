@@ -177,6 +177,7 @@ class Preprocess(HashableModel):
 
 
 class Project(HashableModel):
+    version: str = ''
     output: Output = Field(default_factory=Output)
     flare: Flare = Field(default_factory=Flare)
     ghost: Ghost = Field(default_factory=Ghost)

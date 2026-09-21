@@ -3,6 +3,7 @@ import os
 
 import pydantic
 
+import flare
 from flare.api.project import model
 from flare.api.project.default import default_project
 
@@ -45,6 +46,9 @@ class ProjectIO:
         """Save the Project to a file."""
 
         logger.info(f'Saving: {path}')
+
+        # Insert project version tag to allow for version migration later
+        project.version = flare.__version__
 
         os.makedirs(os.path.dirname(path), exist_ok=True)
 
