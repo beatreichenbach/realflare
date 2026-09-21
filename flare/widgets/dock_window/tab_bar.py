@@ -5,44 +5,60 @@ from qtpy import QtCore, QtGui, QtWidgets
 
 
 class DockTabBar(QtWidgets.QTabBar):
-    """A tab bar with close buttons that emits signals when a tab is dragged out."""
+    """A tab bar with close buttons that emits a signal when a tab is dragged out."""
 
-    detach_started: QtCore.Signal = QtCore.Signal(int)
-    detach_moved: QtCore.Signal = QtCore.Signal()
-    detach_finished: QtCore.Signal = QtCore.Signal()
+    detach_started: QtCore.Signal = QtCore.Signal(QtWidgets.QWidget)
 
     def __init__(self, parent: QtWidgets.QWidget | None = None) -> None:
         super().__init__(parent)
 
         self._drag_index: int | None = None
-        self._detaching: bool = False
+        self._drag_widget: QtWidgets.QWidget | None = None
 
-        self.tabBarClicked.connect(self._tab_bar_click)
+    def mousePressEvent(self, event: QtGui.QMouseEvent) -> None:
+        self._drag_index = self.tabAt(event.position().toPoint())
+        self._drag_widget = self._widget_at(self._drag_index)
+        super().mousePressEvent(event)
 
     def mouseMoveEvent(self, event: QtGui.QMouseEvent) -> None:
-        if self._detaching:
-            # Mouse is pressed down and a tab is detached
-            self.detach_moved.emit()
-        elif not self.rect().contains(event.pos()) and self._drag_index is not None:
-            # A tab is about to be detached
-            self.detach_started.emit(self._drag_index)
-            self._detaching = True
-        else:
-            # No tab is detached
-            # This must only be called when _detaching == False
-            # undocking tabs while mouse move events are being processed leads to
-            # crashes because of the tab's QPainter events
-            super().mouseMoveEvent(event)
+        position = event.position().toPoint()
+        if self._drag_widget is not None and not self.rect().contains(position):
+            widget = self._drag_widget
+            self._drag_index = None
+            self._drag_widget = None
+            # Finish the tab bar's own move so it does not get stuck when the
+            # external drag takes over the mouse.
+            self._finish_move(event)
+            self.detach_started.emit(widget)
+            return
+        super().mouseMoveEvent(event)
 
     def mouseReleaseEvent(self, event: QtGui.QMouseEvent) -> None:
-        super().mouseReleaseEvent(event)
-        if self._detaching:
-            self.detach_finished.emit()
-        self._detaching = False
         self._drag_index = None
+        self._drag_widget = None
+        super().mouseReleaseEvent(event)
 
     def tabInserted(self, index: int) -> None:
         self._add_tab_close_button(index)
+
+    def _finish_move(self, event: QtGui.QMouseEvent) -> None:
+        """Finish the tab bar's internal move with a synthetic release."""
+
+        release = QtGui.QMouseEvent(
+            QtCore.QEvent.Type.MouseButtonRelease,
+            event.position(),
+            event.globalPosition(),
+            QtCore.Qt.MouseButton.LeftButton,
+            QtCore.Qt.MouseButton.NoButton,
+            event.modifiers(),
+        )
+        super().mouseReleaseEvent(release)
+
+    def _widget_at(self, index: int) -> QtWidgets.QWidget | None:
+        parent = self.parentWidget()
+        if isinstance(parent, QtWidgets.QTabWidget) and index >= 0:
+            return parent.widget(index)
+        return None
 
     def _add_tab_close_button(self, index: int) -> None:
         """Add a close button to a tab."""
@@ -62,6 +78,3 @@ class DockTabBar(QtWidgets.QTabBar):
             if tab_button == button:
                 self.tabCloseRequested.emit(i)
                 return
-
-    def _tab_bar_click(self, index: int) -> None:
-        self._drag_index = index

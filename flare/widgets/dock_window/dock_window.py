@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import dataclasses
 import logging
-from collections import OrderedDict
 from functools import partial
 
 from qtpy import QtCore, QtGui, QtWidgets
@@ -130,37 +129,19 @@ class DockWindow(QtWidgets.QWidget):
         dock_widget.show()
         self.dock_widget_added.emit(dock_widget)
 
-    def add_dock_widget(
-        self, dock_widget: DockWidget, position: QtCore.QPoint, simulate: bool = False
+    def show_dock_preview(
+        self, target: DockWidget, area: QtCore.Qt.DockWidgetArea
     ) -> None:
-        """
-        Add a DockWidget at a global position. If `simulate` is true, a placeholder
-        is shown where the widget would get docked.
-        """
+        """Show a preview of where a dragged dock widget would be placed."""
 
-        dock_rects = self._dock_rects()
+        self._placeholder.setParent(target)
+        self._placeholder.setGeometry(target.dock_preview_rect(area))
+        self._placeholder.show()
 
-        for target, rects in dock_rects.items():
-            if target == dock_widget:
-                continue
-            target_position = target.mapFromGlobal(position)
-            if not target.rect().contains(target_position):
-                self._placeholder.hide()
-                continue
+    def hide_dock_preview(self) -> None:
+        """Hide the dock preview."""
 
-            for area, rect in rects.items():
-                if rect.contains(target_position):
-                    if simulate:
-                        preview_rect = target.dock_preview_rect(area)
-                        self._placeholder.setParent(target)
-                        self._placeholder.setGeometry(preview_rect)
-                        self._placeholder.show()
-                    else:
-                        self._placeholder.hide()
-                        target.add_dock_widget(dock_widget, area)
-                    return
-                else:
-                    self._placeholder.hide()
+        self._placeholder.hide()
 
     def dock_widgets(self) -> tuple[DockWidget, ...]:
         """
@@ -220,15 +201,6 @@ class DockWindow(QtWidgets.QWidget):
         """
 
         self._widgets = {t: w for t, w in self._widgets.items() if w is not widget}
-
-    def _dock_rects(
-        self,
-    ) -> OrderedDict[DockWidget, dict[QtCore.Qt.DockWidgetArea, QtCore.QRect]]:
-        rects = OrderedDict()
-        widgets = self.dock_widgets()
-        for widget in widgets:
-            rects[widget] = widget.dock_rects()
-        return rects
 
 
 def focus_widget(widget: QtWidgets.QWidget) -> None:

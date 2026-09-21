@@ -1,35 +1,16 @@
 from __future__ import annotations
 
-import logging
 from collections import OrderedDict
 from typing import TYPE_CHECKING
 
 from qtpy import QtCore, QtGui, QtWidgets
 
+from .drag import DockDrag, active_drag, is_dock_drag
 from .splitter import Splitter
 from .tab_bar import DockTabBar
 
 if TYPE_CHECKING:
     from .dock_window import DockWindow
-
-# Platform plugins that implement window opacity. Others, such as wayland and
-# offscreen, print a warning and ignore the request.
-OPACITY_PLATFORMS = ('cocoa', 'windows', 'xcb')
-
-logger = logging.getLogger(__name__)
-
-
-def supports_window_opacity() -> bool:
-    """Return whether the platform supports window opacity."""
-
-    return QtGui.QGuiApplication.platformName() in OPACITY_PLATFORMS
-
-
-def set_window_opacity(widget: QtWidgets.QWidget, opacity: float) -> None:
-    """Set the opacity of a window where the platform supports it."""
-
-    if supports_window_opacity():
-        widget.setWindowOpacity(opacity)
 
 
 def area_orientation(area: QtCore.Qt.DockWidgetArea) -> QtCore.Qt.Orientation:
@@ -64,9 +45,6 @@ class DockWidget(QtWidgets.QTabWidget):
         self.detachable: bool = True
         self.auto_delete: bool = True
 
-        self._drag_widget: DockWidget | None = None
-        self._hidden: bool = False
-
         self._init_ui()
 
     def _init_ui(self) -> None:
@@ -74,10 +52,9 @@ class DockWidget(QtWidgets.QTabWidget):
         self.setTabBar(tab_bar)
         self.setMovable(True)
         self.setTabsClosable(True)
+        self.setAcceptDrops(True)
 
-        tab_bar.detach_started.connect(self._detach_start)
-        tab_bar.detach_moved.connect(self._detach_move)
-        tab_bar.detach_finished.connect(self._detach_finish)
+        tab_bar.detach_started.connect(self._start_drag)
 
         self.tabCloseRequested.connect(self.close_tab)
         self.currentChanged.connect(self.update_window_title)
@@ -99,7 +76,7 @@ class DockWidget(QtWidgets.QTabWidget):
         center = self.dock_window.geometry().center()
         x = center.x() - (self.width() // 2)
         y = center.y() - (self.height() // 2)
-        self.move(x, y)
+        self.move(x, y)  # NOTE: Does not work on wayland.
 
     def set_floating(self) -> None:
         """Make the widget a floating tool window."""
@@ -107,17 +84,50 @@ class DockWidget(QtWidgets.QTabWidget):
         self.setWindowFlag(QtCore.Qt.WindowType.Tool, True)
 
     def try_delete(self) -> None:
-        """
-        Attempt to delete the widget. If the widget is in a DragEvent, it gets hidden
-        instead.
-        """
+        """Delete the widget when it is empty and auto delete is enabled."""
 
         if self.auto_delete and not self.count():
-            self._hidden = True
-            if self._drag_widget:
-                self._hide_recursively(self)
-            else:
-                self.deleteLater()
+            self.deleteLater()
+
+    def dragEnterEvent(self, event: QtGui.QDragEnterEvent) -> None:
+        if is_dock_drag(event.mimeData()):
+            event.acceptProposedAction()
+        else:
+            event.ignore()
+
+    def dragMoveEvent(self, event: QtGui.QDragMoveEvent) -> None:
+        if not is_dock_drag(event.mimeData()):
+            event.ignore()
+            return
+
+        area = self.dock_area_at(event.position().toPoint())
+        if area is None:
+            self.dock_window.hide_dock_preview()
+            event.ignore()
+            return
+
+        self.dock_window.show_dock_preview(self, area)
+        event.acceptProposedAction()
+
+    def dragLeaveEvent(self, event: QtGui.QDragLeaveEvent) -> None:
+        self.dock_window.hide_dock_preview()
+        super().dragLeaveEvent(event)
+
+    def dropEvent(self, event: QtGui.QDropEvent) -> None:
+        drag = active_drag()
+        self.dock_window.hide_dock_preview()
+
+        if drag is None:
+            event.ignore()
+            return
+
+        area = self.dock_area_at(event.position().toPoint())
+        if area is None:
+            event.ignore()
+            return
+
+        event.acceptProposedAction()
+        drag.drop(self, area)
 
     def add_dock_widget(
         self, dock_widget: DockWidget, area: QtCore.Qt.DockWidgetArea
@@ -146,6 +156,24 @@ class DockWidget(QtWidgets.QTabWidget):
             QtCore.Qt.DockWidgetArea.BottomDockWidgetArea,
         ):
             container.insertWidget(index + 1, dock_widget)
+
+        # self._split_evenly(container, dock_widget)
+
+    def _split_evenly(
+        self, container: QtWidgets.QSplitter, dock_widget: DockWidget
+    ) -> None:
+        """Give this widget and a sibling an equal share of the splitter."""
+
+        index = container.indexOf(self)
+        other = container.indexOf(dock_widget)
+        if index == -1 or other == -1:
+            return
+
+        sizes = container.sizes()
+        total = sizes[index] + sizes[other]
+        sizes[index] = total - total // 2
+        sizes[other] = total // 2
+        container.setSizes(sizes)
 
     def _dock_container(self) -> QtWidgets.QSplitter | None:
         """
@@ -211,40 +239,6 @@ class DockWidget(QtWidgets.QTabWidget):
         if widget is not None:
             widget.deleteLater()
 
-    def detach(self, index: int, interactive: bool = False) -> None:
-        """Detach the tab at an index into a new floating window."""
-
-        if index not in range(self.count()) or not self.detachable:
-            return
-
-        title = self.tabText(index)
-        widget = self.widget(index)
-        if widget is None:
-            return
-
-        self._drag_widget = self.__class__(self.dock_window)
-        self._drag_widget.setParent(self.dock_window)
-        # Setting WindowFlags after parenting creates a window
-        self._drag_widget.set_floating()
-        # Adding a tab after setting the WindowFlags triggers window title update
-        self._drag_widget.addTab(widget, title)
-        self._drag_widget.setGeometry(self._detach_geometry())
-        if interactive:
-            set_window_opacity(self._drag_widget, 0.5)
-        self._drag_widget.raise_()
-        self._drag_widget.show()
-        self._drag_widget.activateWindow()
-
-    def _detach_geometry(self) -> QtCore.QRect:
-        """Return this widget's geometry in global coordinates."""
-
-        geometry = self.geometry()
-        if not self.isWindow():
-            parent = self.parent()
-            if isinstance(parent, QtWidgets.QWidget):
-                geometry.moveTopLeft(parent.mapToGlobal(geometry.topLeft()))
-        return geometry
-
     def update_window_title(self, index: int) -> None:
         """Update a floating window's title to the current tab."""
 
@@ -252,13 +246,17 @@ class DockWidget(QtWidgets.QTabWidget):
             self.window().setWindowTitle(self.tabText(index))
 
     def dock_rects(self) -> dict[QtCore.Qt.DockWidgetArea, QtCore.QRect]:
-        """Return the rect of each dock area, or nothing when hidden."""
+        """Return the rect of each dock area."""
 
-        if not self._hidden:
-            rects = {area: self._dock_rect(area) for area in self.dock_areas}
-        else:
-            rects = {}
-        return rects
+        return {area: self._dock_rect(area) for area in self.dock_areas}
+
+    def dock_area_at(self, position: QtCore.QPoint) -> QtCore.Qt.DockWidgetArea | None:
+        """Return the dock area at a local position, or None."""
+
+        for area, rect in self.dock_rects().items():
+            if rect.contains(position):
+                return area
+        return None
 
     def dock_preview_rect(self, area: QtCore.Qt.DockWidgetArea) -> QtCore.QRect:
         """Return the preview rect for a dock area while dragging."""
@@ -273,29 +271,15 @@ class DockWidget(QtWidgets.QTabWidget):
             widgets[self.tabText(i)] = self.widget(i)
         return widgets
 
-    def _detach_start(self, index: int) -> None:
-        logger.debug('_detach_start')
-        self.detach(index, interactive=True)
+    def _start_drag(self, widget: QtWidgets.QWidget) -> None:
+        """Start dragging a tab's widget."""
 
-    def _detach_move(self) -> None:
-        if self._drag_widget:
-            position = QtGui.QCursor().pos()
-            height = self.style().pixelMetric(
-                QtWidgets.QStyle.PixelMetric.PM_TitleBarHeight
-            )
-            offset = position - QtCore.QPoint(int(height / 2), int(height / 2))
-            logger.debug(f'{offset=}')
-            self._drag_widget.move(offset)
-            self.dock_window.add_dock_widget(self._drag_widget, position, True)
+        index = self.indexOf(widget)
+        if not self.detachable or index == -1:
+            return
 
-    def _detach_finish(self) -> None:
-        logger.debug('_detach_finish')
-        if self._drag_widget:
-            set_window_opacity(self._drag_widget, 1)
-            position = QtGui.QCursor().pos()
-            self.dock_window.add_dock_widget(self._drag_widget, position)
-        self._drag_widget = None
-        self.try_delete()
+        drag = DockDrag(source=self, widget=widget, title=self.tabText(index))
+        drag.start()
 
     def _dock_rect(
         self, area: QtCore.Qt.DockWidgetArea, scale: float = 0.2
@@ -319,23 +303,3 @@ class DockWidget(QtWidgets.QTabWidget):
             if area == QtCore.Qt.DockWidgetArea.BottomDockWidgetArea:
                 rect.moveBottom(self.rect().bottom())
         return rect
-
-    def _hide_recursively(self, widget: QtWidgets.QWidget) -> None:
-        """Hide the top most widget without deleting it."""
-
-        if widget.isWindow():
-            if supports_window_opacity():
-                widget.setWindowOpacity(0)
-            else:
-                # TODO: unsupported opacity might be a problem because the splitter will
-                #  auto delete
-                widget.hide()
-        else:
-            parent = widget.parent()
-            if isinstance(parent, Splitter) and parent.count() == 1:
-                # If the Splitter's only child is self, make it invisible
-                self._hide_recursively(parent)
-            elif parent:
-                # If there are other children, it's safe to hide the Splitter won't
-                # auto delete.
-                widget.hide()

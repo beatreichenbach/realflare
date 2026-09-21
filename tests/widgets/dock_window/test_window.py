@@ -5,7 +5,14 @@ from flare.utils.gui import application
 from flare.widgets import DockWidgetState, StateDockWindow, TabState, WindowState
 
 
-class Widget(QtWidgets.QWidget): ...
+class Widget(QtWidgets.QWidget):
+    def __init__(self, parent: QtWidgets.QWidget | None = None) -> None:
+        super().__init__(parent)
+
+        self.setLayout(QtWidgets.QHBoxLayout())
+        self.layout().addWidget(QtWidgets.QPushButton('asdf'))
+        self.layout().addWidget(QtWidgets.QPushButton('asdf'))
+        self.layout().addWidget(QtWidgets.QPushButton('asdf'))
 
 
 def main() -> None:
