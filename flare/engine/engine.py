@@ -4,7 +4,7 @@ import logging
 from flare import api
 
 from . import graph
-from .base import Array
+from .base import MultiArray
 from .opengl import create_context_surface, get_vram_text
 
 logger = logging.getLogger(__name__)
@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 @dataclasses.dataclass
 class Render:
-    image: Array
+    image: MultiArray
     layer: api.Layer
 
     def __repr__(self) -> str:

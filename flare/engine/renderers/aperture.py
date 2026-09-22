@@ -5,7 +5,7 @@ from qtpy import QtGui
 from flare import api
 from flare.utils import profiling
 
-from ..base import Array, Renderer
+from ..base import MultiArray, Renderer
 from ..tasks import ApertureTask
 
 logger = logging.getLogger(__name__)
@@ -19,12 +19,12 @@ class GhostApertureRenderer(Renderer):
         self.aperture_task = aperture_task
 
     @profiling.timer
-    def run(self, project: api.Project) -> Array:
+    def run(self, project: api.Project) -> MultiArray:
         image = self.aperture_task.run(
             aperture=project.ghost.aperture,
             resolution=project.ghost.render.resolution,
         )
-        return image
+        return MultiArray(image.array, image.args)
 
 
 class StarburstApertureRenderer(Renderer):
@@ -35,7 +35,7 @@ class StarburstApertureRenderer(Renderer):
         self.aperture_task = aperture_task
 
     @profiling.timer
-    def run(self, project: api.Project) -> Array:
+    def run(self, project: api.Project) -> MultiArray:
         if project.flare.light.position is not None:
             x, y = project.flare.light.position.x(), project.flare.light.position.y()
             parallax = project.starburst.aperture.scratches.parallax
@@ -52,4 +52,4 @@ class StarburstApertureRenderer(Renderer):
             scratches_parallax=scratches_parallax,
             dust_parallax=dust_parallax,
         )
-        return image
+        return MultiArray(image.array, image.args)

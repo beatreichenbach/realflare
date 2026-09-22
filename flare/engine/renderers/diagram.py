@@ -3,7 +3,7 @@ from qtpy import QtGui
 from flare import api
 from flare.utils import profiling
 
-from ..base import Array, Renderer
+from ..base import MultiArray, Renderer
 from ..tasks import DiagramTask
 from ..tasks.common import GhostData, get_paths
 
@@ -16,7 +16,7 @@ class DiagramRenderer(Renderer):
         self.diagram_task = diagram_task
 
     @profiling.timer
-    def run(self, project: api.Project) -> Array:
+    def run(self, project: api.Project) -> MultiArray:
 
         sensor_size = project.flare.camera.sensor_size.toTuple()
         resolution = project.flare.render.resolution.toTuple()
@@ -51,7 +51,7 @@ class DiagramRenderer(Renderer):
             resolution=project.diagram.render.resolution,
             lens_config=project.flare.lens,
         )
-        return diagram
+        return MultiArray(diagram.array, diagram.args)
 
 
 def get_ghost_datas(

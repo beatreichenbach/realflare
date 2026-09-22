@@ -5,7 +5,7 @@ from qtpy import QtGui
 from flare import api
 from flare.utils import profiling
 
-from ..base import Array, Renderer
+from ..base import MultiArray, Renderer
 from ..tasks import FlareTask, PreprocessTask, RaytraceTask
 from .ghost import GhostRenderer
 
@@ -28,7 +28,7 @@ class FlareRenderer(Renderer):
         self.ghost_renderer = ghost_renderer
 
     @profiling.timer
-    def run(self, project: api.Project) -> Array:
+    def run(self, project: api.Project) -> MultiArray:
         # Preprocess
         position = project.flare.light.position.toTuple()
         sensor_size = project.flare.camera.sensor_size.toTuple()
@@ -87,4 +87,4 @@ class FlareRenderer(Renderer):
             wireframe=project.flare.debug.wireframe,
         )
 
-        return output
+        return MultiArray(output.array, output.args)

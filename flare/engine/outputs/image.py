@@ -8,7 +8,7 @@ from PIL import Image
 from flare import api
 from flare.api import PathParser
 
-from ..base import Array, EngineError, Output
+from ..base import EngineError, MultiArray, Output
 
 logger = logging.getLogger(__name__)
 
@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 class ImageOutput(Output):
     """Image output for regular formats using imageio."""
 
-    def write(self, image: Array, project: api.Project) -> str:
+    def write(self, image: MultiArray, project: api.Project) -> str:
         path = PathParser.format_path(project.output.path, project.output.frame)
         os.makedirs(os.path.dirname(path), exist_ok=True)
         self.check_extension(path)

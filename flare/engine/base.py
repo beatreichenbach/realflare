@@ -50,6 +50,19 @@ class Array:
         self._args = args
 
 
+class MultiArray(Array):
+    """An RGBA Array with optional named RGBA layers for layered EXR output."""
+
+    def __init__(
+        self,
+        array: np.ndarray,
+        args: Any = None,  # noqa: ANN401
+        layers: dict[api.Layer, np.ndarray] | None = None,
+    ) -> None:
+        super().__init__(array, args)
+        self.layers = layers or {}
+
+
 class File:
     """A hashable file on disk using the modification time for comparison."""
 
@@ -90,11 +103,11 @@ class Renderer(ABC):
         self.context = context
 
     @abstractmethod
-    def run(self, project: api.Project) -> Array: ...
+    def run(self, project: api.Project) -> MultiArray: ...
 
 
 class Output(ABC):
     @abstractmethod
-    def write(self, image: Array, project: api.Project) -> str:
+    def write(self, image: MultiArray, project: api.Project) -> str:
         """Return the path of the render written to disk from the project output."""
         ...

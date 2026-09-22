@@ -5,7 +5,7 @@ from qtpy import QtGui
 from flare import api
 from flare.utils import profiling
 
-from ..base import Array, Renderer
+from ..base import MultiArray, Renderer
 from ..tasks import CompTask
 from .flare import FlareRenderer
 from .starburst import StarburstRenderer
@@ -27,8 +27,9 @@ class CompRenderer(Renderer):
         self.comp_task = comp_task
 
     @profiling.timer
-    def run(self, project: api.Project) -> Array:
+    def run(self, project: api.Project) -> MultiArray:
         flare = self.flare_renderer.run(project)
         starburst = self.starburst_renderer.run(project)
         image = self.comp_task.run(flare, starburst)
-        return image
+        layers = {api.Layer.FLARE: flare.array, api.Layer.STARBURST: starburst.array}
+        return MultiArray(image.array, image.args, layers)

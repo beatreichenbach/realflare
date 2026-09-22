@@ -5,7 +5,7 @@ from qtpy import QtGui
 from flare import api
 from flare.utils import profiling
 
-from ..base import Array, Renderer
+from ..base import MultiArray, Renderer
 from ..tasks import GhostTask
 from .aperture import GhostApertureRenderer
 
@@ -24,11 +24,11 @@ class GhostRenderer(Renderer):
         self.ghost_task = ghost_task
 
     @profiling.timer
-    def run(self, project: api.Project) -> Array:
+    def run(self, project: api.Project) -> MultiArray:
         aperture = self.aperture_renderer.run(project)
         image = self.ghost_task.run(
             aperture=aperture,
             distance=project.ghost.diffraction.distance,
             vignette=project.ghost.diffraction.vignette,
         )
-        return image
+        return MultiArray(image.array, image.args)

@@ -3,7 +3,7 @@ from qtpy import QtGui
 from flare import api
 from flare.utils import profiling
 
-from ..base import Array, Renderer
+from ..base import MultiArray, Renderer
 from ..tasks import StarburstTask
 from .aperture import StarburstApertureRenderer
 
@@ -20,7 +20,7 @@ class StarburstRenderer(Renderer):
         self.starburst_task = starburst_task
 
     @profiling.timer
-    def run(self, project: api.Project) -> Array:
+    def run(self, project: api.Project) -> MultiArray:
         aperture = self.aperture_renderer.run(project)
 
         sensor_size = (
@@ -38,4 +38,4 @@ class StarburstRenderer(Renderer):
             resolution=project.flare.render.resolution,
             illuminant=project.flare.light.illuminant,
         )
-        return image
+        return MultiArray(image.array, image.args)
