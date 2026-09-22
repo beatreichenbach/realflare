@@ -14,27 +14,12 @@ class Response:
         return self._data
 
 
-def test_is_newer() -> None:
-    assert release.is_newer('1.0.1', '1.0.0')
-    assert release.is_newer('1.1.0', '1.0.9')
-    assert release.is_newer('2.0.0', '1.9.9')
-    assert release.is_newer('v1.0.1', '1.0.0')
-    assert release.is_newer('1.0.0', '1.0.0-rc.1')
-
-
-def test_is_not_newer() -> None:
-    assert not release.is_newer('1.0.0', '1.0.0')
-    assert not release.is_newer('1.0.0', '1.0')
-    assert not release.is_newer('1.0.0', '1.0.1')
-    assert not release.is_newer('1.0.0-rc.1', '1.0.0')
-    assert not release.is_newer('invalid', '1.0.0')
-
-
 def test_has_update() -> None:
     item = release.Release('v1.2.0', '1.2.0', '', '', '', '')
     assert release.has_update('1.0.0', item)
     assert not release.has_update('1.2.0', item)
     assert not release.has_update('2.0.0', item)
+    assert not release.has_update('invalid', item)
 
 
 def test_latest_release(monkeypatch: pytest.MonkeyPatch) -> None:

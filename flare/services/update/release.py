@@ -49,13 +49,7 @@ def latest_release() -> Release | None:
 def has_update(version: str, release: Release) -> bool:
     """Return whether a release is newer than an installed version."""
 
-    return is_newer(release.version, version)
-
-
-def is_newer(version: str, other: str) -> bool:
-    """Return whether a version string is newer than another version string."""
-
     try:
-        return Version(version) > Version(other)
+        return Version(release.version) > Version(version)
     except InvalidVersion:
         return False
