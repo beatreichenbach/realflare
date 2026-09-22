@@ -1,6 +1,6 @@
 import copy
 import logging
-from collections.abc import Sequence
+from typing import NamedTuple
 
 from qtpy import QtCore
 
@@ -11,12 +11,19 @@ from flare.engine.engine import Engine, Render
 logger = logging.getLogger(__name__)
 
 
+class RenderRequest(NamedTuple):
+    """A render request of layers for a project."""
+
+    project: api.Project
+    layers: tuple[api.Layer, ...]
+
+
 class RenderController(QtCore.QObject):
     """
     Drive rendering of the current project.
 
     Queue render requests, run them through the Engine and emit the resulting
-    Renders. Setting a new project requests a render of it.
+    Renders.
     """
 
     rendered: QtCore.Signal = QtCore.Signal(Render)
@@ -25,68 +32,45 @@ class RenderController(QtCore.QObject):
     def __init__(self, parent: QtCore.QObject | None = None) -> None:
         super().__init__(parent)
 
-        self._project: api.Project | None = None
         self._layers: tuple[api.Layer, ...] = ()
         self._image_hashes: dict[api.Layer, int] = {}
-        self._queue: api.Project | None = None
+        self._queue: RenderRequest | None = None
         self._rendering = False
 
         self.engine = Engine()
 
-    def layers(self) -> tuple[api.Layer, ...]:
-        """Return the layers that are rendered."""
+    def request(self, request: RenderRequest) -> None:
+        """Queue a render request and render until the queue is empty."""
 
-        return self._layers
+        if request.layers != self._layers:
+            self._layers = request.layers
+            self._image_hashes = {}
 
-    def set_layers(self, layers: Sequence[api.Layer]) -> None:
-        """Set the layers that are rendered."""
-
-        self._image_hashes = {}
-        self._layers = tuple(layers)
-
-    def set_project(self, project: api.Project) -> None:
-        """Set the current project and request a render."""
-
-        self._project = project
-        self._enqueue(project)
-
-    def request(self) -> None:
-        """Request a render of the current project."""
-
-        if self._project is not None:
-            self._enqueue(self._project)
-
-    def render_to_disk(self) -> None:
-        """Render the current project and write the output to disk."""
-
-        if self._project is None:
-            return
-
-        project = copy.deepcopy(self._project)
-        project.output.write = True
-        self._enqueue(project)
-
-    def _enqueue(self, project: api.Project) -> None:
-        """Queue a project and render until the queue is empty."""
-
-        self._queue = project
+        self._queue = request
         if self._rendering:
             return
 
         while self._queue is not None:
-            project = self._queue
+            request = self._queue
             self._queue = None
-            self._render(project)
+            self._render(request)
 
-    def _render(self, project: api.Project) -> None:
-        """Render the layers of a project and emit the results."""
+    def render_to_disk(self, request: RenderRequest) -> None:
+        """Render a request and write the output to disk."""
+
+        project = copy.deepcopy(request.project)
+        project.output.write = True
+        self.request(RenderRequest(project, request.layers))
+
+    def _render(self, request: RenderRequest) -> None:
+        """Render the layers of a request and emit the results."""
 
         self._rendering = True
         self.progress_changed.emit(-1)
         try:
-            for layer in self._layers:
-                render = self.engine.render(project, layer)
-                self.engine.output(render, project)
+            for layer in request.layers:
+                render = self.engine.render(request.project, layer)
+                self.engine.output(render, request.project)
                 self._emit_render(render)
         except EngineError as e:
             if e.log:

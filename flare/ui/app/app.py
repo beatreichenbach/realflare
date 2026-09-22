@@ -13,7 +13,7 @@ import flare
 from flare import api
 from flare.infrastructure.storage import PreferencesManager, StateManager
 from flare.services.project import ProjectManager, Source
-from flare.services.render import RenderController
+from flare.services.render import RenderController, RenderRequest
 from flare.services.update.controller import UpdateController
 from flare.ui.app.menu import FlareMenuBar, ProjectActions
 from flare.ui.app.update import UpdatePresenter
@@ -95,15 +95,14 @@ class FlareDockWindow(StateDockWindow):
         super().closeEvent(event)
 
     def refresh(self) -> None:
-        """Update the layers and refresh the Viewers."""
+        """Request a render of the current project and layers."""
 
-        self._update_layers()
-        self.renderer.set_project(self.manager.project())
+        self.renderer.request(self._render_request())
 
     def request_disk_render(self) -> None:
         """Request a render and save the output to disk."""
 
-        self.renderer.render_to_disk()
+        self.renderer.render_to_disk(self._render_request())
 
     def save_state(self) -> None:
         """Save the state of the window."""
@@ -169,7 +168,7 @@ class FlareDockWindow(StateDockWindow):
     def _render_project(self, project: api.Project, source: Source) -> None:
         """Request a render of a changed project."""
 
-        self.renderer.set_project(project)
+        self.renderer.request(RenderRequest(project, self._layers()))
 
     def _project_changed(self, project: api.Project, source: Source) -> None:
         """Update the ProjectEditor with a changed project."""
@@ -208,8 +207,8 @@ class FlareDockWindow(StateDockWindow):
                 param.set_value(ndc_position)
                 param.blockSignals(False)
 
-    def _update_layers(self) -> None:
-        """Update the layers in the engine that should be rendered."""
+    def _layers(self) -> tuple[api.Layer, ...]:
+        """Return the layers that should be rendered."""
 
         layers = []
         for dock_widget in self.dock_widgets():
@@ -220,7 +219,12 @@ class FlareDockWindow(StateDockWindow):
                 and (layer := widget.layer())
             ):
                 layers.append(layer)
-        self.renderer.set_layers(tuple(layers))
+        return tuple(layers)
+
+    def _render_request(self) -> RenderRequest:
+        """Return a render request for the current project and layers."""
+
+        return RenderRequest(self.manager.project(), self._layers())
 
     def _update_viewers(self, render: Render) -> None:
         """Update the LayerViewers with a new Render."""
