@@ -202,186 +202,220 @@ Intersection intersect_sphere(
     return i;
 }
 
-// Cylindrical intersection – cylinder axis along X (CYLINDER_X) or Y (CYLINDER_Y)
-// Equation for CYLINDER_X (axis = X, curved in Y-Z): (y - 0)^2 + (z - Cz)^2 = r^2
-// Equation for CYLINDER_Y (axis = Y, curved in X-Z): (x - 0)^2 + (z - Cz)^2 = r^2
+// Intersect a ray with an anamorphic (cylindrical) surface.
+//
+// A cylindrical surface is a circle of radius r that is swept along one axis,
+// centered at z = center on the optical axis:
+//   CYLINDER_X (swept along X, curved in Y-Z): y^2 + (z - center)^2 = r^2
+//   CYLINDER_Y (swept along Y, curved in X-Z): x^2 + (z - center)^2 = r^2
+// Substituting the ray position + t*dir gives a quadratic in the ray parameter
+//   a*t^2 + b*t + c = 0
+// which is solved for the first positive root. The normal lies in the curved
+// plane, pointing from the axis (0, center) towards the hit point.
+// https://en.wikipedia.org/wiki/Line-cylinder_intersection
 Intersection intersect_cylindrical(
     Ray ray,
     float center,
     float radius,
     uint type
 ) {
-    Intersection i;
+    Intersection intersection;
     float r = abs(radius);
-    float Cz = center;
+    float center_z = center;
 
-    float A, B, C;
+    // Quadratic coefficients, a*t^2 + b*t + c = 0.
+    float a;
+    float b;
+    float c;
 
     if (type == CYLINDER_X) {
-        A = ray.dir.y * ray.dir.y + ray.dir.z * ray.dir.z;
-        B = 2.0 * (ray.pos.y * ray.dir.y + (ray.pos.z - Cz) * ray.dir.z);
-        C = ray.pos.y * ray.pos.y + (ray.pos.z - Cz) * (ray.pos.z - Cz) - r * r;
+        a = ray.dir.y * ray.dir.y + ray.dir.z * ray.dir.z;
+        b = 2.0 * (ray.pos.y * ray.dir.y + (ray.pos.z - center_z) * ray.dir.z);
+        c = ray.pos.y * ray.pos.y
+            + (ray.pos.z - center_z) * (ray.pos.z - center_z) - r * r;
     } else { // CYLINDER_Y
-        A = ray.dir.x * ray.dir.x + ray.dir.z * ray.dir.z;
-        B = 2.0 * (ray.pos.x * ray.dir.x + (ray.pos.z - Cz) * ray.dir.z);
-        C = ray.pos.x * ray.pos.x + (ray.pos.z - Cz) * (ray.pos.z - Cz) - r * r;
+        a = ray.dir.x * ray.dir.x + ray.dir.z * ray.dir.z;
+        b = 2.0 * (ray.pos.x * ray.dir.x + (ray.pos.z - center_z) * ray.dir.z);
+        c = ray.pos.x * ray.pos.x
+            + (ray.pos.z - center_z) * (ray.pos.z - center_z) - r * r;
     }
 
-    if (abs(A) < 1e-8) {
-        i.hit = false;
-        return i;
+    if (abs(a) < 1e-8) {
+        intersection.hit = false;
+        return intersection;
     }
 
-    float D = B * B - 4.0 * A * C;
-    if (D < 0.0) {
-        i.hit = false;
-        return i;
+    float discriminant = b * b - 4.0 * a * c;
+    if (discriminant < 0.0) {
+        intersection.hit = false;
+        return intersection;
     }
 
-    float sqrtD = sqrt(D);
-    float t0 = (-B - sqrtD) / (2.0 * A);
-    float t1 = (-B + sqrtD) / (2.0 * A);
+    float sqrt_discriminant = sqrt(discriminant);
+    float t_near = (-b - sqrt_discriminant) / (2.0 * a);
+    float t_far = (-b + sqrt_discriminant) / (2.0 * a);
 
+    // Pick the first intersection in front of the ray origin.
     float t = 1e30;
-    if (t0 > 1e-6) t = t0;
-    if (t1 > 1e-6 && t1 < t) t = t1;
+    if (t_near > 1e-6) t = t_near;
+    if (t_far > 1e-6 && t_far < t) t = t_far;
     if (t > 1e29) {
-        i.hit = false;
-        return i;
+        intersection.hit = false;
+        return intersection;
     }
 
-    vec3 pos = ray.pos + t * ray.dir;
+    vec3 position = ray.pos + t * ray.dir;
 
-    float sgn = (radius * ray.dir.z) > 0.0 ? -1.0 : 1.0;
+    // Orient the normal along the incoming direction, matching the sphere logic.
+    float orientation = (radius * ray.dir.z) > 0.0 ? -1.0 : 1.0;
     vec3 normal;
     if (type == CYLINDER_X) {
-        vec3 tmp = vec3(0.0, pos.y, pos.z - Cz);
-        // tmp is (0, y, z-Cz); length should be r
-        normal = normalize(tmp) * sgn;
+        normal = normalize(vec3(0.0, position.y, position.z - center_z));
     } else {
-        vec3 tmp = vec3(pos.x, 0.0, pos.z - Cz);
-        normal = normalize(tmp) * sgn;
+        normal = normalize(vec3(position.x, 0.0, position.z - center_z));
     }
-
-    // Ensure normal faces against incoming ray for refraction
-    // (sgn already handles convex/concave, but double-check orientation)
-    // If dot(-ray.dir, normal) < 0, flip – keeps consistent with sphere logic
-    // (sphere logic uses sgn to achieve same, so keep as is)
+    normal *= orientation;
 
     float incident = acos(clamp(dot(-ray.dir, normal), -1.0, 1.0));
 
-    i.hit = true;
-    i.incident = incident;
-    i.pos = pos;
-    i.normal = normal;
-    return i;
+    intersection.hit = true;
+    intersection.incident = incident;
+    intersection.pos = position;
+    intersection.normal = normal;
+    return intersection;
 }
 
 // Aspheric sag helpers
-float asphere_sag(float r, Surface s) {
+//
+// Return the sag z(r) of an aspheric surface at a radial distance r from the
+// optical axis. It is the sum of a conic (quadric) term and a polynomial:
+//
+//   z(r) = c*r^2 / (1 + sqrt(1 - (1 + k)*c^2*r^2)) + sum(a_i * r^power)
+//
+// with vertex curvature c = 1 / radius and conic constant k.
+// https://en.wikipedia.org/wiki/Aspheric_lens#Surface_profile
+// https://en.wikipedia.org/wiki/Conic_constant
+//
+// The polynomial coefficients depend on the Zemax surface type:
+//   EVENASPH / XASPHERE: a1*r^2 + a2*r^4 + a3*r^6 + a4*r^8
+//   XOSPHERE:            a1*r^1 + a2*r^2 + a3*r^3 + a4*r^4
+// https://ansyshelp.ansys.com/public/Views/Secured/Zemax/v251/en/OpticStudio_User_Guide/OpticStudio_Help/topics/Even_Asphere.html
+//
+// NOTE: Only the first 4 coefficients are uploaded which is a deliberate approximation.
+// The optics database does not use normalized coefficients or a term mode.
+float asphere_sag(float r, Surface surface) {
     float sag = 0.0;
     float c = 0.0;
-    if (abs(s.radius) > 1e-9) {
-        c = 1.0 / s.radius;
+    if (abs(surface.radius) > 1e-9) {
+        c = 1.0 / surface.radius;
     }
-    float k = s.conic;
+    float k = surface.conic;
     float r2 = r * r;
 
     if (abs(c) > 1e-9) {
-        float a = (1.0 + k) * c * c * r2;
-        float v = 1.0 - a;
-        v = max(v, 0.0);
-        float srt = sqrt(v);
-        float denom = 1.0 + srt;
-        if (abs(denom) > 1e-9) {
-            sag = c * r2 / denom;
+        float conic_factor = (1.0 + k) * c * c * r2;
+        float radicand = 1.0 - conic_factor;
+        radicand = max(radicand, 0.0);
+        float root = sqrt(radicand);
+        float denominator = 1.0 + root;
+        if (abs(denominator) > 1e-9) {
+            sag = c * r2 / denominator;
         }
     }
 
-    if (s.type == EVEN_ASPHERIC || s.type == EXTENDED_ASPHERIC) {
-        // coefficients are r2, r4, r6, r8
-        float r_pow = r2; // r^2
+    if (surface.type == EVEN_ASPHERIC || surface.type == EXTENDED_ASPHERIC) {
+        // coefficients are a1*r^2, a2*r^4, a3*r^6, a4*r^8
+        float radius_power = r2; // r^2
         // unrolled for vec4
-        sag += s.coefficients.x * r_pow;
-        r_pow *= r2; // r^4
-        sag += s.coefficients.y * r_pow;
-        r_pow *= r2; // r^6
-        sag += s.coefficients.z * r_pow;
-        r_pow *= r2; // r^8
-        sag += s.coefficients.w * r_pow;
-    } else if (s.type == EXTENDED_ODD_ASPHERIC) {
-        // coefficients are A1*r^1, A2*r^2, A3*r^3, A4*r^4
-        float r_pow = r; // r^1
-        sag += s.coefficients.x * r_pow;
-        r_pow *= r; // r^2
-        sag += s.coefficients.y * r_pow;
-        r_pow *= r; // r^3
-        sag += s.coefficients.z * r_pow;
-        r_pow *= r; // r^4
-        sag += s.coefficients.w * r_pow;
+        sag += surface.coefficients.x * radius_power;
+        radius_power *= r2; // r^4
+        sag += surface.coefficients.y * radius_power;
+        radius_power *= r2; // r^6
+        sag += surface.coefficients.z * radius_power;
+        radius_power *= r2; // r^8
+        sag += surface.coefficients.w * radius_power;
+    } else if (surface.type == EXTENDED_ODD_ASPHERIC) {
+        // coefficients are a1*r^1, a2*r^2, a3*r^3, a4*r^4
+        float radius_power = r; // r^1
+        sag += surface.coefficients.x * radius_power;
+        radius_power *= r; // r^2
+        sag += surface.coefficients.y * radius_power;
+        radius_power *= r; // r^3
+        sag += surface.coefficients.z * radius_power;
+        radius_power *= r; // r^4
+        sag += surface.coefficients.w * radius_power;
     }
     return sag;
 }
 
-float asphere_sag_derivative(float r, Surface s) {
+// Return the analytic derivative dz/dr of asphere_sag, used to build the surface normal.
+// The conic slope is
+//   dz/dr = c*r / sqrt(1 - (1 + k)*c^2*r^2)
+// and the polynomial slopes are
+//   even: 2*a1*r + 4*a2*r^3 + 6*a3*r^5 + 8*a4*r^7
+//   odd:  a1 + 2*a2*r + 3*a3*r^2 + 4*a4*r^3
+float asphere_sag_derivative(float r, Surface surface) {
     if (r < 1e-9) {
-        // at apex derivative is 0 for even, coeff.x for odd (r^1 term)
-        if (s.type == EXTENDED_ODD_ASPHERIC) {
-            return s.coefficients.x; // d/dr (A1*r) = A1
+        // at apex the conic and even slopes are 0, only the odd a1*r term remains
+        if (surface.type == EXTENDED_ODD_ASPHERIC) {
+            return surface.coefficients.x; // d/dr (a1*r) = a1
         }
         return 0.0;
     }
-    float dsdr = 0.0;
+    float sag_slope = 0.0;
     float c = 0.0;
-    if (abs(s.radius) > 1e-9) {
-        c = 1.0 / s.radius;
+    if (abs(surface.radius) > 1e-9) {
+        c = 1.0 / surface.radius;
     }
-    float k = s.conic;
+    float k = surface.conic;
     float r2 = r * r;
     if (abs(c) > 1e-9) {
-        float a = (1.0 + k) * c * c;
-        float v = 1.0 - a * r2;
-        v = max(v, 0.0);
-        float srt = sqrt(v);
-        float denom = 1.0 + srt;
-        if (abs(denom) > 1e-9 && srt > 1e-9) {
-            // ds/dr = (2*c*r*denom + c*r2*a*r/srt) / denom^2
-            dsdr = (2.0 * c * r * denom + c * r2 * a * r / srt) / (denom * denom);
-        } else if (abs(denom) > 1e-9) {
-            dsdr = (2.0 * c * r) / denom;
+        float conic_factor = (1.0 + k) * c * c;
+        float radicand = 1.0 - conic_factor * r2;
+        radicand = max(radicand, 0.0);
+        float root = sqrt(radicand);
+        float denominator = 1.0 + root;
+        if (abs(denominator) > 1e-9 && root > 1e-9) {
+            // ds/dr = (2*c*r*denominator + c*r2*conic_factor*r/root) / denominator^2
+            sag_slope = (
+                2.0 * c * r * denominator + c * r2 * conic_factor * r / root
+            ) / (denominator * denominator);
+        } else if (abs(denominator) > 1e-9) {
+            sag_slope = (2.0 * c * r) / denominator;
         }
     }
-    if (s.type == EVEN_ASPHERIC || s.type == EXTENDED_ASPHERIC) {
-        // even: coeff0*r^2 + coeff1*r^4 + coeff2*r^6 + coeff3*r^8
-        // d/dr: 2*coeff0*r + 4*coeff1*r^3 + 6*coeff2*r^5 + 8*coeff3*r^7
-        float r1 = r;
-        float r3 = r2 * r;
-        float r5 = r3 * r2;
-        float r7 = r5 * r2;
-        dsdr += 2.0 * s.coefficients.x * r1;
-        dsdr += 4.0 * s.coefficients.y * r3;
-        dsdr += 6.0 * s.coefficients.z * r5;
-        dsdr += 8.0 * s.coefficients.w * r7;
-    } else if (s.type == EXTENDED_ODD_ASPHERIC) {
-        // odd: coeff0*r + coeff1*r^2 + coeff2*r^3 + coeff3*r^4
-        // d/dr: coeff0 + 2*coeff1*r + 3*coeff2*r^2 + 4*coeff3*r^3
-        float r1 = r;
-        float r2_ = r2;
-        float r3 = r2 * r;
-        dsdr += s.coefficients.x;
-        dsdr += 2.0 * s.coefficients.y * r1;
-        dsdr += 3.0 * s.coefficients.z * r2_;
-        dsdr += 4.0 * s.coefficients.w * r3;
+    if (surface.type == EVEN_ASPHERIC || surface.type == EXTENDED_ASPHERIC) {
+        // even: a1*r^2 + a2*r^4 + a3*r^6 + a4*r^8
+        // d/dr: 2*a1*r + 4*a2*r^3 + 6*a3*r^5 + 8*a4*r^7
+        float radius_pow3 = r2 * r;
+        float radius_pow5 = radius_pow3 * r2;
+        float radius_pow7 = radius_pow5 * r2;
+        sag_slope += 2.0 * surface.coefficients.x * r;
+        sag_slope += 4.0 * surface.coefficients.y * radius_pow3;
+        sag_slope += 6.0 * surface.coefficients.z * radius_pow5;
+        sag_slope += 8.0 * surface.coefficients.w * radius_pow7;
+    } else if (surface.type == EXTENDED_ODD_ASPHERIC) {
+        // odd: a1*r + a2*r^2 + a3*r^3 + a4*r^4
+        // d/dr: a1 + 2*a2*r + 3*a3*r^2 + 4*a4*r^3
+        float radius_pow3 = r2 * r;
+        sag_slope += surface.coefficients.x;
+        sag_slope += 2.0 * surface.coefficients.y * r;
+        sag_slope += 3.0 * surface.coefficients.z * r2;
+        sag_slope += 4.0 * surface.coefficients.w * radius_pow3;
     }
-    return dsdr;
+    return sag_slope;
 }
 
+// Intersect a ray with an aspheric surface using Newton-Raphson on
+//   f(t) = position.z(t) - (vertex + sag(r(t)))
+// and derive the normal from the surface gradient
+//   (-dz/dx, -dz/dy, 1)
 Intersection intersect_asphere(
     Ray ray,
-    Surface s
+    Surface surface
 ) {
-    Intersection i;
-    float vertex = -s.center + s.radius; // vertex position along Z
+    Intersection intersection;
+    float vertex = -surface.center + surface.radius; // vertex position along Z
 
     // initial guess: intersection with vertex plane
     float t = 1e30;
@@ -395,70 +429,70 @@ Intersection intersect_asphere(
 
     // Newton iteration to solve f(t)=0 where f = ray.z(t) - (vertex + sag(r(t)))
     for (int iter = 0; iter < 12; ++iter) {
-        vec3 p = ray.pos + t * ray.dir;
-        float r = length(p.xy);
-        float sag = asphere_sag(r, s);
-        float f = p.z - (vertex + sag);
-        if (abs(f) < 1e-7) {
+        vec3 position = ray.pos + t * ray.dir;
+        float r = length(position.xy);
+        float sag = asphere_sag(r, surface);
+        float residual = position.z - (vertex + sag);
+        if (abs(residual) < 1e-7) {
             break;
         }
-        float dsdr = asphere_sag_derivative(r, s);
-        float drdt = 0.0;
+        float sag_slope = asphere_sag_derivative(r, surface);
+        float radius_rate = 0.0;
         if (r > 1e-9) {
-            drdt = (p.x * ray.dir.x + p.y * ray.dir.y) / r;
+            radius_rate = (position.x * ray.dir.x + position.y * ray.dir.y) / r;
         }
-        float dfdt = ray.dir.z - dsdr * drdt;
-        if (abs(dfdt) < 1e-9) {
+        float residual_rate = ray.dir.z - sag_slope * radius_rate;
+        if (abs(residual_rate) < 1e-9) {
             break;
         }
-        float t_next = t - f / dfdt;
+        float next_t = t - residual / residual_rate;
         // keep t positive and limit step to avoid divergence
-        if (t_next < 1e-6) {
+        if (next_t < 1e-6) {
             // no forward intersection
             break;
         }
         // clamp large jumps
-        if (abs(t_next - t) > 10.0) {
-            t_next = t + sign(t_next - t) * 10.0;
+        if (abs(next_t - t) > 10.0) {
+            next_t = t + sign(next_t - t) * 10.0;
         }
-        t = t_next;
-        if (abs(f) < 1e-6) {
+        t = next_t;
+        if (abs(residual) < 1e-6) {
             break;
         }
     }
 
-    vec3 pos = ray.pos + t * ray.dir;
-    float r = length(pos.xy);
+    vec3 position = ray.pos + t * ray.dir;
+    float r = length(position.xy);
     // final check: ray must be forward and within reasonable bounds
     if (t < 1e-6 || t > 1e6) {
-        i.hit = false;
-        return i;
+        intersection.hit = false;
+        return intersection;
     }
     // check that we actually converged (residual small)
     {
-        float sag = asphere_sag(r, s);
-        float f = pos.z - (vertex + sag);
-        if (abs(f) > 1e-4) {
+        float sag = asphere_sag(r, surface);
+        float residual = position.z - (vertex + sag);
+        if (abs(residual) > 1e-4) {
             // fallback to sphere/plane if not converged and conic==0 and no coeffs
             // still return hit if close to vertex plane
             // but mark as miss if far
-            if (abs(f) > 1e-3) {
-                i.hit = false;
-                return i;
+            if (abs(residual) > 1e-3) {
+                intersection.hit = false;
+                return intersection;
             }
         }
     }
 
-    float dsdr = asphere_sag_derivative(r, s);
+    float sag_slope = asphere_sag_derivative(r, surface);
     vec3 normal;
     if (r < 1e-9) {
         normal = vec3(0.0, 0.0, 1.0);
     } else {
-        float invr = 1.0 / r;
-        float dzdx = dsdr * pos.x * invr;
-        float dzdy = dsdr * pos.y * invr;
-        // surface: z = vertex + sag(r), gradient = (-dzdx, -dzdy, 1)
-        normal = normalize(vec3(-dzdx, -dzdy, 1.0));
+        float inv_radius = 1.0 / r;
+        float slope_x = sag_slope * position.x * inv_radius;
+        float slope_y = sag_slope * position.y * inv_radius;
+        // surface: z = vertex + sag(r), gradient = (-slope_x, -slope_y, 1)
+        normal = normalize(vec3(-slope_x, -slope_y, 1.0));
     }
     // ensure normal faces against incoming ray (needed for refraction)
     if (dot(normal, -ray.dir) < 0.0) {
@@ -467,33 +501,47 @@ Intersection intersect_asphere(
 
     float incident = acos(clamp(dot(-ray.dir, normal), -1.0, 1.0));
 
-    i.hit = true;
-    i.incident = incident;
-    i.pos = pos;
-    i.normal = normal;
-    return i;
+    intersection.hit = true;
+    intersection.incident = incident;
+    intersection.pos = position;
+    intersection.normal = normal;
+    return intersection;
 }
 
 
 // Calculate the intersection of a Ray with a Surface.
+// Return the intersection of a ray with a surface, dispatching on the surface
+// type. Cylindrical surfaces (CYLINDER_X / CYLINDER_Y) model anamorphic lenses.
 Intersection intersect(
     Ray ray,
     Surface surface
 ) {
-    Intersection i;
+    Intersection intersection;
 
     if (ray.dir.z == 0) {
-        i.hit = false;
+        intersection.hit = false;
     } else if (surface.radius == 0) {
-        i = intersect_plane(ray, -surface.center);
-    } else if (use_aspheric && (surface.type == EVEN_ASPHERIC || surface.type == EXTENDED_ASPHERIC || surface.type == EXTENDED_ODD_ASPHERIC)) {
-        i = intersect_asphere(ray, surface);
-    } else if (use_aspheric && (surface.type == CYLINDER_X || surface.type == CYLINDER_Y)) {
-        i = intersect_cylindrical(ray, -surface.center, surface.radius, surface.type);
+        intersection = intersect_plane(ray, -surface.center);
+    } else if (
+        use_aspheric
+        && (
+            surface.type == EVEN_ASPHERIC
+            || surface.type == EXTENDED_ASPHERIC
+            || surface.type == EXTENDED_ODD_ASPHERIC
+        )
+    ) {
+        intersection = intersect_asphere(ray, surface);
+    } else if (
+        use_aspheric
+        && (surface.type == CYLINDER_X || surface.type == CYLINDER_Y)
+    ) {
+        intersection = intersect_cylindrical(
+            ray, -surface.center, surface.radius, surface.type
+        );
     } else {
-        i = intersect_sphere(ray, -surface.center, surface.radius);
+        intersection = intersect_sphere(ray, -surface.center, surface.radius);
     }
-    return i;
+    return intersection;
 }
 
 //void transform_ray(inout Ray ray) {

@@ -10,6 +10,7 @@ class HashableModel(BaseModel):
         return hash(self.model_dump_json())
 
 
+# TODO: Add support for toroid, biconic.
 class Lens(HashableModel):
     class Surface(HashableModel):
         class SurfaceType(enum.Enum):
