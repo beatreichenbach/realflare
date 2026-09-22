@@ -1,10 +1,13 @@
 import dataclasses
+import logging
 
 from flare import api
 
 from . import graph
 from .base import Array
-from .opengl import create_context_surface
+from .opengl import create_context_surface, get_vram_text
+
+logger = logging.getLogger(__name__)
 
 
 @dataclasses.dataclass
@@ -23,6 +26,8 @@ class Engine:
 
     def render(self, project: api.Project, layer: api.Layer) -> Render:
         self.context.makeCurrent(self.surface)
+
+        logger.debug(f'VRAM: {get_vram_text()}')
 
         renderer = self.graph.get_renderer(layer)
         image = renderer.run(project)
