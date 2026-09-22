@@ -49,7 +49,8 @@ class Database:
 
         store = CacheStore(cache_path)
         cache = store.load()
-        if cache is None:
+        if cache is None or cache.version != model.CACHE_VERSION:
+            logger.info('Building database cache ...')
             cache = self._load_database()
             store.save(cache)
 
@@ -99,7 +100,11 @@ class Database:
         lenses.sort(key=lambda x: (x.vendor, x.name))
         materials.sort(key=lambda x: (x.vendor, x.name))
 
-        return model.Cache(lenses=tuple(lenses), materials=tuple(materials))
+        return model.Cache(
+            version=model.CACHE_VERSION,
+            lenses=tuple(lenses),
+            materials=tuple(materials),
+        )
 
     def get_lenses(self) -> tuple[Lens, ...]:
         """Return all Lenses from the database."""

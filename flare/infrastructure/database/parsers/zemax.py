@@ -156,7 +156,7 @@ class ZemaxParser(Parser[Lens]):
                 # NOTE: PARM are the polynomial coefficients for even aspheric surfaces.
 
                 parts = text.split()
-                if len(parts) < 3:
+                if len(parts) < 2:
                     continue
 
                 index = int(parse_float(parts[0]))
@@ -173,9 +173,12 @@ class ZemaxParser(Parser[Lens]):
                 # NOTE: XDAT is extra data for extended aspheric surfaces.
                 #       XDAT 1 is the max order. This is inferred from the tuple length.
                 #       XDAT 2 is the norm radius mode. This is ignored.
+                #       XDAT 3 is the term mode. 0 = Even powers, 1 = All powers.
+                #       Every surface in the optics database uses even powers (0), so
+                #       the term mode is ignored.
 
                 parts = text.split()
-                if len(parts) < 3:
+                if len(parts) < 2:
                     continue
 
                 index = int(parse_float(parts[0]))
@@ -185,8 +188,7 @@ class ZemaxParser(Parser[Lens]):
                     continue
 
                 if surface.get('type') == Lens.Surface.SurfaceType.EXTENDED_ASPHERIC:
-                    # NOTE: XDAT 3 is the term mode. 0 = Even powers, 1 = All powers.
-                    #       XDAT 4+ are polynomial coefficients where 4 is a1
+                    # NOTE: XDAT 4+ are polynomial coefficients where 4 is a1
 
                     start = 4
 
