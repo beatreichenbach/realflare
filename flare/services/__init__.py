@@ -1,3 +1,3 @@
-from .project import ProjectManager
+from .project import ProjectManager, Source
 
-__all__ = ['ProjectManager']
+__all__ = ['ProjectManager', 'Source']

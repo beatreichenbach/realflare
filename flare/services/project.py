@@ -1,3 +1,4 @@
+import enum
 import logging
 
 from qtpy import QtCore
@@ -10,6 +11,14 @@ logger = logging.getLogger(__name__)
 MAX_RECENT_PATHS = 10
 
 
+class Source(enum.StrEnum):
+    """The origin of a project change."""
+
+    MANAGER = 'manager'
+    EDITOR = 'editor'
+    VIEWER = 'viewer'
+
+
 class ProjectManager(QtCore.QObject):
     """
     Manage the current project session.
@@ -18,10 +27,10 @@ class ProjectManager(QtCore.QObject):
     list of recently opened paths. Loading and saving is delegated to ProjectIO.
     """
 
-    project_changed: QtCore.Signal = QtCore.Signal(Project)
-    path_changed: QtCore.Signal = QtCore.Signal(str)
-    modified_changed: QtCore.Signal = QtCore.Signal(bool)
-    recent_paths_changed: QtCore.Signal = QtCore.Signal(tuple)
+    project_changed = QtCore.Signal(Project, Source)
+    path_changed = QtCore.Signal(str)
+    modified_changed = QtCore.Signal(bool)
+    recent_paths_changed = QtCore.Signal(tuple)
 
     def __init__(self, parent: QtCore.QObject | None = None) -> None:
         super().__init__(parent)
@@ -84,28 +93,32 @@ class ProjectManager(QtCore.QObject):
         self._refresh_modified()
         return True
 
-    def set_project(self, project: Project, path: str = '') -> None:
+    def set_project(
+        self, project: Project, path: str = '', source: Source = Source.MANAGER
+    ) -> None:
         """Replace the current Project and reset its saved state."""
 
         self._project = project
         self._saved_hash = hash(project)
 
         self.set_path(path)
-        self.project_changed.emit(project)
+        self.project_changed.emit(project, source)
         self._refresh_modified()
 
-    def update_project(self, project: Project) -> None:
+    def update_project(self, project: Project, source: Source = Source.EDITOR) -> None:
         """Set a modified Project without resetting its saved state."""
 
         self._project = project
-        self.project_changed.emit(project)
+        self.project_changed.emit(project, source)
         self._refresh_modified()
 
-    def set_light_position(self, position: QtCore.QPointF) -> None:
+    def set_light_position(
+        self, position: QtCore.QPointF, source: Source = Source.VIEWER
+    ) -> None:
         """Set the position of the light source and mark the project modified."""
 
         self._project.flare.light.position = position
-        self.update_project(self._project)
+        self.update_project(self._project, source=source)
 
     def set_path(self, path: str) -> None:
         """Set the file path and record it in the recent paths."""

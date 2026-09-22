@@ -12,7 +12,7 @@ from qtpy import QtCore, QtGui, QtWidgets
 import flare
 from flare import api
 from flare.infrastructure.storage import PreferencesManager, StateManager
-from flare.services.project import ProjectManager
+from flare.services.project import ProjectManager, Source
 from flare.services.render import RenderController
 from flare.services.update.controller import UpdateController
 from flare.ui.app.menu import FlareMenuBar, ProjectActions
@@ -44,8 +44,6 @@ class FlareDockWindow(StateDockWindow):
         self.updates = UpdateController(self)
         self.update_presenter = UpdatePresenter(self, self.updates)
 
-        self._syncing = False
-
         self.project_editor: ProjectEditor | None = None
         self.widget_added.connect(self._update_widget)
 
@@ -75,7 +73,7 @@ class FlareDockWindow(StateDockWindow):
 
     def _init_signals(self) -> None:
         self.manager.project_changed.connect(self._project_changed)
-        self.manager.project_changed.connect(self.renderer.set_project)
+        self.manager.project_changed.connect(self._render_project)
         self.manager.path_changed.connect(self._refresh_window_title)
         self.manager.modified_changed.connect(self._refresh_window_title)
 
@@ -168,28 +166,25 @@ class FlareDockWindow(StateDockWindow):
         if value >= 1:
             self.progress_bar.setValue(0)
 
-    def _project_changed(self, project: api.Project) -> None:
+    def _render_project(self, project: api.Project, source: Source) -> None:
+        """Request a render of a changed project."""
+
+        self.renderer.set_project(project)
+
+    def _project_changed(self, project: api.Project, source: Source) -> None:
         """Update the ProjectEditor with a changed project."""
 
-        if self.project_editor is not None and not self._syncing:
-            self._syncing = True
-            try:
-                self.project_editor.set_project(project)
-            finally:
-                self._syncing = False
+        if source == Source.MANAGER and self.project_editor is not None:
+            self.project_editor.set_project(project)
         self._refresh_window_title()
 
     def _project_editor_changed(self) -> None:
         """Handle the changing of the ProjectEditor."""
 
-        if self.project_editor is None or self._syncing:
+        if self.project_editor is None:
             return
 
-        self._syncing = True
-        try:
-            self.manager.update_project(self.project_editor.get_project())
-        finally:
-            self._syncing = False
+        self.manager.update_project(self.project_editor.get_project())
 
     def _position_changed(self, viewer: LayerViewer, position: QtCore.QPoint) -> None:
         """Handle the changing of position from a Viewer by updating the api.Project."""
@@ -203,11 +198,7 @@ class FlareDockWindow(StateDockWindow):
             (position.y() / viewer.resolution().height() * 2.0) - 1.0,
         )
 
-        self._syncing = True
-        try:
-            self.manager.set_light_position(ndc_position)
-        finally:
-            self._syncing = False
+        self.manager.set_light_position(ndc_position)
 
         # Update the ProjectEditor
         if self.project_editor is not None:

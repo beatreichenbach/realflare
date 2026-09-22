@@ -7,7 +7,6 @@ from qt_parameters import (
     IntParameter,
     ParameterEditor,
     ParameterForm,
-    ParameterWidget,
     PathParameter,
     PointFParameter,
     PointParameter,
@@ -601,7 +600,6 @@ class ProjectEditor(ParameterEditor, StateWidget):
         self.blockSignals(True)
         self.set_values(values)
         self.blockSignals(False)
-        self.parameter_changed.emit(ParameterWidget())
 
     def _randomize_coatings(self) -> None:
         """Randomize the coatings of a LensModel."""
