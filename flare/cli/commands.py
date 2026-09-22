@@ -33,3 +33,14 @@ def gui(
     from flare.cli.gui import run_gui
 
     run_gui(project_path)
+
+
+def report() -> None:
+    """Print a diagnostic report of the environment."""
+
+    from qtpy import QtGui
+
+    from flare.services import environment_report
+
+    QtGui.QGuiApplication()
+    print(environment_report())

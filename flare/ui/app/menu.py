@@ -13,7 +13,7 @@ from flare.ui.app.widgets.viewer import LayerViewer
 from flare.ui.widgets import MessageBox
 
 if TYPE_CHECKING:
-    from flare.services.project import ProjectManager
+    from flare.services import ProjectManager
     from flare.ui.app.app import FlareDockWindow
 
 StandardButton = QtWidgets.QMessageBox.StandardButton

@@ -7,7 +7,7 @@ import typer
 import flare
 from flare import utils
 
-from .commands import gui, render
+from .commands import gui, render, report
 
 signal.signal(signal.SIGINT, signal.SIG_DFL)
 
@@ -15,6 +15,7 @@ app = typer.Typer(add_completion=False)
 
 app.command(name='render')(render)
 app.command(name='gui')(gui)
+app.command(name='report')(report)
 
 
 @app.callback(invoke_without_command=True)

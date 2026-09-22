@@ -70,7 +70,7 @@ def get_vram_text() -> str:
         values = (('used', used_kb), ('total', info.total_kb))
 
     parts = [
-        f'{label} {value / 2**20:.1f} GB'
+        f'{label} {value / 1024**2:.1f} GB'
         for label, value in values
         if value is not None
     ]
