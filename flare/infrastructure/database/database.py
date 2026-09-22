@@ -5,10 +5,10 @@ import os
 
 import numpy as np
 import platformdirs
-import pydantic
 
 import flare
 from flare.api.lens import Lens, Material
+from flare.infrastructure.storage.jsonfile import read_model, write_model
 
 from . import model, parsers, providers
 
@@ -150,25 +150,9 @@ class CacheStore:
     def save(self, cache: model.Cache) -> None:
         """Save the cache to disk."""
 
-        os.makedirs(os.path.dirname(self.cache_path), exist_ok=True)
-
-        data = cache.model_dump_json()
-        try:
-            with open(self.cache_path, 'w') as f:
-                f.write(data)
-        except OSError as e:
-            logger.error(f'Failed to write cache: {self.cache_path}', exc_info=e)
+        write_model(cache, self.cache_path, indent=None)
 
     def load(self) -> model.Cache | None:
         """Return the Cache from disk."""
 
-        if not os.path.exists(self.cache_path):
-            return None
-
-        try:
-            with open(self.cache_path) as file:
-                cache = model.Cache.model_validate_json(file.read())
-            return cache
-        except (OSError, ValueError, pydantic.ValidationError) as e:
-            logger.error(f'Failed to read cache: {self.cache_path}', exc_info=e)
-            return None
+        return read_model(model.Cache, self.cache_path)

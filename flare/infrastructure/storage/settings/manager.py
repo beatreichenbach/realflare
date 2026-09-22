@@ -9,6 +9,7 @@ import pydantic
 
 import flare
 
+from ..jsonfile import read_model, write_model
 from .model import Preferences, State
 
 logger = logging.getLogger(__name__)
@@ -29,33 +30,16 @@ class JSONManager(ABC, Generic[M]):
         path = cls.path()
         logger.info(f'Loading {model.__name__}: {path}')
 
-        if not os.path.exists(path):
-            return model()
-
-        try:
-            with open(path) as file:
-                instance = model.model_validate_json(file.read())
+        instance = read_model(model, path)
+        if instance is not None:
             return instance
-        except OSError as e:
-            logger.warning(f'Could not read file: {path}', exc_info=e)
-            return model()
-        except (ValueError, pydantic.ValidationError) as e:
-            logger.warning(f'Could not load data from file: {path}', exc_info=e)
-            return model()
+        return model()
 
     @classmethod
     def set(cls, model: M) -> None:
         path = cls.path()
         logger.info(f'Saving {model.__class__.__name__}: {path}')
-
-        os.makedirs(os.path.dirname(path), exist_ok=True)
-
-        data = model.model_dump_json(indent=2)
-        try:
-            with open(path, 'w') as file:
-                file.write(data)
-        except OSError as e:
-            logger.error(f'Could not write file: {path}', exc_info=e)
+        write_model(model, path)
 
     @classmethod
     def reset(cls) -> None:
@@ -65,9 +49,8 @@ class JSONManager(ABC, Generic[M]):
 
     @classmethod
     def path(cls) -> str:
-        filename = cls.filename
         config_dir = platformdirs.user_config_dir(flare.__name__)
-        path = os.path.join(config_dir, filename)
+        path = os.path.join(config_dir, cls.filename)
         return path
 
 

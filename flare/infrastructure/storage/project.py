@@ -1,11 +1,11 @@
 import logging
 import os
 
-import pydantic
-
 import flare
 from flare.api.project import model
 from flare.api.project.default import default_project
+
+from .jsonfile import read_model, write_model
 
 logger = logging.getLogger(__name__)
 
@@ -28,18 +28,7 @@ class ProjectIO:
             return None
 
         logger.info(f'Opening: {path}')
-
-        try:
-            with open(path) as f:
-                project = model.Project.model_validate_json(f.read())
-        except OSError as e:
-            logger.error(f'Could not read file: {path}', exc_info=e)
-            return None
-        except pydantic.ValidationError as e:
-            logger.error(f'Could not load project from file: {path}', exc_info=e)
-            return None
-
-        return project
+        return read_model(model.Project, path)
 
     @staticmethod
     def save(project: model.Project, path: str = '') -> None:
@@ -50,11 +39,4 @@ class ProjectIO:
         # Insert project version tag to allow for version migration later
         project.version = flare.__version__
 
-        os.makedirs(os.path.dirname(path), exist_ok=True)
-
-        data = project.model_dump_json(indent=2)
-        try:
-            with open(path, 'w') as f:
-                f.write(data)
-        except OSError as e:
-            logger.error(f'Could not write file: {path}', exc_info=e)
+        write_model(project, path)
