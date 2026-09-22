@@ -53,10 +53,12 @@ class DockDrag:
             pixmap = self._pixmap()
             drag.setPixmap(pixmap)
             drag.setHotSpot(pixmap.rect().center())
+            self.widget.hide()
             action = drag.exec(QtCore.Qt.DropAction.MoveAction)
         finally:
             dock_window.hide_dock_preview()
             _active_drag = None
+            self.widget.show()
 
         if action != QtCore.Qt.DropAction.MoveAction:
             self.float()
