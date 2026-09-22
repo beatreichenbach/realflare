@@ -24,6 +24,12 @@ from flare.infrastructure.database import Database
 from .base import StateWidget
 
 
+def _none_to_empty(value: object) -> object:
+    """Return an empty string for an unselected combo parameter."""
+
+    return '' if value is None else value
+
+
 class ProjectEditor(ParameterEditor, StateWidget):
     def __init__(self, parent: QtWidgets.QWidget | None = None) -> None:
         super().__init__(name='project', parent=parent)
@@ -574,6 +580,13 @@ class ProjectEditor(ParameterEditor, StateWidget):
         """Return the project from the Form's values."""
 
         values = self.values()
+
+        # Combo parameters without a selection return None
+        light = values['flare']['light']
+        light['illuminant'] = light['illuminant'] or ''
+        lens = values['flare']['lens']
+        for key in ('vendor', 'lens', 'glass'):
+            lens[key] = lens[key] or ''
 
         project = api.Project()
         project = project.model_validate(values)

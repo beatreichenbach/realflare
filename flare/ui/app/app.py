@@ -5,6 +5,7 @@ import os
 from functools import partial
 from typing import TYPE_CHECKING, Any
 
+import pydantic
 from qt_logging import LogBar, LogViewer
 from qtpy import QtCore, QtGui, QtWidgets
 
@@ -19,7 +20,13 @@ from flare.ui.app.update import UpdatePresenter
 from flare.ui.app.widgets.base import StateWidget
 from flare.ui.app.widgets.project_editor import ProjectEditor
 from flare.ui.app.widgets.viewer import LayerViewer
-from flare.ui.widgets import StateDockWindow, WindowState
+from flare.ui.widgets import (
+    DockWidgetState,
+    SplitterState,
+    StateDockWindow,
+    TabState,
+    WindowState,
+)
 
 if TYPE_CHECKING:
     from flare.engine.engine import Render
@@ -112,7 +119,15 @@ class FlareDockWindow(StateDockWindow):
         """Load the state of the window."""
 
         state = StateManager.get()
-        self.set_window_state(WindowState.model_validate(state.main_window))
+
+        window_state = self._default_window_state()
+        if state.main_window:
+            try:
+                window_state = WindowState.model_validate(state.main_window)
+            except pydantic.ValidationError as e:
+                logger.error('Could not load the window state.', exc_info=e)
+        self.set_window_state(window_state)
+
         self._set_widget_states(state.widgets)
 
     def _widget_states(self) -> dict[str, Any]:
@@ -265,3 +280,23 @@ class FlareDockWindow(StateDockWindow):
         if self.manager.modified():
             title = f'{title} *'
         self.setWindowTitle(title)
+
+    @staticmethod
+    def _default_window_state() -> WindowState:
+        """Return the default window layout."""
+
+        return WindowState(
+            states=(
+                SplitterState(
+                    sizes=(4, 1),
+                    states=(
+                        DockWidgetState(
+                            widgets=(TabState('Viewer', 'Viewer'),),
+                        ),
+                        DockWidgetState(
+                            widgets=(TabState('Parameters', 'ProjectEditor'),)
+                        ),
+                    ),
+                ),
+            ),
+        )

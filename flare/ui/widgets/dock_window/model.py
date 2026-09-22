@@ -17,18 +17,18 @@ class BaseWidgetState(BaseModel):
 
 class SplitterState(BaseWidgetState):
     kind: Literal['splitter'] = 'splitter'
-    sizes: tuple[int, ...]
-    orientation: QtCore.Qt.Orientation
+    sizes: tuple[int, ...] = ()
+    orientation: QtCore.Qt.Orientation = QtCore.Qt.Orientation.Horizontal
     states: tuple['WidgetState', ...] = ()
 
 
 class DockWidgetState(BaseWidgetState):
     kind: Literal['dock'] = 'dock'
-    current_index: int
-    widgets: tuple[TabState, ...]
-    detachable: bool
-    auto_delete: bool
-    is_center_widget: bool
+    current_index: int = 0
+    widgets: tuple[TabState, ...] = ()
+    detachable: bool = True
+    auto_delete: bool = True
+    is_center_widget: bool = False
 
 
 WidgetState = Annotated[SplitterState | DockWidgetState, Field(discriminator='kind')]

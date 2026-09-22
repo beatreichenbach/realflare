@@ -133,7 +133,8 @@ class StateDockWindow(DockWindow):
             else:
                 splitter = Splitter(state.orientation)
             self._set_child_states(state.states, widgets, splitter)
-            splitter.setSizes(state.sizes)
+            if state.sizes:
+                splitter.setSizes(state.sizes)
             return splitter
 
         if isinstance(state, DockWidgetState):
