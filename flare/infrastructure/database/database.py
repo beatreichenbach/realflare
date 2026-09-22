@@ -2,22 +2,28 @@ from __future__ import annotations
 
 import logging
 import os
+from pathlib import Path
 
 import numpy as np
 import platformdirs
 
 import flare
+from flare import env
 from flare.api.lens import Lens, Material
 from flare.infrastructure.storage.jsonfile import read_model, write_model
 
 from . import model, parsers, providers
+from .providers.repository import DEFAULT_URL
 
 logger = logging.getLogger(__name__)
 
-OPTICS_URL = 'https://github.com/amegahed/OpticsDatabase/archive/refs/heads/main.zip'
+OPTICS_URL = os.environ.get(env.REALFLARE_OPTICS_URL, DEFAULT_URL)
 OPTICS_LENS_DIR = 'Optics/Photography'
 OPTICS_MATERIAL_DIR = 'Materials'
-CUSTOM_LENS_DIR = os.path.expanduser('~/dev/flare/custom')
+DEFAULT_LENS_DIR = str(Path(flare.__file__).resolve().parent.parent / 'custom')
+CUSTOM_LENS_DIR = os.path.expanduser(
+    os.environ.get(env.REALFLARE_LENS_DIR, DEFAULT_LENS_DIR)
+)
 
 
 class Database:

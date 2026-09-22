@@ -4,7 +4,7 @@ from pathlib import Path
 import PyOpenColorIO as OCIO
 import pytest
 
-from flare import env, ocio
+from flare import ocio
 
 
 @pytest.fixture(autouse=True)
@@ -28,7 +28,7 @@ def test_get_config_from_env(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) ->
     builtin = OCIO.Config.CreateFromBuiltinConfig(name)
     path = tmp_path / 'config.ocio'
     path.write_text(builtin.serialize())
-    monkeypatch.setenv(env.OCIO, str(path))
+    monkeypatch.setenv('OCIO', str(path))
 
     config = ocio.get_config()
 

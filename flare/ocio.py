@@ -4,8 +4,6 @@ import os
 import numpy as np
 import PyOpenColorIO as OCIO
 
-from flare import env
-
 DEFAULT_CONFIG = 'cg-config-v2.2.0_aces-v1.3_ocio-v2.4'
 XYZ_BUILTIN = 'UTILITY - ACES-AP0_to_CIE-XYZ-D65_BFD'
 
@@ -20,7 +18,7 @@ def get_config() -> OCIO.Config:  # ty: ignore[unresolved-attribute]
     environment is only read once.
     """
 
-    if os.environ.get(env.OCIO):
+    if os.environ.get('OCIO'):
         return OCIO.Config.CreateFromEnv()  # ty: ignore[unresolved-attribute]
     return OCIO.Config.CreateFromBuiltinConfig(DEFAULT_CONFIG)  # ty: ignore[unresolved-attribute]
 
