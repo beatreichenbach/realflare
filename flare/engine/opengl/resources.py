@@ -1,18 +1,15 @@
 import contextlib
 import inspect
 from collections.abc import Sequence
-from functools import lru_cache
 from pathlib import Path
-from typing import Any, ClassVar, TypeVar
 
 import numpy as np
 from OpenGL import GL
 from OpenGL.constant import Constant
-from qtpy import QtCore, QtGui
+from qtpy import QtCore
 
-from .base import Array, EngineError, Task
-
-T = TypeVar('T', bound='OpenGLTask')
+# TODO: this should be relative to where it is called from.
+SHADER_DIR = Path(__file__).parent.parent / 'tasks' / 'shaders'
 
 
 class ResourceManager:
@@ -27,12 +24,11 @@ class ResourceManager:
             if candidate.is_file():
                 path = candidate
             else:
-                # Fallback: when called on ResourceManager/OpenGLTask defined in engine/
-                # shaders live in engine/tasks/shaders
-                fallback = Path(__file__).parent / 'tasks' / 'shaders' / filename
+                # Fallback: the engine task shaders live in engine/tasks/shaders.
+                fallback = SHADER_DIR / filename
                 path = fallback if fallback.is_file() else candidate
         except (TypeError, OSError):
-            path = Path(__file__).parent / 'tasks' / 'shaders' / filename
+            path = SHADER_DIR / filename
 
         with open(path) as file:
             source = file.read()
@@ -364,253 +360,3 @@ class BindingManager:
 
         GL.glBindBuffer(GL.GL_ARRAY_BUFFER, 0)
         GL.glBindVertexArray(0)
-
-
-class OpenGLTask(Task, ResourceManager, BindingManager):
-    _instances: ClassVar[dict[QtGui.QOpenGLContext, dict[type, 'OpenGLTask']]] = {}
-
-    def __new__(
-        cls: type[T], context: QtGui.QOpenGLContext, *args: Any, **kwargs: Any
-    ) -> T:
-        # NOTE: Tasks bind resources to slots that are constants per context.
-        # Multiple instances per context would access the same slots, so only one
-        # instance per task class and context is allowed.
-        instances = OpenGLTask._instances.setdefault(context, {})
-        if cls in instances:
-            raise RuntimeError(f'cannot instance {cls.__name__} multiple times')
-        instance = super().__new__(cls)
-        instances[cls] = instance
-        return instance
-
-    def __init__(self, context: QtGui.QOpenGLContext) -> None:
-        super().__init__()
-
-        self.context = context
-
-    def release(self) -> None:
-        """Delete the task resources and allow re-instantiation for the context."""
-
-        self.delete_resources()
-
-        # Clear the cached methods using lru_cache so they release the reference to
-        # this instance.
-        for name in dir(type(self)):
-            cache_clear = getattr(getattr(type(self), name, None), 'cache_clear', None)
-            if callable(cache_clear):
-                cache_clear()
-
-        instances = OpenGLTask._instances.get(self.context)
-        if instances is not None:
-            instances.pop(type(self), None)
-            if not instances:
-                OpenGLTask._instances.pop(self.context, None)
-
-    @lru_cache(1)  # noqa: B019
-    def cached_update_ssbo(
-        self,
-        buffer: int,
-        array: Array,
-        usage: int | Constant = GL.GL_DYNAMIC_DRAW,
-    ) -> None:
-        self.update_ssbo(buffer, array.array, usage)
-
-    @lru_cache(1)  # noqa: B019
-    def cached_update_texture(self, texture: int, array: Array) -> None:
-        self.update_texture(texture, array.array)
-
-    @lru_cache(1)  # noqa: B019
-    def cached_update_mipmap_texture(self, texture: int, array: Array) -> None:
-        self.update_texture(texture, array.array)
-        self.generate_mipmap(texture)
-
-    @staticmethod
-    def load_shader(source: str, shader_type: int | Constant) -> int:
-        shader = GL.glCreateShader(shader_type)
-        GL.glShaderSource(shader, source)
-        GL.glCompileShader(shader)
-
-        if not GL.glGetShaderiv(shader, GL.GL_COMPILE_STATUS):
-            log = GL.glGetShaderInfoLog(shader)
-            raise RuntimeError(log.decode('utf-8', errors='replace'))
-        return shader
-
-    @staticmethod
-    def render(program: int, fbo: int, resolution: QtCore.QSize) -> None:
-        """Render the program for the screen vertex shader to the framebuffer."""
-
-        GL.glBindFramebuffer(GL.GL_DRAW_FRAMEBUFFER, fbo)
-        GL.glDrawBuffer(GL.GL_COLOR_ATTACHMENT0)
-        GL.glClearColor(0.0, 0.0, 0.0, 1.0)
-        GL.glClear(GL.GL_COLOR_BUFFER_BIT)
-        GL.glViewport(0, 0, resolution.width(), resolution.height())
-
-        GL.glUseProgram(program)
-
-        # Reset program
-        GL.glDisableVertexAttribArray(0)
-        GL.glBindBuffer(GL.GL_ARRAY_BUFFER, 0)
-        GL.glBindBuffer(GL.GL_DRAW_INDIRECT_BUFFER, 0)
-        GL.glBindBuffer(GL.GL_ELEMENT_ARRAY_BUFFER, 0)
-
-        GL.glDisable(GL.GL_BLEND)
-        GL.glBlendFunc(GL.GL_SRC_ALPHA, GL.GL_ONE_MINUS_SRC_ALPHA)
-        GL.glEnable(GL.GL_DEPTH_TEST)
-
-        # Render
-        # NOTE: Use a triangle that spans the whole screen.
-        GL.glDrawArrays(GL.GL_TRIANGLES, 0, 3)
-
-        GL.glFinish()
-
-
-def _as_int(value: Any) -> int | None:
-    """Return the int extracted from a glGet result."""
-
-    if value is None:
-        return None
-    try:
-        # numpy array or sequence
-        if hasattr(value, '__len__') and not isinstance(value, (str, bytes)):
-            if len(value) == 0:
-                return None
-            value = value[0]
-        return int(value)
-    except Exception:
-        return None
-
-
-def get_vram_info() -> dict[str, int | None]:
-    """
-    Return VRAM usage in KB.
-
-    Keys: total_kb, available_kb, used_kb
-    Values are int in KB or None if unsupported/unavailable.
-    Works across vendors: NVIDIA (NVX), ATI/AMD (ATI_meminfo).
-    Requires a current OpenGL context; otherwise returns all None.
-    """
-
-    total_kb: int | None = None
-    available_kb: int | None = None
-
-    # NVIDIA: GL_NVX_gpu_memory_info
-    try:
-        from OpenGL.GL.NVX.gpu_memory_info import (
-            GL_GPU_MEMORY_INFO_CURRENT_AVAILABLE_VIDMEM_NVX,
-            GL_GPU_MEMORY_INFO_TOTAL_AVAILABLE_MEMORY_NVX,
-        )
-
-        total_val = GL.glGetIntegerv(GL_GPU_MEMORY_INFO_TOTAL_AVAILABLE_MEMORY_NVX)
-        avail_val = GL.glGetIntegerv(GL_GPU_MEMORY_INFO_CURRENT_AVAILABLE_VIDMEM_NVX)
-        total_kb = _as_int(total_val)
-        available_kb = _as_int(avail_val)
-        # Treat 0 as unavailable (no context or unsupported)
-        if total_kb == 0:
-            total_kb = None
-        if available_kb == 0 and total_kb is None:
-            available_kb = None
-    except Exception:
-        pass
-
-    # ATI / AMD: GL_ATI_meminfo (GL_TEXTURE_FREE_MEMORY_ATI = 0x87FC)
-    # Returns 4 ints: [total free, largest block, aux free, largest aux] in KB.
-    # No total dedicated, so only available can be queried.
-    if available_kb is None:
-        try:
-            GL_TEXTURE_FREE_MEMORY_ATI = 0x87FC
-            # Try to get via glGetIntegerv; may need to check extension.
-            # Some implementations expose as vec4, others via glGetIntegerv with count.
-            # We try generic call and parse first element.
-            val = GL.glGetIntegerv(GL_TEXTURE_FREE_MEMORY_ATI)
-            # In PyOpenGL, this returns a tuple/list of 4 ints if successful.
-            if val is not None:
-                if hasattr(val, '__len__') and len(val) >= 1:
-                    available_kb = _as_int(val[0])
-                else:
-                    available_kb = _as_int(val)
-                # Some drivers return 0 on failure, treat as unavailable
-                if available_kb == 0:
-                    available_kb = None
-        except Exception:
-            pass
-
-    # Fallback for Renderbuffer free memory (same values)
-    if available_kb is None:
-        try:
-            GL_RENDERBUFFER_FREE_MEMORY_ATI = 0x87FD
-            val = GL.glGetIntegerv(GL_RENDERBUFFER_FREE_MEMORY_ATI)
-            if val is not None and hasattr(val, '__len__') and len(val) >= 1:
-                available_kb = _as_int(val[0])
-            else:
-                available_kb = _as_int(val)
-            if available_kb == 0:
-                available_kb = None
-        except Exception:
-            pass
-
-    used_kb: int | None = None
-    if total_kb is not None and available_kb is not None:
-        try:
-            used_kb = total_kb - available_kb
-        except Exception:
-            used_kb = None
-
-    return {'total_kb': total_kb, 'available_kb': available_kb, 'used_kb': used_kb}
-
-
-def get_total_vram_kb() -> int | None:
-    """Return total VRAM in KB or None if unavailable."""
-
-    return get_vram_info()['total_kb']
-
-
-def get_available_vram_kb() -> int | None:
-    """Return currently available VRAM in KB or None if unavailable."""
-
-    return get_vram_info()['available_kb']
-
-
-def get_used_vram_kb() -> int | None:
-    """Return currently used VRAM in KB or None if unavailable."""
-
-    return get_vram_info()['used_kb']
-
-
-def create_context_surface() -> tuple[QtGui.QOpenGLContext, QtGui.QOffscreenSurface]:
-    """
-    Return a current OpenGL 4.3 core context and its offscreen surface.
-
-    :raises EngineError: if the surface or context cannot be created.
-    """
-
-    # Format
-    fmt = QtGui.QSurfaceFormat()
-    fmt.setProfile(QtGui.QSurfaceFormat.OpenGLContextProfile.CoreProfile)
-    # NOTE: Set both RenderableType and Version, otherwise a mismatch happens.
-    fmt.setRenderableType(QtGui.QSurfaceFormat.RenderableType.OpenGL)
-    fmt.setVersion(4, 3)
-
-    # Surface
-    surface = QtGui.QOffscreenSurface()
-    surface.setFormat(fmt)
-    surface.create()
-    if not surface.isValid():
-        raise EngineError('invalid QOffscreenSurface')
-
-    # Context
-    context = QtGui.QOpenGLContext()
-    context.setFormat(fmt)
-    context.create()
-    if not context.isValid():
-        raise EngineError('invalid QOpenGLContext')
-
-    # Make current
-    if not context.makeCurrent(surface):
-        raise EngineError('failed to make the context current')
-
-    # Version
-    actual_fmt = context.format()
-    major, minor = actual_fmt.version()
-    if (major, minor) < (4, 3):
-        raise EngineError(f'required OpenGL 4.3, got OpenGL {major}.{minor}')
-
-    return context, surface
