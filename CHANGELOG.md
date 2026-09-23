@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v1.0.1 (2026-09-23)
+
+### Bug Fixes
+
+- Set sensible default
+  ([`14a61e5`](https://github.com/beatreichenbach/realflare/commit/14a61e5ec5db9b5c98b5793d44e53c39dd1c63bb))
+
+
 ## v1.0.0 (2026-09-23)
 
 - Initial Release
