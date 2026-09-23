@@ -1,3 +1,6 @@
+import logging
+
+import flare
 from flare.ui import application
 from flare.ui.app import FlareDockWindow
 
@@ -6,6 +9,8 @@ dialog = None
 
 def run_gui(project_path: str = '') -> None:
     """Show the main window, optionally loading a project."""
+
+    logging.getLogger(flare.__name__).setLevel(logging.DEBUG)
 
     with application():
         global dialog

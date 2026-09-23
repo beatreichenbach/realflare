@@ -227,8 +227,7 @@ def apply_divisions(
     ghost_datas: Array, areas: Array, min_divisions: int, max_divisions: int
 ) -> None:
     """
-    Set the divisions attribute per ghost depending on how deformed the primitives
-    are.
+    Set the divisions attribute per ghost depending on how deformed the primitives are.
     """
 
     # areas.array[:] = 0
@@ -239,8 +238,6 @@ def apply_divisions(
         variances = np.nanvar(areas.array, axis=1)
 
     mask = (mean_areas > 0.0) & (~np.isnan(mean_areas)) & (~ghost_datas.array['culled'])
-    mask_count = int((~mask).sum())
-    logger.debug(f'Mask Count: {mask_count}')
     # Calculate CV^2: Variance / (Mean^2)
     relative_variances = variances[mask] / (mean_areas[mask] ** 2)
 
