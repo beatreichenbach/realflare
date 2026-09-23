@@ -1,8 +1,10 @@
 import enum
 import logging
+import os
 
 from qtpy import QtCore
 
+from flare import env
 from flare.api import Project
 from flare.infrastructure.storage import ProjectIO, StateManager
 
@@ -40,6 +42,7 @@ class ProjectManager(QtCore.QObject):
         self._saved_hash = hash(self._project)
         self._modified = False
         self._recent_paths = StateManager.get().recent_paths
+        self._update_env_vars()
 
     def project(self) -> Project:
         """Return the current Project."""
@@ -50,6 +53,13 @@ class ProjectManager(QtCore.QObject):
         """Return the path of the current Project, or an empty string if untitled."""
 
         return self._path
+
+    def project_dir(self) -> str:
+        """Return the directory of the current Project, or the user directory."""
+
+        if self._path:
+            return os.path.dirname(self._path)
+        return os.path.expanduser('~')
 
     def modified(self) -> bool:
         """Return whether the current Project has unsaved changes."""
@@ -124,9 +134,15 @@ class ProjectManager(QtCore.QObject):
         """Set the file path and record it in the recent paths."""
 
         self._path = path
+        self._update_env_vars()
         self.path_changed.emit(path)
         if path:
             self._add_recent(path)
+
+    def _update_env_vars(self) -> None:
+        """Update environment variables from the current project path."""
+
+        os.environ[env.RFP] = self.project_dir()
 
     def _refresh_modified(self) -> None:
         """Emit `modified_changed` when the save state changed."""

@@ -4,7 +4,7 @@ import os.path
 
 from qtpy import QtCore, QtWidgets
 
-from flare import api
+from flare import api, env
 from flare.api import PathParser
 from flare.engine.engine import Engine
 from flare.infrastructure.storage import ProjectIO
@@ -34,6 +34,8 @@ def run_render(project_path: str, animation_path: str, output: str) -> None:
     project = ProjectIO.open(project_path)
     if project is None:
         raise ValueError(f'could not load project: {project_path}')
+
+    os.environ[env.RFP] = os.path.dirname(os.path.abspath(project_path))
 
     try:
         layer_name = animation['layer']

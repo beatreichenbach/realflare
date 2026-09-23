@@ -20,6 +20,7 @@ StandardButton = QtWidgets.QMessageBox.StandardButton
 
 DOCUMENTATION_URL = 'https://beatreichenbach.github.io/realflare/reference/flare/'
 ISSUE_URL = 'https://github.com/beatreichenbach/realflare/issues/new'
+FILE_FILTER = 'JSON Files (*.json)'
 
 
 class FlareMenuBar(QtWidgets.QMenuBar):
@@ -154,7 +155,7 @@ class ProjectActions:
             return
 
         path, _filters = QtWidgets.QFileDialog.getOpenFileName(
-            self._parent, 'Open Project', self.recent_dir(), '*.json'
+            self._parent, 'Open Project', self.recent_dir(), FILE_FILTER
         )
         if path:
             self._manager.open(path)
@@ -165,20 +166,20 @@ class ProjectActions:
         path = self._manager.path()
         if not path:
             path, _filters = QtWidgets.QFileDialog.getSaveFileName(
-                self._parent, 'Save Project', self.recent_dir(), '*.json'
+                self._parent, 'Save Project', self._manager.project_dir(), FILE_FILTER
             )
         if path:
-            return self._manager.save(path)
+            return self._manager.save(self._with_extension(path))
         return False
 
     def save_as(self) -> bool:
         """Return whether the current project was saved to a new path."""
 
         path, _filters = QtWidgets.QFileDialog.getSaveFileName(
-            self._parent, 'Save Project As', self.recent_dir(), '*.json'
+            self._parent, 'Save Project As', self._manager.project_dir(), FILE_FILTER
         )
         if path:
-            return self._manager.save_as(path)
+            return self._manager.save_as(self._with_extension(path))
         return False
 
     def open_recent(self, path: str) -> None:
@@ -211,6 +212,14 @@ class ProjectActions:
 
         recent_dirs = (os.path.dirname(p) for p in self._manager.recent_paths())
         return next(recent_dirs, os.path.expanduser('~'))
+
+    @staticmethod
+    def _with_extension(path: str) -> str:
+        """Return the path with a `.json` extension."""
+
+        if path and not path.lower().endswith('.json'):
+            return f'{path}.json'
+        return path
 
 
 def open_url(url: str) -> None:
