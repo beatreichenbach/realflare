@@ -5,8 +5,11 @@ from flare.ui.app import FlareDockWindow
 
 def main() -> None:
     with application():
-        dialog = FlareDockWindow()
-        dialog.show()
+        window = FlareDockWindow()
+        window.show()
+
+        if recent := window.manager.recent_paths():
+            window.manager.open(recent[0])
 
 
 if __name__ == '__main__':

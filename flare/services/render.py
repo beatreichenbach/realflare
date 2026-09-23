@@ -1,5 +1,6 @@
 import copy
 import logging
+from functools import cached_property
 from typing import NamedTuple
 
 from qtpy import QtCore
@@ -37,7 +38,11 @@ class RenderController(QtCore.QObject):
         self._queue: RenderRequest | None = None
         self._rendering = False
 
-        self.engine = Engine()
+    @cached_property
+    def engine(self) -> Engine:
+        """The render engine, created on first use."""
+
+        return Engine()
 
     def request(self, request: RenderRequest) -> None:
         """Queue a render request and render until the queue is empty."""

@@ -37,6 +37,8 @@ class FlareDockWindow(StateDockWindow):
     def __init__(self, parent: QtWidgets.QWidget | None = None) -> None:
         super().__init__(parent)
 
+        self._renderer_initialized: bool = False
+
         self.manager = ProjectManager(self)
         self.renderer = RenderController(self)
         self.project_actions = ProjectActions(self.manager, self)
@@ -72,17 +74,23 @@ class FlareDockWindow(StateDockWindow):
 
     def _init_signals(self) -> None:
         self.manager.project_changed.connect(self._project_changed)
-        self.manager.project_changed.connect(self._render_project)
         self.manager.path_changed.connect(self._refresh_window_title)
         self.manager.modified_changed.connect(self._refresh_window_title)
 
+    def _init_renderer(self) -> None:
+        self.manager.project_changed.connect(self._render_project)
         self.renderer.rendered.connect(self._update_viewers)
         self.renderer.progress_changed.connect(self._progress_changed)
+
+        self.refresh()
 
     def showEvent(self, event: QtGui.QShowEvent) -> None:
         super().showEvent(event)
 
-        QtCore.QTimer.singleShot(500, self.refresh)
+        # Start rendering only once the window is visible
+        if not self._renderer_initialized:
+            self._renderer_initialized = True
+            QtCore.QTimer.singleShot(100, self._init_renderer)
         QtCore.QTimer.singleShot(2000, self.updates.check)
 
     def closeEvent(self, event: QtGui.QCloseEvent) -> None:
