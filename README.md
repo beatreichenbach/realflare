@@ -2,6 +2,8 @@
 
 Physically-based lens flare rendering using spectral raytracing on the GPU.
 
+![Screenshot](.github/assets/screenshot.png)
+
 ## Installation
 
 ### Requirements
