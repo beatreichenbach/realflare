@@ -2,13 +2,16 @@ Gizmo {
  name Realflare
  label render
  selected true
+ knobChanged "import nuke_flare\nnuke_flare.knob_changed()\n"
  addUserKnob {20 Flare}
  addUserKnob {2 project}
  addUserKnob {22 launch l Launch T "import nuke_flare\nnuke_flare.launch()\n" +STARTLINE}
  addUserKnob {26 ""}
  addUserKnob {4 layer M {"Ghost Aperture" "Starburst Aperture" Ghost Starburst Flare Comp}}
  layer Flare
- addUserKnob {7 intensity}
+ addUserKnob {6 intensity_enabled l "override intensity" +STARTLINE}
+ intensity_enabled false
+ addUserKnob {7 intensity +DISABLED}
  intensity 1
  addUserKnob {12 position}
  addUserKnob {3 width l "resolution"}
@@ -16,15 +19,16 @@ Gizmo {
  addUserKnob {3 height l "" -STARTLINE}
  height {{height}}
  addUserKnob {26 ""}
+ addUserKnob {41 on_error l "Missing Frames" T Read1.on_error}
+ addUserKnob {22 reload l Reload -STARTLINE T "import nuke_flare\nnuke_flare.reload()\n"}
+ addUserKnob {22 create_read l "Create Read" T "import nuke_flare\nnuke_flare.create_node()\n"}
+ addUserKnob {26 ""}
  addUserKnob {2 file}
  addUserKnob {3 frame_start l "frame range"}
  frame_start {{root.first_frame}}
  addUserKnob {3 frame_end l "" -STARTLINE}
  frame_end {{root.last_frame}}
  addUserKnob {22 render l Render T "import nuke_flare\nnuke_flare.render()\n" +STARTLINE}
- addUserKnob {26 ""}
- addUserKnob {41 on_error l "Missing Frames" T Read1.on_error}
- addUserKnob {22 reload l Reload -STARTLINE T "import nuke_flare\nnuke_flare.reload()\n"}
 }
  Input {
   inputs 0

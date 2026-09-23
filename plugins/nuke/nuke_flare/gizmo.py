@@ -36,6 +36,46 @@ def launch() -> None:
         nuke.error(f'Could not launch Realflare: {e}')
 
 
+def create_node() -> None:
+    """Create a read node below the gizmo with the settings of its read node."""
+
+    node = nuke.thisNode()
+
+    with node:  # ty: ignore[invalid-context-manager]
+        read_node = nuke.toNode(READ_NAME)
+        if read_node is None:
+            return
+
+        file_knob = get_knob(read_node, 'file', nuke.File_Knob)
+        evaluated_path = file_knob.evaluate() or ''
+        path = get_padded_path(evaluated_path)
+        file_type = get_knob(read_node, 'file_type').value()
+        on_error = get_knob(read_node, 'on_error').value()
+
+    first_frame, last_frame = get_frame_range(path)
+
+    created = nuke.nodes.Read(
+        file=path,
+        file_type=file_type,
+        on_error=on_error,
+        first=first_frame,
+        last=last_frame,
+    )
+    created.setXYpos(node.xpos(), node.ypos() + 100)
+    created.setSelected(True)
+
+
+def knob_changed() -> None:
+    """Enable the intensity knob only when its override is checked."""
+
+    node = nuke.thisNode()
+    enabled_knob = node.knob('intensity_enabled')
+    intensity_knob = node.knob('intensity')
+    if enabled_knob is None or intensity_knob is None:
+        return
+    intensity_knob.setEnabled(bool(enabled_knob.value()))
+
+
 def render() -> None:
     """Render the current node."""
 
@@ -91,7 +131,7 @@ def reload(node: nuke.Node | None = None) -> None:
             return
 
         file_knob = get_knob(read_node, 'file', nuke.File_Knob)
-        evaluated_path = file_knob.evaluate()
+        evaluated_path = file_knob.evaluate() or ''
         path = get_padded_path(evaluated_path)
         first_frame, last_frame = get_frame_range(path)
         get_knob(read_node, 'first').setValue(first_frame)

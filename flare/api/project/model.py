@@ -11,7 +11,7 @@ class HashableModel(BaseModel):
 
 
 class Layer(enum.Enum):
-    COMP = 'composite'
+    COMP = 'comp'
     FLARE = 'flare'
     STARBURST = 'starburst'
     STARBURST_APERTURE = 'starburst_aperture'

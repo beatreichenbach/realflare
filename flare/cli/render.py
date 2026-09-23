@@ -63,8 +63,9 @@ def run_render(project_path: str, animation_path: str, output: str) -> None:
         project.flare.light.position = QtCore.QPointF(*position)
 
         if intensities:
-            intensity = intensities[frame]
-            project.flare.light.intensity = intensity
+            intensity = intensities.get(frame)
+            if intensity is not None:
+                project.flare.light.intensity = intensity
 
         image_render = engine.render(project, layer)
         engine.output(image_render, project)

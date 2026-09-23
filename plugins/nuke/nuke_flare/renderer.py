@@ -30,7 +30,8 @@ def export_render_paths(node: nuke.Node) -> RenderPaths:
 
     project_path = get_knob(node, 'project').value()
     file_knob = get_knob(node, 'file', nuke.File_Knob)
-    output_path = get_padded_path(file_knob.evaluate())
+    output_path_value = file_knob.evaluate() or ''
+    output_path = get_padded_path(output_path_value)
     animation_path = export_data(get_animation_data(node))
 
     return RenderPaths(project_path, animation_path, output_path)
@@ -43,7 +44,8 @@ def get_animation_data(node: nuke.Node) -> dict[str, Any]:
     frame_end = int(get_knob(node, 'frame_end').value())
     width = int(get_knob(node, 'width').value())
     height = int(get_knob(node, 'height').value())
-    layer = get_knob(node, 'layer').value()
+    layer_name = get_knob(node, 'layer').value()
+    layer = layer_name.lower().replace(' ', '_')
     with node:  # ty: ignore[invalid-context-manager]
         input_node = nuke.toNode('Input1')
         if input_node is None:
@@ -51,25 +53,28 @@ def get_animation_data(node: nuke.Node) -> dict[str, Any]:
         input_width = input_node.width()
         input_height = input_node.height()
     position_knob = get_knob(node, 'position')
-    intensity_knob = get_knob(node, 'intensity')
+    intensity_enabled = bool(get_knob(node, 'intensity_enabled').value())
 
     positions: dict[int, tuple[float, float]] = {}
-    intensities: dict[int, float] = {}
     for frame in range(frame_start, frame_end + 1):
         position = position_knob.getValueAt(frame)
         x = (position[0] / input_width) * 2.0 - 1.0
         y = (position[1] / input_height) * 2.0 - 1.0
         positions[frame] = (x, y)
 
-        intensity = intensity_knob.getValueAt(frame)
-        intensities[frame] = intensity
-
-    data = {
+    data: dict[str, Any] = {
         'layer': layer,
         'position': positions,
-        'intensity': intensities,
         'resolution': (width, height),
     }
+
+    if intensity_enabled:
+        intensity_knob = get_knob(node, 'intensity')
+        intensities: dict[int, float] = {}
+        for frame in range(frame_start, frame_end + 1):
+            intensities[frame] = intensity_knob.getValueAt(frame)
+        data['intensity'] = intensities
+
     return data
 
 
