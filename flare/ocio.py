@@ -1,4 +1,5 @@
 import functools
+import logging
 import os
 
 import numpy as np
@@ -7,9 +8,11 @@ import PyOpenColorIO as OCIO
 DEFAULT_CONFIG = 'cg-config-v2.2.0_aces-v1.3_ocio-v2.4'
 XYZ_BUILTIN = 'UTILITY - ACES-AP0_to_CIE-XYZ-D65_BFD'
 
+logger = logging.getLogger(__name__)
+
 
 @functools.lru_cache(maxsize=1)
-def get_config() -> OCIO.Config:  # ty: ignore[unresolved-attribute]
+def get_config() -> OCIO.Config:
     """
     Return the active OCIO config.
 
@@ -18,9 +21,13 @@ def get_config() -> OCIO.Config:  # ty: ignore[unresolved-attribute]
     environment is only read once.
     """
 
-    if os.environ.get('OCIO'):
-        return OCIO.Config.CreateFromEnv()  # ty: ignore[unresolved-attribute]
-    return OCIO.Config.CreateFromBuiltinConfig(DEFAULT_CONFIG)  # ty: ignore[unresolved-attribute]
+    config = os.environ.get('OCIO')
+    if config:
+        logger.debug(f'Loading OCIO config: {config}')
+        return OCIO.Config.CreateFromEnv()
+    else:
+        logger.debug(f'Loading default OCIO config: {DEFAULT_CONFIG}')
+        return OCIO.Config.CreateFromBuiltinConfig(DEFAULT_CONFIG)
 
 
 @functools.lru_cache(maxsize=1)
@@ -35,19 +42,15 @@ def get_xyz_to_scene_linear() -> np.ndarray:
 
     config = get_config()
 
-    transform = OCIO.GroupTransform()  # ty: ignore[unresolved-attribute]
-    transform.appendTransform(
-        OCIO.BuiltinTransform(  # ty: ignore[unresolved-attribute]
-            style=XYZ_BUILTIN,
-            direction=OCIO.TRANSFORM_DIR_INVERSE,  # ty: ignore[unresolved-attribute]
-        )
+    transform = OCIO.GroupTransform()
+    builtin_transform = OCIO.BuiltinTransform(
+        style=XYZ_BUILTIN, direction=OCIO.TRANSFORM_DIR_INVERSE
     )
-    transform.appendTransform(
-        OCIO.ColorSpaceTransform(  # ty: ignore[unresolved-attribute]
-            OCIO.ROLE_INTERCHANGE_SCENE,  # ty: ignore[unresolved-attribute]
-            OCIO.ROLE_SCENE_LINEAR,  # ty: ignore[unresolved-attribute]
-        )
+    transform.appendTransform(builtin_transform)
+    color_space_transform = OCIO.ColorSpaceTransform(
+        OCIO.ROLE_INTERCHANGE_SCENE, OCIO.ROLE_SCENE_LINEAR
     )
+    transform.appendTransform(color_space_transform)
 
     processor = config.getProcessor(transform)
     cpu = processor.getDefaultCPUProcessor()
@@ -69,12 +72,12 @@ def create_shader_source() -> str:
     display = config.getDefaultDisplay()
     view = config.getDefaultView(display)
 
-    transform = OCIO.DisplayViewTransform()  # ty: ignore[unresolved-attribute]
-    transform.setSrc(OCIO.ROLE_SCENE_LINEAR)  # ty: ignore[unresolved-attribute]
+    transform = OCIO.DisplayViewTransform()
+    transform.setSrc(OCIO.ROLE_SCENE_LINEAR)
     transform.setDisplay(display)
     transform.setView(view)
 
     gpu = config.getProcessor(transform).getDefaultGPUProcessor()
-    shader_desc = OCIO.GpuShaderDesc.CreateShaderDesc(OCIO.GPU_LANGUAGE_GLSL_4_0)  # ty: ignore[unresolved-attribute]
+    shader_desc = OCIO.GpuShaderDesc.CreateShaderDesc(OCIO.GPU_LANGUAGE_GLSL_4_0)
     gpu.extractGpuShaderInfo(shader_desc)
     return shader_desc.getShaderText()

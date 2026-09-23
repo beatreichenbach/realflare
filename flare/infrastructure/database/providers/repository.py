@@ -1,10 +1,10 @@
 import logging
 import os
-import shutil
 import tempfile
 import urllib.parse
 import zipfile
 from collections.abc import Sequence
+from pathlib import Path, PurePosixPath
 
 import requests
 
@@ -15,11 +15,6 @@ from .base import Provider
 from .common import load_files
 
 logger = logging.getLogger(__name__)
-
-DEFAULT_URL = 'https://github.com/amegahed/OpticsDatabase/archive/refs/heads/main.zip'
-DEFAULT_LENS_SUBDIR = 'Optics/Photography'
-DEFAULT_MATERIAL_SUBDIR = 'Materials'
-DEFAULT_MATERIAL_VENDORS = ('Cdgm', 'Hikari', 'Hoya', 'Ohara', 'Schott', 'Sumita')
 
 
 class RepositoryProvider(Provider):
@@ -46,29 +41,17 @@ class RepositoryProvider(Provider):
     def load(self) -> None:
         """Download the repository and load the files from disk."""
 
-        # Download the Repository
-        temp_file = download(self._url)
-        temp_dir = tempfile.gettempdir()
-        extract(temp_file, temp_dir)
+        with tempfile.TemporaryDirectory(prefix='flare_optics_') as temp_dir:
+            directory = Path(temp_dir)
+            archive = download(self._url, directory)
+            root_dir = extract_repo_archive(archive, directory)
 
-        # Load files from disk
-        root_dir = None
-        for entry in os.listdir(temp_dir):
-            path = os.path.join(temp_dir, entry)
-            if os.path.isdir(path):
-                root_dir = path
-                break
-
-        if root_dir:
             if self._lens_dir and self._lens_parsers:
-                lens_dir = os.path.join(root_dir, self._lens_dir)
-                self._lenses = load_files(lens_dir, self._lens_parsers)
+                lens_dir = root_dir / self._lens_dir
+                self._lenses = load_files(str(lens_dir), self._lens_parsers)
             if self._material_dir and self._material_parsers:
-                material_dir = os.path.join(root_dir, self._material_dir)
-                self._materials = load_files(material_dir, self._material_parsers)
-
-        # Clean up
-        shutil.rmtree(temp_dir, ignore_errors=True)
+                material_dir = root_dir / self._material_dir
+                self._materials = load_files(str(material_dir), self._material_parsers)
 
     def get_lenses(self) -> tuple[Lens, ...]:
         return self._lenses
@@ -77,9 +60,9 @@ class RepositoryProvider(Provider):
         return self._materials
 
 
-def download(url: str) -> str:
+def download(url: str, dest: os.PathLike[str]) -> Path:
     """
-    Return the local path of a downloaded file.
+    Download a file into dest and return its local path.
 
     :raises HTTPError: If one occurred.
     """
@@ -89,24 +72,33 @@ def download(url: str) -> str:
     result = requests.get(url, stream=True, timeout=30)
     result.raise_for_status()
 
-    path = urllib.parse.urlparse(url).path
-    name, ext = os.path.splitext(path)
-
-    temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=ext)
-    with open(temp_file.name, 'wb') as file:
+    filename = PurePosixPath(urllib.parse.urlparse(url).path).name or 'archive.zip'
+    path = Path(dest) / filename
+    with path.open('wb') as file:
         for chunk in result.iter_content(chunk_size=8192):
             file.write(chunk)
 
-    logger.debug(f'Downloaded: {temp_file.name}')
-    return temp_file.name
+    logger.debug(f'Downloaded: {path}')
+    return path
 
 
-def extract(path: str, dest: str) -> None:
-    """Extract a zip file to dest."""
+def extract_repo_archive(path: os.PathLike[str], dest: os.PathLike[str]) -> Path:
+    """Extract a repository archive to dest and return its root directory."""
 
-    logger.debug(f'Extracting: {path}')
+    path = Path(path)
+    destination = Path(dest)
+
+    logger.debug(f'Extracting: {path!r}')
 
     with zipfile.ZipFile(path, 'r') as file:
-        file.extractall(dest)
+        names = file.namelist()
+        file.extractall(destination)
 
-    logger.debug(f'Extracted: {dest}')
+    # The root directory is the first directory in the archive.
+    tops = {name.split('/', 1)[0] for name in names if name and name != '/'}
+    if len(tops) == 1:
+        (top,) = tops
+        candidate = destination / top
+        if candidate.is_dir():
+            return candidate
+    return destination

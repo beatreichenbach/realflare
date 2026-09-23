@@ -187,7 +187,7 @@ def _ocio_info() -> list[tuple[str, str]]:
         ('config', config.getName() or 'unnamed'),
         ('display', display),
         ('view', config.getDefaultView(display)),
-        ('scene-linear', config.getRoleColorSpace(OCIO.ROLE_SCENE_LINEAR)),  # ty: ignore[unresolved-attribute]
+        ('scene-linear', config.getRoleColorSpace(OCIO.ROLE_SCENE_LINEAR)),
     ]
 
 

@@ -40,7 +40,8 @@ dev = [
     "pytest>=8.0",
     "ruff>=0.16",
     "ty>=0.0.82",
-    "types-nuke>=13.0"
+    "types-nuke>=13.0",
+    "types-opencolorio>=2.4,<3"
 ]
 
 [project.scripts]
