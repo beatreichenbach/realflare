@@ -19,13 +19,14 @@ Physically-based lens flare rendering using spectral raytracing on the GPU.
 | Windows         | Supported         | Install GPU drivers                         |
 | macOS           | **Not supported** | Apple stopped at OpenGL 4.1                 |
 
-### Quick Install (Linux)
+### Manual Install
 
 ```bash
 git clone https://github.com/beatreichenbach/realflare.git
 cd realflare
-chmod +x scripts/install.sh
-./scripts/install.sh
+python -m venv venv
+source venv/bin/activate  # or venv\Scripts\activate on Windows
+pip install -e .
 ```
 
 ### Wayland
@@ -42,24 +43,6 @@ Force to use the discrete NVIDIA GPU:
 ```bash
 export __NV_PRIME_RENDER_OFFLOAD=1
 export __GLX_VENDOR_LIBRARY_NAME=nvidia
-```
-
-### Quick Install (Windows)
-
-```bat
-git clone https://github.com/beatreichenbach/realflare.git
-cd realflare
-scripts\install.bat
-```
-
-### Manual Install
-
-```bash
-git clone https://github.com/beatreichenbach/realflare.git
-cd realflare
-python -m venv venv
-source venv/bin/activate  # or venv\Scripts\activate on Windows
-pip install -e ".[openexr]"
 ```
 
 ## Usage

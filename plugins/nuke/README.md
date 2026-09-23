@@ -5,8 +5,9 @@ the `flare` CLI and loads the result back into Nuke.
 
 ## Installation
 
-Install Realflare as described in [../../README.md](../../README.md), then add
-the `plugins/nuke` directory to Nuke's plug-in path using either option below.
+Install Realflare as described in [README.md](../../README.md), then add the `plugins/nuke` directory to 
+Nuke's plug-in path using either option below.
+
 See [Defining the Nuke Plug-in Path](https://learn.foundry.com/nuke/content/comp_environment/configuring_nuke/defining_nuke_plugin_path.html)
 for details.
 
@@ -23,9 +24,6 @@ nuke.pluginAddPath('/path/to/realflare/plugins/nuke')
 ### 2. NUKE_PATH
 
 Append the absolute path to the `NUKE_PATH` environment variable, for example `/path/to/realflare/plugins/nuke`.
-
-See [Defining the Nuke Plug-in Path](https://learn.foundry.com/nuke/content/comp_environment/configuring_nuke/defining_nuke_plugin_path.html)
-for details.
 
 ### Binary location
 
