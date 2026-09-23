@@ -140,7 +140,7 @@ class StarburstTask(OpenGLTask):
         fft_radius = get_fft_radius(
             sensor_size, fft_fstop, aperture_resolution, resolution
         )
-        fft_radius *= max(config.camera.scale, 0.0)
+        fft_radius *= max(config.camera.scale, 0.0) * 10
         samples = 2**config.render.samples
 
         params = np.zeros((), dtype=params_dtype)

@@ -264,9 +264,9 @@ class RaytraceTask(OpenGLTask):
         # Update the args after raytracing
         rays.args = (*rays.args, surfaces, iors)
 
-        array = self.read_buffer(self._rays_buffer, rays.array)
+        # NOTE: The traced rays stay on the GPU as it's never used on the CPU.
         args = (*rays.args, surfaces, iors, use_aspheric)
-        traced_rays = Array(array=array, args=args)
+        traced_rays = Array(array=rays.array, args=args)
         return traced_rays
 
     @profiling.timer
