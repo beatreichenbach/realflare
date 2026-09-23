@@ -65,7 +65,7 @@ class RenderController(QtCore.QObject):
 
         project = copy.deepcopy(request.project)
         project.output.write = True
-        self.request(RenderRequest(project, request.layers))
+        self.request(RenderRequest(project, (project.output.layer,)))
 
     def _render(self, request: RenderRequest) -> None:
         """Render the layers of a request and emit the results."""
