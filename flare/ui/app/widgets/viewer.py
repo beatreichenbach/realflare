@@ -22,6 +22,7 @@ class LayerViewer(Viewer, StateWidget):
 
         self.layer_parm = EnumParameter()
         self.layer_parm.set_enum(api.Layer)
+        self.layer_parm.set_default(api.Layer.FLARE)
         self.layer_parm.combo.setSizePolicy(Policy.Minimum, Policy.Fixed)
         self.layer_parm.value_changed.connect(self.layer_changed)
 
