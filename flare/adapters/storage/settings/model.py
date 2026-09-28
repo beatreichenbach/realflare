@@ -11,4 +11,3 @@ class State(BaseModel):
     main_window: dict[str, Any] = Field(default_factory=dict)
     widgets: dict[str, Any] = Field(default_factory=dict)
     recent_paths: tuple[str, ...] = ()
-    last_update_check: str = ''

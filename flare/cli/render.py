@@ -5,9 +5,9 @@ import os.path
 from qtpy import QtCore, QtWidgets
 
 from flare import api, env
+from flare.adapters import ProjectIO
 from flare.api import PathParser
 from flare.engine.engine import Engine
-from flare.infrastructure.storage import ProjectIO
 
 logger = logging.getLogger(__name__)
 

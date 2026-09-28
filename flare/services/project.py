@@ -5,8 +5,8 @@ import os
 from qtpy import QtCore
 
 from flare import env
+from flare.adapters import ProjectIO, StateManager
 from flare.api import Project
-from flare.infrastructure.storage import ProjectIO, StateManager
 
 logger = logging.getLogger(__name__)
 

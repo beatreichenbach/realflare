@@ -17,8 +17,8 @@ from qt_parameters import (
 from qtpy import QtCore, QtWidgets
 
 from flare import api
+from flare.adapters import Database
 from flare.api import color
-from flare.infrastructure.database import Database
 
 from .base import StateWidget
 

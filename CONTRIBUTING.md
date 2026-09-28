@@ -24,12 +24,12 @@ pytest
 
 ```
 flare/
-  api/                 # engine-facing domain (Project, Lens, Material, color, output paths)
+  api/                 # domain (Project, Lens, Material, color, output paths)
   engine/              # OpenGL rendering engine
-  infrastructure/      # adapters to the outside world
+  adapters/            # adapters
     storage/           #   persistence gateways (project files, preferences/state)
     database/          #   optics database download and parsing
-  services/            # application layer: project session, rendering, updates
+  services/            # application layer: project session, rendering
   ui/                  # Qt user interface
     widgets/           #   generic, reusable components (DockWindow, Viewer, ...)
     app/               #   components of this application (window, editors, dialogs)
@@ -53,15 +53,15 @@ Notes:
 
 Dependencies point inward. A package may only import the packages listed for it:
 
-| package          | may import                                                   |
-|------------------|--------------------------------------------------------------|
-| `api`            | –                                                            |
-| `utils`          | –                                                            |
-| `infrastructure` | `api`, `utils`                                               |
-| `engine`         | `api`, `infrastructure`, `utils`                             |
-| `services`       | `api`, `infrastructure`, `engine`, `utils`                   |
-| `ui`             | `api`, `services`, `infrastructure`, `engine`, `utils`       |
-| `cli`            | `api`, `services`, `infrastructure`, `engine`, `ui`, `utils` |
+| package    | may import                                             |
+|------------|--------------------------------------------------------|
+| `api`      | –                                                      |
+| `utils`    | –                                                      |
+| `adapters` | `api`, `utils`                                         |
+| `engine`   | `api`, `adapters`, `utils`                             |
+| `services` | `api`, `adapters`, `engine`, `utils`                   |
+| `ui`       | `api`, `services`, `adapters`, `engine`, `utils`       |
+| `cli`      | `api`, `services`, `adapters`, `engine`, `ui`, `utils` |
 
 `tests/test_architecture.py` walks the import graph and fails when one of these
 edges is violated. Keep it in sync when the layering changes.

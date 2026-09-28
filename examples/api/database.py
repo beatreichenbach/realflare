@@ -1,19 +1,19 @@
 import logging
 
 from examples import init
-from flare.infrastructure.database import database
+from flare.adapters import Database
 
 logger = logging.getLogger(__name__)
 
 
 def get_lenses() -> None:
-    db = database.Database()
+    db = Database()
     lenses = db.get_lenses()
     logger.info(f'{len(lenses)} Lenses')
 
 
 def get_lens() -> None:
-    db = database.Database()
+    db = Database()
     lens = db.get_lens(vendor='Hasselblad', name='Hasselblad XCD 2.8 65')
     assert lens
     logger.info(f'{lens.vendor=}')
@@ -23,7 +23,7 @@ def get_lens() -> None:
 
 
 def get_coatings() -> None:
-    db = database.Database()
+    db = Database()
     lenses = db.get_lenses()
     lens = lenses[0]
     coatings = lens.get_coatings(wavelength_range=(370, 790), ior_range=(1.2, 2.2))
@@ -31,7 +31,7 @@ def get_coatings() -> None:
 
 
 def get_materials() -> None:
-    db = database.Database()
+    db = Database()
     materials = db.get_materials()
     logger.info(f'{len(materials)} Materials')
 
@@ -40,14 +40,14 @@ def get_materials() -> None:
 
 
 def get_material() -> None:
-    db = database.Database()
+    db = Database()
     material = db.get_material('Hoya', ior=1.568, abbe=56.04)
     assert material
     assert material.name == 'BAC4'
 
 
 def get_ior() -> None:
-    db = database.Database()
+    db = Database()
     material = db.get_material('Schott', ior=1.622, abbe=58.2)
     assert material
     logger.info(f'{material=}')

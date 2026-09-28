@@ -3,12 +3,7 @@ from pathlib import Path
 import platformdirs
 import pytest
 
-from flare.infrastructure.storage import (
-    Preferences,
-    PreferencesManager,
-    State,
-    StateManager,
-)
+from flare.adapters import Preferences, PreferencesManager, State, StateManager
 
 
 @pytest.fixture
@@ -23,7 +18,7 @@ def config_dir(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
 
 
 def test_preferences_round_trip(config_dir: Path) -> None:
-    preferences = Preferences(clear_log_on_render=False, check_updates=False)
+    preferences = Preferences(clear_log_on_render=False)
 
     PreferencesManager.set(preferences)
 
@@ -32,10 +27,7 @@ def test_preferences_round_trip(config_dir: Path) -> None:
 
 
 def test_state_round_trip(config_dir: Path) -> None:
-    state = State(
-        recent_paths=('/one.flare', '/two.flare'),
-        last_update_check='2026-01-01T00:00:00Z',
-    )
+    state = State(recent_paths=('/one.flare', '/two.flare'))
 
     StateManager.set(state)
 

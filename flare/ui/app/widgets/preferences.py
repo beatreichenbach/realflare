@@ -3,7 +3,7 @@ import logging
 from qt_parameters import BoolParameter, ParameterForm
 from qtpy import QtGui, QtWidgets
 
-from flare.infrastructure.storage.settings import Preferences, PreferencesManager
+from flare.adapters import Preferences, PreferencesManager
 from flare.ui.widgets import DialogButtonBox
 
 logger = logging.getLogger(__name__)

@@ -6,8 +6,8 @@ from OpenGL import GL
 from qtpy import QtCore, QtGui
 
 from flare import api
+from flare.adapters import Database
 from flare.engine.tasks.common.lens import get_surfaces
-from flare.infrastructure.database import Database
 
 from ..base import Array
 from ..opengl import OpenGLTask

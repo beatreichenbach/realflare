@@ -3,7 +3,7 @@ from functools import lru_cache
 import numpy as np
 
 from flare import api
-from flare.infrastructure.database import Database
+from flare.adapters import Database
 
 from ...base import Array, EngineError
 

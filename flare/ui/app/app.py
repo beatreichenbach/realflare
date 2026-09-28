@@ -11,7 +11,7 @@ from qtpy import QtCore, QtGui, QtWidgets
 
 import flare
 from flare import api
-from flare.infrastructure.storage import PreferencesManager, StateManager
+from flare.adapters import PreferencesManager, StateManager
 from flare.services import ProjectManager, RenderController, RenderRequest, Source
 from flare.ui.app.menu import FlareMenuBar, ProjectActions
 from flare.ui.app.widgets.base import StateWidget

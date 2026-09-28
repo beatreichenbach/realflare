@@ -9,8 +9,8 @@ import platformdirs
 
 import flare
 from flare import env
+from flare.adapters.storage.jsonfile import read_model, write_model
 from flare.api.lens import Lens, Material
-from flare.infrastructure.storage.jsonfile import read_model, write_model
 
 from . import model, parsers, providers
 

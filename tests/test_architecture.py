@@ -6,15 +6,15 @@ import pytest
 PACKAGE = Path(__file__).resolve().parent.parent / 'flare'
 
 # Allowed intra-package imports per source package. Dependencies point inward:
-# cli/ui -> services -> engine/infrastructure -> api/utils.
+# cli/ui -> services -> engine/adapters -> api/utils.
 ALLOWED: dict[str, set[str]] = {
     'api': set(),
     'utils': set(),
-    'infrastructure': {'api', 'utils'},
-    'engine': {'api', 'infrastructure', 'utils'},
-    'services': {'api', 'infrastructure', 'engine', 'utils'},
-    'ui': {'api', 'services', 'infrastructure', 'engine', 'utils'},
-    'cli': {'api', 'services', 'infrastructure', 'engine', 'ui', 'utils'},
+    'adapters': {'api', 'utils'},
+    'engine': {'api', 'adapters', 'utils'},
+    'services': {'api', 'adapters', 'engine', 'utils'},
+    'ui': {'api', 'services', 'adapters', 'engine', 'utils'},
+    'cli': {'api', 'services', 'adapters', 'engine', 'ui', 'utils'},
 }
 
 

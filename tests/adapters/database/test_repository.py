@@ -2,7 +2,7 @@ import zipfile
 from collections.abc import Sequence
 from pathlib import Path
 
-from flare.infrastructure.database.providers.repository import extract_repo_archive
+from flare.adapters.database.providers.repository import extract_repo_archive
 
 
 def make_zip(path: Path, files: Sequence[str]) -> None:
