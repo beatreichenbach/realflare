@@ -1,4 +1,4 @@
-import tests
+from examples import init
 from flare.api.project import Project
 from flare.ui import application
 from flare.ui.app.widgets.project_editor import ProjectEditor
@@ -13,5 +13,5 @@ def main() -> None:
 
 
 if __name__ == '__main__':
-    tests.init()
+    init()
     main()

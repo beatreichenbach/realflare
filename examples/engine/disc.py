@@ -1,7 +1,7 @@
 from OpenGL import GL
 from qtpy import QtCore, QtGui
 
-import tests
+from examples import init
 from flare.engine.base import Array
 from flare.engine.opengl import OpenGLTask, create_context_surface
 from flare.engine.tasks.common import DiscMesh
@@ -79,5 +79,5 @@ def main() -> None:
 
 
 if __name__ == '__main__':
-    tests.init()
+    init()
     main()

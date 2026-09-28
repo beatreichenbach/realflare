@@ -13,11 +13,11 @@ pre-commit install
 Run the checks:
 
 ```sh
-uv run ruff format flare
-uv run ruff check --select I --fix flare
-uv run ruff check flare
-uv run ty check flare
-uv run pytest
+ruff format flare examples
+ruff check --select I --fix flare examples
+ruff check flare examples
+ty check flare examples
+pytest
 ```
 
 ## Project layout
@@ -35,6 +35,8 @@ flare/
     app/               #   components of this application (window, editors, dialogs)
   cli/                 # entrypoints (Typer commands, run_gui, run_render)
   utils/               # shared helpers (logging, text, profiling, path)
+`tests/`               # automated test suite
+`examples/`            # runnable scripts for visual and manual checks
 ```
 
 Notes:

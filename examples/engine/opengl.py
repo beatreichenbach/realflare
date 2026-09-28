@@ -2,10 +2,11 @@ import logging
 
 from qtpy import QtWidgets
 
+from examples import init
 from flare.engine.opengl import create_context_surface, utils
 
 
-def test_get_vram_info() -> None:
+def get_vram_info() -> None:
     QtWidgets.QApplication()
     context, surface = create_context_surface()
     context.makeCurrent(surface)
@@ -14,7 +15,7 @@ def test_get_vram_info() -> None:
     logging.info(vram_info)
 
 
-def test_get_gpu_info() -> None:
+def get_gpu_info() -> None:
     QtWidgets.QApplication()
     context, surface = create_context_surface()
     context.makeCurrent(surface)
@@ -22,3 +23,13 @@ def test_get_gpu_info() -> None:
     gpu_info = utils.get_gpu_info()
     for label, value in gpu_info:
         logging.info(f'{label: <24} {value}')
+
+
+def main() -> None:
+    get_vram_info()
+    get_gpu_info()
+
+
+if __name__ == '__main__':
+    init()
+    main()

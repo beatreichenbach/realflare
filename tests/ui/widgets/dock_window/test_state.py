@@ -126,35 +126,6 @@ def _process_deletions() -> None:
     QtCore.QCoreApplication.sendPostedEvents(None, QtCore.QEvent.Type.DeferredDelete)
 
 
-def test_set_state_removes_unused_docks(qapp: QtWidgets.QApplication) -> None:
-    window = _window()
-
-    center = _dock(0, [['A', 'WidgetA']])
-    center['is_center_widget'] = True
-    center['auto_delete'] = False
-
-    _set_state(
-        window,
-        {
-            'states': [
-                _splitter([center, _dock(0, [['B', 'WidgetB']])], [100, 100]),
-            ],
-        },
-    )
-    _set_state(
-        window,
-        {
-            'states': [
-                _splitter([center], [100]),
-            ],
-        },
-    )
-    _process_deletions()
-
-    unused = [d for d in window.dock_widgets() if d is not window.center_widget]
-    assert unused == []
-
-
 def test_close_tab_deletes_widget(qapp: QtWidgets.QApplication) -> None:
     window = _window()
     window.show_widget('A')

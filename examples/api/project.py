@@ -1,13 +1,13 @@
 import logging
 
-import tests
+from examples import init
 from flare.api import Project
 from flare.utils import profiling
 
 logger = logging.getLogger(__name__)
 
 
-def test_hash_project() -> None:
+def hash_project() -> None:
     with profiling.Timer('Initialize project'):
         project = Project()
 
@@ -18,7 +18,11 @@ def test_hash_project() -> None:
         logger.debug(project.__hash__())
 
 
-if __name__ == '__main__':
-    tests.init()
+def main() -> None:
     logging.getLogger().setLevel(logging.DEBUG)
-    test_hash_project()
+    hash_project()
+
+
+if __name__ == '__main__':
+    init()
+    main()

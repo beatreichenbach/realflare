@@ -1,14 +1,14 @@
-import tests
+from examples import init
 from flare.ui import application
-from flare.ui.app.widgets.about import AboutDialog
+from flare.ui.app.widgets.preferences import PreferencesDialog
 
 
 def main() -> None:
     with application():
-        dialog = AboutDialog()
+        dialog = PreferencesDialog()
         dialog.show()
 
 
 if __name__ == '__main__':
-    tests.init()
+    init()
     main()

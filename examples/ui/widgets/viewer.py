@@ -1,6 +1,6 @@
 import numpy as np
 
-import tests
+from examples import init
 from flare.ui import application
 from flare.ui.widgets import Viewer
 
@@ -22,5 +22,5 @@ def main() -> None:
 
 
 if __name__ == '__main__':
-    tests.init()
+    init()
     main()

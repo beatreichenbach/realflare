@@ -1,6 +1,6 @@
 from qtpy import QtWidgets
 
-import tests
+from examples import init
 from flare.ui import application
 from flare.ui.widgets import DockWidgetState, StateDockWindow, TabState, WindowState
 
@@ -9,10 +9,11 @@ class Widget(QtWidgets.QWidget):
     def __init__(self, parent: QtWidgets.QWidget | None = None) -> None:
         super().__init__(parent)
 
-        self.setLayout(QtWidgets.QHBoxLayout())
-        self.layout().addWidget(QtWidgets.QPushButton('asdf'))
-        self.layout().addWidget(QtWidgets.QPushButton('asdf'))
-        self.layout().addWidget(QtWidgets.QPushButton('asdf'))
+        layout = QtWidgets.QHBoxLayout()
+        layout.addWidget(QtWidgets.QPushButton('asdf'))
+        layout.addWidget(QtWidgets.QPushButton('asdf'))
+        layout.addWidget(QtWidgets.QPushButton('asdf'))
+        self.setLayout(layout)
 
 
 def main() -> None:
@@ -40,5 +41,5 @@ def main() -> None:
 
 
 if __name__ == '__main__':
-    tests.init()
+    init()
     main()

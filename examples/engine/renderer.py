@@ -1,6 +1,6 @@
 from qtpy import QtWidgets
 
-import tests
+from examples import init
 from flare import api
 from flare.api.project.default import default_project
 from flare.engine.engine import Engine
@@ -51,8 +51,7 @@ def diagram() -> None:
     render(api.Layer.DIAGRAM, project)
 
 
-if __name__ == '__main__':
-    tests.init()
+def main() -> None:
     QtWidgets.QApplication()
 
     starburst_aperture()
@@ -62,3 +61,8 @@ if __name__ == '__main__':
     flare()
     comp()
     # diagram()
+
+
+if __name__ == '__main__':
+    init()
+    main()
