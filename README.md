@@ -6,6 +6,25 @@ Physically-based lens flare rendering using spectral raytracing on the GPU.
 
 ## Installation
 
+Install using uv:
+
+```shell
+git clone https://github.com/beatreichenbach/realflare.git
+cd realflare
+uv venv --python 3.13
+uv pip install -e .
+```
+
+Or without:
+
+```shell
+git clone https://github.com/beatreichenbach/realflare.git
+cd realflare
+python -m venv venv
+source venv/bin/activate  # or venv\Scripts\activate on Windows
+pip install -e .
+```
+
 ### Requirements
 
 - **Python 3.11–3.13** (OpenEXR ships no 3.14 wheels yet)
@@ -18,16 +37,6 @@ Physically-based lens flare rendering using spectral raytracing on the GPU.
 | Linux (X11)     | Supported         | Use `glx` backend and `xcb` Qt Platform     |
 | Windows         | Supported         | Install GPU drivers                         |
 | macOS           | **Not supported** | Apple stopped at OpenGL 4.1                 |
-
-### Manual Install
-
-```bash
-git clone https://github.com/beatreichenbach/realflare.git
-cd realflare
-python -m venv venv
-source venv/bin/activate  # or venv\Scripts\activate on Windows
-pip install -e .
-```
 
 ### Wayland
 
