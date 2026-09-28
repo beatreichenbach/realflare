@@ -2,6 +2,30 @@
 
 <!-- version list -->
 
+## v1.0.2 (2026-09-28)
+
+### Bug Fixes
+
+- Use qt-updater
+  ([`46b018b`](https://github.com/beatreichenbach/realflare/commit/46b018bbea3ccc4e96bf7c84693307ab504527a7))
+
+### Documentation
+
+- Update installation
+  ([`186b4f3`](https://github.com/beatreichenbach/realflare/commit/186b4f3f5f69f72b95298089ab8d1d0942871b22))
+
+- Update readme
+  ([`1e2c91b`](https://github.com/beatreichenbach/realflare/commit/1e2c91b3465adb676028c43ca2c4bf3f86a31311))
+
+### Refactoring
+
+- Export engine symbols
+  ([`2374bfe`](https://github.com/beatreichenbach/realflare/commit/2374bfe09892bc8b55cf9d0f79fbf7e5e5760374))
+
+- Rename infrastructure to adapters
+  ([`4122a96`](https://github.com/beatreichenbach/realflare/commit/4122a9670d1b0db92abae57e5fd22b4602249d6f))
+
+
 ## v1.0.1 (2026-09-23)
 
 ### Bug Fixes
