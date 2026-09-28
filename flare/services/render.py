@@ -6,8 +6,7 @@ from typing import NamedTuple
 from qtpy import QtCore
 
 from flare import api
-from flare.engine.base import EngineError
-from flare.engine.engine import Engine, Render
+from flare.engine import Engine, EngineError, Render
 
 logger = logging.getLogger(__name__)
 

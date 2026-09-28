@@ -26,7 +26,7 @@ from flare.ui.widgets import (
 )
 
 if TYPE_CHECKING:
-    from flare.engine.engine import Render
+    from flare.engine import Render
 
 logger = logging.getLogger(__name__)
 

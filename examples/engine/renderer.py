@@ -3,7 +3,7 @@ from qtpy import QtWidgets
 from examples import init
 from flare import api
 from flare.api.project.default import default_project
-from flare.engine.engine import Engine
+from flare.engine import Engine
 
 
 def render(layer: api.Layer, project: api.Project | None = None) -> None:

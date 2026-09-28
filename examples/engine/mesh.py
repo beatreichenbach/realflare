@@ -1,7 +1,7 @@
 import logging
 
 from examples import init
-from flare.engine.tasks.common import DiscMesh
+from flare.engine import DiscMesh
 
 logger = logging.getLogger(__name__)
 

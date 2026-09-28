@@ -12,7 +12,7 @@ from qtpy import QtGui
 
 import flare
 from flare import ocio
-from flare.engine import opengl
+from flare.engine import create_context_surface, get_gpu_info
 
 logger = logging.getLogger(__name__)
 
@@ -189,9 +189,9 @@ def _opengl_info() -> list[tuple[str, str]]:
     if QtGui.QGuiApplication.instance() is None:
         return [('status', 'unavailable')]
 
-    context, _ = opengl.create_context_surface()
+    context, _ = create_context_surface()
     try:
-        return opengl.get_gpu_info()
+        return get_gpu_info()
     finally:
         context.doneCurrent()
 

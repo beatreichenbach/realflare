@@ -2,9 +2,7 @@ from OpenGL import GL
 from qtpy import QtCore, QtGui
 
 from examples import init
-from flare.engine.base import Array
-from flare.engine.opengl import OpenGLTask, create_context_surface
-from flare.engine.tasks.common import DiscMesh
+from flare.engine import Array, DiscMesh, OpenGLTask, create_context_surface
 from flare.ui import application
 from flare.ui.widgets import Viewer
 
