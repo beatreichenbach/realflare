@@ -23,6 +23,7 @@ dependencies = [
     "qt-parameters>=1.1,<2",
     "qt-pydantic>=0.1,<1",
     "qt-themes>=0.2,<1",
+    "qt-updater@git+https://github.com/beatreichenbach/qt-updater@v0.1.1",
     "qtpy>=2.0,<3",
     "requests>=2.34,<3",
     "rich>=15,<16",
@@ -71,5 +72,6 @@ quote-style = "single"
 select = ["E", "W", "F", "I", "UP", "B", "SIM", "ANN", "RUF"]
 
 [tool.pytest.ini_options]
+testpaths = ["tests"]
 log_cli = true
 log_level = "INFO"

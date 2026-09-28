@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING
 
 from qt_logging import LogViewer
 from qt_material_icons import MaterialIcon
+from qt_updater import App, show_update_dialog
 from qtpy import QtGui, QtWidgets
 
 from flare.ui.app.widgets.project_editor import ProjectEditor
@@ -18,7 +19,9 @@ if TYPE_CHECKING:
 
 StandardButton = QtWidgets.QMessageBox.StandardButton
 
-DOCUMENTATION_URL = 'https://beatreichenbach.github.io/realflare/reference/flare/'
+PACKAGE = 'flare'
+GITHUB_REPO = 'beatreichenbach/realflare'
+DOCUMENTATION_URL = 'https://github.com/beatreichenbach/realflare'
 ISSUE_URL = 'https://github.com/beatreichenbach/realflare/issues/new'
 FILE_FILTER = 'JSON Files (*.json)'
 
@@ -129,7 +132,8 @@ class FlareMenuBar(QtWidgets.QMenuBar):
 
         action = QtWidgets.QAction('Check for Updates', self._window)
         action.setIcon(MaterialIcon('update'))
-        action.triggered.connect(partial(show_update, self._window))
+        app = App.github(PACKAGE, GITHUB_REPO)
+        action.triggered.connect(partial(show_update_dialog, app, self._window))
         help_menu.addAction(action)
 
         action = QtWidgets.QAction('About', self._window)
@@ -237,12 +241,6 @@ def show_preferences(window: FlareDockWindow) -> None:
 
     dialog = PreferencesDialog(parent=window)
     dialog.show()
-
-
-def show_update(window: FlareDockWindow) -> None:
-    """Check for updates."""
-
-    window.updates.check(manual=True)
 
 
 def show_about(window: FlareDockWindow) -> None:

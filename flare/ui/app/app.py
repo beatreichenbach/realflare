@@ -13,9 +13,7 @@ import flare
 from flare import api
 from flare.infrastructure.storage import PreferencesManager, StateManager
 from flare.services import ProjectManager, RenderController, RenderRequest, Source
-from flare.services.update.controller import UpdateController
 from flare.ui.app.menu import FlareMenuBar, ProjectActions
-from flare.ui.app.update import UpdatePresenter
 from flare.ui.app.widgets.base import StateWidget
 from flare.ui.app.widgets.project_editor import ProjectEditor
 from flare.ui.app.widgets.viewer import LayerViewer
@@ -42,8 +40,6 @@ class FlareDockWindow(StateDockWindow):
         self.manager = ProjectManager(self)
         self.renderer = RenderController(self)
         self.project_actions = ProjectActions(self.manager, self)
-        self.updates = UpdateController(self)
-        self.update_presenter = UpdatePresenter(self, self.updates)
 
         self.project_editor: ProjectEditor | None = None
         self.widget_added.connect(self._update_widget)
@@ -91,7 +87,6 @@ class FlareDockWindow(StateDockWindow):
         if not self._renderer_initialized:
             self._renderer_initialized = True
             QtCore.QTimer.singleShot(100, self._init_renderer)
-        QtCore.QTimer.singleShot(2000, self.updates.check)
 
     def closeEvent(self, event: QtGui.QCloseEvent) -> None:
         if not self.project_actions.prompt_unsaved():

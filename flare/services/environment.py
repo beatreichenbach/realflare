@@ -14,8 +14,6 @@ import flare
 from flare import ocio
 from flare.engine import opengl
 
-from .update import manager
-
 logger = logging.getLogger(__name__)
 
 PACKAGES = (
@@ -59,17 +57,9 @@ def environment_report() -> str:
 
 
 def _flare_info() -> list[tuple[str, str]]:
-    root = manager.install_root()
-    if root is None:
-        install = 'installed package'
-    else:
-        kind = 'editable git' if manager.is_git(root) else 'editable'
-        install = f'{kind} ({root})'
-
     return [
         ('version', flare.__version__),
         ('path', str(flare.__file__)),
-        ('install', install),
         ('config', platformdirs.user_config_dir(flare.__name__)),
     ]
 

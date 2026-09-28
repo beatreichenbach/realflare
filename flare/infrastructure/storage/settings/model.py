@@ -5,7 +5,6 @@ from pydantic import BaseModel, Field
 
 class Preferences(BaseModel):
     clear_log_on_render: bool = True
-    check_updates: bool = True
 
 
 class State(BaseModel):
