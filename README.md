@@ -1,5 +1,11 @@
 # Realflare
 
+[![GitHub release](https://img.shields.io/github/v/release/beatreichenbach/realflare.svg)](https://github.com/beatreichenbach/realflare/releases)
+[![Python](https://img.shields.io/badge/python-3.11%2B-blue.svg)](https://github.com/beatreichenbach/realflare)
+[![License](https://img.shields.io/github/license/beatreichenbach/realflare.svg)](https://github.com/beatreichenbach/realflare/blob/main/LICENSE)
+[![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
+[![ty](https://img.shields.io/badge/type%20checked-ty-261230.svg)](https://github.com/astral-sh/ty)
+
 Physically-based lens flare rendering using spectral raytracing on the GPU.
 
 ![Screenshot](.github/assets/screenshot.png)
