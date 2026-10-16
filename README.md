@@ -73,6 +73,8 @@ flare render --project path/to/project.json
 flare render --project path/to/project.json --animation path/to/animation.json
 ```
 
+![Window](.github/assets/window.png)
+
 ## Nuke Plugin
 
 A Nuke plugin is available for rendering lens flares from the Nuke gizmo.
