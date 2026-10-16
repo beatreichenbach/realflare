@@ -7,17 +7,23 @@ To get started:
 ```sh
 uv venv --python 3.13
 uv pip install -e ".[dev]"
-pre-commit install
+uv run pre-commit install
 ```
 
 Run the checks:
 
 ```sh
-ruff format flare examples
-ruff check --select I --fix flare examples
-ruff check flare examples
-ty check flare examples
-pytest
+uv run ruff format flare examples
+uv run ruff check --select I --fix flare examples
+uv run ruff check flare examples
+uv run ty check flare examples
+uv run pytest
+```
+
+To version up using [python-semantic-release](https://github.com/python-semantic-release/python-semantic-release):
+
+```sh
+uv run semantic-release version
 ```
 
 ## Project layout
