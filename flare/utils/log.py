@@ -15,7 +15,6 @@ def init_rich() -> None:
     try:
         from rich.logging import RichHandler
 
-        os.environ.setdefault('COLUMNS', '200')
         logging.basicConfig(
             format='%(message)s',
             datefmt='[%X]',
