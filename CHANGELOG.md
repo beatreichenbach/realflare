@@ -2,6 +2,33 @@
 
 <!-- version list -->
 
+## v1.0.3 (2026-11-16)
+
+### Bug Fixes
+
+- Remove columns default
+  ([`f98a500`](https://github.com/beatreichenbach/realflare/commit/f98a50075652cd6a7e52a644db6a3ffb0fd94697))
+
+### Build System
+
+- Remove email
+  ([`0165330`](https://github.com/beatreichenbach/realflare/commit/0165330cf406c614513f2522cb04d065215f107c))
+
+- Update package dependencies
+  ([`ab2ea6b`](https://github.com/beatreichenbach/realflare/commit/ab2ea6b3403ea31f84b3202ed4d1b2659f42fd7f))
+
+### Documentation
+
+- Add README badges
+  ([`93827f6`](https://github.com/beatreichenbach/realflare/commit/93827f6d77765036e7004e14940489694e2b8cf1))
+
+- Add window screenshot
+  ([`072a82d`](https://github.com/beatreichenbach/realflare/commit/072a82d26fd68c8c3f558a545bd859899219261a))
+
+- Update uv commands
+  ([`7411cbc`](https://github.com/beatreichenbach/realflare/commit/7411cbc2c529ac43b11aba3aa5f5785bc51faf26))
+
+
 ## v1.0.2 (2026-09-28)
 
 ### Bug Fixes
